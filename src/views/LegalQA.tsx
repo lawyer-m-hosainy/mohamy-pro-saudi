@@ -113,11 +113,15 @@ export default function LegalQA() {
                   <SelectValue placeholder="اختر قضية" />
                 </SelectTrigger>
                 <SelectContent>
-                  {cases.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.plaintiff} ضد {c.defendant}
-                    </SelectItem>
-                  ))}
+                  {cases.length > 0 ? (
+                    cases.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.plaintiff} ضد {c.defendant}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-slate-500 text-center">لا توجد قضايا مضافة حالياً.</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>

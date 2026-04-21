@@ -18,7 +18,34 @@ interface CasesState {
 }
 
 export const useCasesStore = create<CasesState>((set) => ({
-  cases: [],
+  cases: [
+    {
+      id: "C-1001",
+      title: "قضية تجارية - تعويضات",
+      clientName: "شركة الأفق",
+      type: "Commercial",
+      status: "Active",
+      court: "المحكمة التجارية بالرياض",
+      plaintiff: "شركة الأفق",
+      defendant: "مؤسسة البناء",
+      filedDate: "2024-01-15",
+      nextSession: "2024-05-20",
+      assignedTo: "U-001"
+    },
+    {
+      id: "C-1002",
+      title: "نزاع عمالي",
+      clientName: "أحمد محمد",
+      type: "Labor",
+      status: "UnderReview",
+      court: "المحكمة العمالية بجدة",
+      plaintiff: "أحمد محمد",
+      defendant: "شركة التقنية",
+      filedDate: "2024-03-10",
+      nextSession: "2024-06-12",
+      assignedTo: "U-001"
+    }
+  ],
   sessions: [],
   deadlines: [],
 
