@@ -21,29 +21,29 @@ export const useCasesStore = create<CasesState>((set) => ({
   cases: [
     {
       id: "C-1001",
-      title: "قضية تجارية - تعويضات",
-      clientName: "شركة الأفق",
-      type: "Commercial",
-      status: "Active",
-      court: "المحكمة التجارية بالرياض",
+      clientId: "CL-001",
+      type: "تجاري",
+      status: "نشطة",
+      court: "المحكمة التجارية",
       plaintiff: "شركة الأفق",
       defendant: "مؤسسة البناء",
-      filedDate: "2024-01-15",
-      nextSession: "2024-05-20",
-      assignedTo: "U-001"
+      memorandums: ["لائحة الادعاء", "مذكرة الرد"],
+      powerOfAttorneyRef: "POA-2024-001",
+      najizReferenceStatus: "مربوط بناجز",
+      createdAt: "2024-01-15"
     },
     {
       id: "C-1002",
-      title: "نزاع عمالي",
-      clientName: "أحمد محمد",
-      type: "Labor",
-      status: "UnderReview",
-      court: "المحكمة العمالية بجدة",
+      clientId: "CL-002",
+      type: "عمالي",
+      status: "تحت الدراسة",
+      court: "المحكمة العمالية",
       plaintiff: "أحمد محمد",
       defendant: "شركة التقنية",
-      filedDate: "2024-03-10",
-      nextSession: "2024-06-12",
-      assignedTo: "U-001"
+      memorandums: [],
+      powerOfAttorneyRef: "POA-2024-002",
+      najizReferenceStatus: "غير مربوط",
+      createdAt: "2024-03-10"
     }
   ],
   sessions: [],

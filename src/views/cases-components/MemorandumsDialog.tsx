@@ -15,6 +15,7 @@ export default function MemorandumsDialog({ caseData }: MemorandumsDialogProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const memorandums = caseData.memorandums ?? [];
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,7 +42,7 @@ export default function MemorandumsDialog({ caseData }: MemorandumsDialogProps) 
     <Dialog open={open} onOpenChange={setOpen}>
       <Button type="button" variant="ghost" size="sm" className="flex items-center gap-1 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400" onClick={() => setOpen(true)}>
         <FileText size={14} />
-        <span className="text-xs font-bold">{caseData.memorandums.length}</span>
+        <span className="text-xs font-bold">{memorandums.length}</span>
       </Button>
       <DialogContent className="max-w-xl bg-white dark:bg-navy-900 border-none shadow-xl">
         <DialogHeader>
@@ -71,7 +72,7 @@ export default function MemorandumsDialog({ caseData }: MemorandumsDialogProps) 
             </div>
           </div>
           <div className="border dark:border-white/10 rounded-lg divide-y divide-slate-100 dark:divide-white/10">
-            {caseData.memorandums.map((memo, idx) => (
+            {memorandums.map((memo, idx) => (
               <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
@@ -92,7 +93,7 @@ export default function MemorandumsDialog({ caseData }: MemorandumsDialogProps) 
                 </div>
               </div>
             ))}
-            {caseData.memorandums.length === 0 && (
+            {memorandums.length === 0 && (
               <p className="text-[10px] text-slate-400 text-center py-4 italic">لا توجد مذكرات أو ملفات مرفوعة</p>
             )}
           </div>
