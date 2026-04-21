@@ -1,0 +1,873 @@
+# 🏛️ التقرير الفني الشامل — منصة محامي برو (Mohamy Pro KSA)
+
+**تاريخ التقييم:** أبريل 2026  
+**اللجنة:** CTO، مهندس النظم المعمارية، مهندس الأمن السيبراني، مهندس الخوادم، مهندس الواجهات، مهندس DevOps، مدير المنتج، محلل نظم قانونية  
+**الهدف:** تدقيق فني شامل قبل العرض على المستثمرين (Investor Readiness Audit)
+
+---
+
+## 1. الملخص التنفيذي (Executive Summary)
+
+منصة "محامي برو" هي منصة SaaS متعددة المستأجرين مصممة حصرياً لمكاتب المحاماة في المملكة العربية السعودية. المنصة وصلت إلى مرحلة **MVP متقدم جاهز للعرض التجريبي** مع +38 شاشة متكاملة و+15 مخزن حالة (Zustand store) و+60 نوع بيانات (TypeScript interface).
+
+### الحكم العام
+
+| المعيار | التقييم | الملاحظة |
+|---------|---------|----------|
+| جودة المعمارية | ⭐⭐⭐⭐ | هيكلة ممتازة مع فصل واضح للمسؤوليات |
+| جودة الواجهات | ⭐⭐⭐⭐⭐ | UI فاخر واحترافي يضاهي المنصات العالمية |
+| الأمن السيبراني | ⭐⭐⭐ | قواعد Firestore جيدة لكن توجد ثغرات حرجة |
+| جاهزية الإنتاج | ⭐⭐⭐ | يحتاج إصلاحات حرجة قبل النشر العام |
+| جاهزية العرض للمستثمر | ⭐⭐⭐⭐ | جاهز مع تحفظات قابلة للمعالجة السريعة |
+| التوافق السعودي | ⭐⭐⭐⭐⭐ | ممتاز - محاكم، ناجز، ZATCA، ضريبة 15% |
+
+---
+
+## 2. تحليل حزمة التقنيات (Technology Stack Analysis)
+
+### الواجهات (Frontend)
+| التقنية | الإصدار | التقييم |
+|---------|---------|---------|
+| React | 19.0.0 | ✅ أحدث إصدار مستقر |
+| Vite | 6.2.0 | ✅ أسرع bundler في السوق |
+| TypeScript | 5.8.2 | ✅ أحدث إصدار |
+| Tailwind CSS | 4.1.14 | ✅ أحدث إصدار |
+| Zustand | 5.0.12 | ✅ خفيف وسريع لإدارة الحالة |
+| shadcn/ui | 4.2.0 | ✅ مكتبة UI حديثة ومرنة |
+| motion (Framer) | 12.23.24 | ✅ حركات سلسة واحترافية |
+| recharts | 3.8.1 | ✅ مخططات تفاعلية |
+
+### الخوادم (Backend)
+| التقنية | الملاحظة |
+|---------|----------|
+| Express.js | خادم خفيف لـ AI APIs + SPA serving |
+| Firebase Auth | مصادقة Google |
+| Firestore | قاعدة بيانات NoSQL |
+| Firebase Storage | تخزين المستندات |
+| Gemini AI (2.5 Flash) | المساعد القانوني الذكي |
+
+### التقييم العام للحزمة
+> [!TIP]
+> الحزمة التقنية **حديثة جداً وفي الطليعة**. اختيار React 19 + Vite 6 + Tailwind 4 يُظهر وعياً تقنياً عالياً. Firebase يُعتبر مثالياً لمرحلة MVP لكنه سيحتاج لـ Backend مستقل لاحقاً.
+
+---
+
+## 3. تقييم جودة المعمارية (Architecture Quality Assessment)
+
+### نمط المعمارية
+**Frontend-Heavy Monolith** مع اتصال مباشر بخدمات Firebase + Express middleware لـ AI.
+
+### التنظيم الداخلي (Modularity)
+```
+src/
+├── views/          ← 38 شاشة (UI Layer)
+├── components/     ← مكونات مشتركة + layout
+├── store/          ← 15 مخزن Zustand (State Layer)
+├── services/       ← خدمات البيانات والـ AI (Service Layer)
+├── domain/         ← قواعد العمل القانونية (Domain Layer)
+├── types/          ← تعريفات TypeScript (Contract Layer)
+├── lib/            ← أدوات مساعدة (Utility Layer)
+├── security/       ← RBAC والصلاحيات
+├── observability/  ← المراقبة والتسجيل
+├── modules/        ← وحدات المؤسسة (admin, onboarding, subscriptions)
+└── mocks/          ← بيانات تجريبية
+```
+
+### نقاط القوة المعمارية
+1. **فصل المسؤوليات ممتاز** — طبقة `domain/` تعزل القواعد القانونية السعودية لاختبارها مستقلاً
+2. **مخازن Zustand مفصولة** — كل مجال عمل له مخزن مستقل (Cases, Clients, Finance, etc.)
+3. **نظام صلاحيات RBAC متين** — 6 أدوار محددة بدقة مع أذونات مفصلة
+4. **نظام ملاحظة (Observability)** — `logger.ts` يُخفي البيانات الحساسة تلقائياً
+
+### المخاطر المعمارية
+
+> [!CAUTION]
+> **`useAppStore.ts` مُصنّف @deprecated لكنه لا يزال مستخدماً** — هذا "God Object" يُسبب إعادة تصيير (re-render) شاملة في كل المكونات التي تستخدمه. يجب استبداله تدريجياً.
+
+> [!WARNING]
+> **غياب Backend مستقل** — كل العمليات (CRUD) تتم مباشرة من الواجهة إلى Firestore. هذا يعني:
+> - القواعد التجارية يمكن تجاوزها من المتصفح
+> - لا يوجد طبقة Validation مركزية
+> - لا يمكن إضافة Webhooks أو تكاملات خارجية بسهولة
+
+---
+
+## 4. نقاط القوة في النظام (Strengths)
+
+### ⭐ واجهة مستخدم استثنائية
+- تصميم فاخر (Premium) يضاهي منصات Clio و LegalZoom
+- استخدام `motion/react` لحركات سلسة
+- ألوان سعودية أنيقة (Emerald Green #006C35, Navy #0B2E59, Gold #D4AF37)
+- صفحة Landing احترافية مع أقسام: خدمات، تقنية، شهادات عملاء
+
+### ⭐ توافق كامل مع السوق السعودي
+- 9 أنواع محاكم سعودية مُعرّفة بدقة (`KSACourtType`)
+- ضريبة القيمة المضافة مُثبتة على 15%
+- مولّد QR Code متوافق مع ZATCA
+- مصطلحات قانونية صحيحة ("نظام" بدل "قانون"، "مذكرات" بدل "صحائف")
+- تنسيق رقم الهاتف السعودي (+9665XXXXXXXX)
+
+### ⭐ أداء تحميل سريع
+- `lazy()` + `Suspense` لجميع الشاشات الـ 38
+- `React.memo` للمخططات
+- `useMemo` للحسابات المالية
+
+### ⭐ نظام صلاحيات متين (RBAC)
+- 6 أدوار: مدير مكتب، محامي شريك، محامي مستشار، محامي، محامي متدرب، سكرتير
+- `PermissionGate` يحمي الشاشات الحساسة
+- `hasPermission()` مركزي في `useAuthStore`
+
+### ⭐ بيانات تجريبية واقعية
+- 10 عملاء سعوديين بأسماء واقعية
+- 5 قضايا في محاكم مختلفة
+- فواتير، مصروفات، مهام، مواعيد
+- بيانات تنفيذ، استشارات، ملكية فكرية
+
+### ⭐ تكامل AI ذكي
+- مساعد قانوني سعودي عبر Gemini 2.5 Flash
+- صياغة وثائق آلية (لوائح، عقود، مذكرات)
+- تحليل مستندات قانونية
+- حماية أمنية: Rate limiting، تنقية المدخلات، Timeout
+
+---
+
+## 5. نقاط الضعف (Weaknesses)
+
+### 🔴 حرجة
+
+| # | المشكلة | التأثير | الملف |
+|---|---------|---------|-------|
+| W1 | **`useAppStore` God Object** — يُسبب re-renders مفرطة | أداء | `useAppStore.ts` |
+| W2 | **كل المستخدمين يحصلون على دور "مدير مكتب"** عند التسجيل بـ Google | أمن | `AuthProvider.tsx:26` |
+| W3 | **`tenantId` يرجع دائماً `demo-tenant`** — لا يوجد tenant حقيقي | عزل بيانات | `tenant.ts:6` |
+| W4 | **تعريف مكرر لـ `Invoice`** في `types/index.ts` | خطأ TypeScript | سطر 100 وسطر 706 |
+| W5 | **بوابة الموكلين بدون نظام تسجيل دخول مستقل** | وظيفي | `ClientPortal.tsx` |
+| W6 | **زر "تسجيل الدخول" يدعم Google فقط** | وظيفي | `Login.tsx` |
+
+### 🟡 متوسطة
+
+| # | المشكلة | التأثير |
+|---|---------|---------|
+| W7 | غياب كامل للاختبارات الآلية (0 tests) | جودة |
+| W8 | `render.yaml` يُنشر كـ Static site لكن المشروع يحتاج Server | نشر |
+| W9 | `deleteInvoice` لا تتحقق من `tenantId` | أمن |
+| W10 | لا يوجد نظام إشعارات فعلي (Push/Email) | وظيفي |
+| W11 | بعض الشاشات تعرض بيانات ثابتة (hardcoded) وليست ديناميكية | وظيفي |
+
+---
+
+## 6. المخاطر الحرجة — يجب إصلاحها فوراً (Critical Risks)
+
+### 🔴 CR-1: كل المستخدمين يحصلون على صلاحيات كاملة
+**الملف:** [AuthProvider.tsx](file:///f:/mohamay_pro-saudi/src/components/AuthProvider.tsx#L22-L28)
+
+```typescript
+// المشكلة: كل من يسجل بـ Google يصبح "مدير مكتب" تلقائياً!
+useAuthStore.getState().setCurrentUser({
+  id: user.uid,
+  name: user.displayName || 'المستخدم',
+  email: user.email || '',
+  role: 'مدير مكتب',  // ← خطأ أمني حرج
+  avatar: user.photoURL || undefined
+});
+```
+
+**الخطورة:** أي شخص يسجل دخوله بحساب Google يحصل على صلاحيات كاملة لإدارة المكتب.
+
+---
+
+### 🔴 CR-2: عزل المستأجرين معطل فعلياً
+**الملف:** [tenant.ts](file:///f:/mohamay_pro-saudi/src/lib/tenant.ts)
+
+```typescript
+export function getCurrentTenantId() {
+  return auth.currentUser?.tenantId || DEMO_TENANT_ID; // ← دائماً "demo-tenant"
+}
+```
+
+**الخطورة:** Firebase Auth لا يُعيّن `tenantId` بشكل افتراضي. كل المستخدمين يتشاركون نفس `demo-tenant`.
+
+---
+
+### 🔴 CR-3: Firebase API Key مكشوف في الكود
+**الملف:** [firebase-applet-config.json](file:///f:/mohamay_pro-saudi/firebase-applet-config.json)
+
+```json
+{
+  "apiKey": "AIzaSyD-lxwIwoTARV7EavQWnaI0jFVYpTZgiR0",
+  ...
+}
+```
+
+**الخطورة:** Firebase client keys آمنة بطبيعتها إذا كانت Firestore Rules صارمة، لكن يجب حمايتها بـ HTTP Referrer restrictions في Google Cloud Console.
+
+---
+
+### 🔴 CR-4: حذف الفاتورة بدون تحقق من المستأجر
+**الملف:** [legalDataService.ts](file:///f:/mohamay_pro-saudi/src/services/legalDataService.ts#L93-L100)
+
+```typescript
+export async function deleteInvoice(invoiceId: string): Promise<void> {
+  // ← لا يتحقق من tenantId! أي مستخدم يمكنه حذف أي فاتورة
+  await deleteDoc(doc(db, INVOICES_COLLECTION, invoiceId));
+}
+```
+
+---
+
+## 7. القضايا متوسطة الأهمية (Medium Priority Issues)
+
+| # | المشكلة | الحل المقترح |
+|---|---------|-------------|
+| M1 | **نص عبري في Finance.tsx** سطر 47: `"הפאתורة"` | استبدال بـ `"الفاتورة"` |
+| M2 | **نص عبري في Finance.tsx** سطر 110: `"ਆلياً"` | استبدال بـ `"آلياً"` |
+| M3 | **CaseSchema يحتوي محاكم مختلفة عن KSACourtType** | توحيد القائمة في `schemas.ts` |
+| M4 | **عدم وجود Loading states** في بعض الشاشات | إضافة Skeleton loaders |
+| M5 | **WhatsApp link يستخدم رقم وهمي** `966500000000` | تحديثه للرقم الحقيقي |
+| M6 | **`window.innerWidth` في Sidebar** يُسبب مشاكل SSR | استخدام media query CSS |
+
+---
+
+## 8. تحسينات بسيطة (Minor Improvements)
+
+- إضافة `aria-label` لجميع الأزرار التفاعلية
+- تحسين دعم الشاشات الصغيرة (< 375px) في جداول Finance
+- إضافة `loading="lazy"` لصور الأفاتار الخارجية
+- استبدال `picsum.photos` بصور محلية ثابتة للعرض التجريبي
+- تحسين أداء البحث العربي بإضافة فهرس محلي
+
+---
+
+## 9. تقييم المخاطر الأمنية (Security Risk Assessment)
+
+### ✅ نقاط القوة الأمنية
+1. **Helmet.js** مُفعّل مع CSP, HSTS, X-Frame-Options
+2. **CORS** محدود بنطاقات معروفة
+3. **Rate Limiting** على AI endpoints (10 req/min)
+4. **Input Sanitization** لإزالة HTML/Script tags
+5. **Firestore Rules** تفرض `tenantId` للقراءة والكتابة
+6. **Storage Rules** تمنع رفع ملفات > 10MB وتحصر الأنواع
+7. **Logger** يُخفي البيانات الحساسة (هوية، ضريبي، هاتف)
+8. **File Upload** يتحقق من MIME type + Extension + Size
+
+### 🔴 نقاط الضعف الأمنية
+
+| # | الثغرة | المستوى | التوصية |
+|---|--------|---------|---------|
+| S1 | كل المستخدمين `مدير مكتب` | حرج | قراءة الدور من Firestore `users` collection |
+| S2 | `tenantId` ثابت على `demo-tenant` | حرج | ربطه بـ Custom Claims أو users collection |
+| S3 | حذف فواتير بدون تحقق tenant | عالي | إضافة `where('tenantId', '==', tenantId)` |
+| S4 | `audit_logs` تكتب `userId: 'system'` | متوسط | استخدام `auth.currentUser.uid` الفعلي |
+| S5 | لا يوجد CSRF protection | متوسط | إضافة CSRF token للنماذج |
+| S6 | `@ts-nocheck` في ErrorBoundary | منخفض | استبدال بـ `@ts-expect-error` محدد |
+
+---
+
+## 10. تقييم قابلية التوسع SaaS (SaaS Scalability Assessment)
+
+### الحالة الحالية: Logical Isolation (Single Database)
+```
+Firestore DB
+├── clients/{clientId}     → tenantId: "demo-tenant"
+├── cases/{caseId}         → tenantId: "demo-tenant"  
+├── invoices/{invoiceId}   → tenantId: "demo-tenant"
+└── audit_logs/{logId}     → tenantId: "demo-tenant"
+```
+
+### المطلوب للتوسع
+
+| المرحلة | الإجراء | التأثير |
+|---------|---------|---------|
+| قريب | تفعيل `tenantId` ديناميكي من `users` collection | عزل فعلي |
+| متوسط | إضافة Backend middleware (NestJS/Fast API) | أمان + تكاملات |
+| بعيد | Database-per-tenant للعملاء الكبار | عزل كامل |
+
+### تقدير الحمل المتوقع
+
+| المقياس | الحالي | مع 100 مكتب | مع 1000 مكتب |
+|---------|--------|-------------|-------------|
+| مستخدمون متزامنون | 1-5 | 200-500 | 2,000-5,000 |
+| حجم Firestore | ~1MB | ~500MB | ~10GB |
+| تكلفة Firebase/شهر | مجاني | ~$50 | ~$500 |
+| AI Requests/شهر | ~100 | ~10,000 | ~100,000 |
+
+---
+
+## 11. خطة إعادة الهيكلة (Refactoring Plan)
+
+### المرحلة 1: إصلاحات حرجة فورية (1-2 يوم)
+1. ✅ إصلاح `AuthProvider` لقراءة الدور من Firestore
+2. ✅ إضافة تسجيل دخول بالبريد/كلمة المرور
+3. ✅ إصلاح `tenantId` الثابت
+4. ✅ إصلاح حذف الفاتورة بتحقق tenant
+5. ✅ إصلاح النصوص العبرية في Finance.tsx
+
+### المرحلة 2: تحسينات وظيفية (3-5 أيام)
+1. بناء نظام بوابة الموكلين بتسجيل دخول مستقل
+2. إزالة استخدامات `useAppStore` المُتجاوزة
+3. إضافة Error Boundaries لكل شاشة
+4. إضافة Loading skeletons
+
+### المرحلة 3: تحسينات بنيوية (1-2 أسبوع)
+1. إضافة اختبارات وحدة (Unit Tests) للـ domain و lib
+2. إضافة اختبارات تكاملية (Integration Tests) لـ stores
+3. بناء CI/CD pipeline
+
+---
+
+## 12. تحليل الديون التقنية (Technical Debt Analysis)
+
+| الدين | المستوى | التكلفة المقدرة |
+|-------|---------|----------------|
+| `useAppStore` God Object | عالي | 4 ساعات |
+| غياب الاختبارات بالكامل | عالي | 2-3 أيام |
+| Invoice duplicate type | متوسط | 30 دقيقة |
+| CaseSchema vs KSACourtType mismatch | متوسط | 1 ساعة |
+| Hardcoded demo data in views | متوسط | 4 ساعات |
+| `@ts-nocheck` / `@ts-ignore` | منخفض | 1 ساعة |
+| `render.yaml` static vs server mismatch | متوسط | 1 ساعة |
+
+**إجمالي الدين التقني المقدر: ~5-7 أيام عمل**
+
+---
+
+## 13. تحسينات المعمارية طويلة المدى
+
+1. **إضافة Backend مستقل (NestJS)** — لحماية القواعد التجارية وإضافة:
+   - Webhook endpoints
+   - تكامل ناجز API
+   - بوابة دفع Moyasar
+   - نظام إشعارات (Email/SMS/Push)
+
+2. **ترحيل المالية لـ PostgreSQL** — Firestore غير مناسب للعمليات المحاسبية:
+   - دفتر الأستاذ العام (General Ledger)
+   - تقارير ZATCA المعقدة
+   - تسويات حسابات الأمانة
+
+3. **بناء RAG Engine** للتحليل القانوني:
+   - تقطيع المستندات العربية
+   - Vector Embeddings (Pinecone/pgvector)
+   - تحليل المذكرات واستخراج الدفوع
+
+---
+
+## 14. اقتراحات تحسين المنتج
+
+### ميزات مفقودة حرجة للسوق
+1. **تكامل ناجز** — السحب التلقائي لبيانات القضايا
+2. **فوترة إلكترونية متوافقة 100% مع ZATCA** — Phase 2
+3. **نظام إشعارات ذكي** — مواعيد الجلسات، انتهاء المهل
+4. **تطبيق جوال (PWA)** — للمحامين والموكلين
+5. **نظام توقيع إلكتروني** — للعقود والوكالات
+
+### استراتيجية التسعير المقترحة
+
+| الباقة | السعر/شهر | المميزات |
+|--------|-----------|----------|
+| أساسية | 499 ر.س | 2 مستخدمين، 50 قضية، بوابة موكلين |
+| احترافية | 1,499 ر.س | 10 مستخدمين، قضايا غير محدودة، AI |
+| مؤسسية | 4,999 ر.س | مستخدمون غير محدودين، API، تكامل ناجز |
+
+---
+
+## 15. خطة النشر لخادم العرض التجريبي
+
+### 🟢 الخيار المُوصى به: Render.com (Web Service)
+
+**المشكلة الحالية:** `render.yaml` يُنشر كـ `static` لكن المشروع يحتاج `server.js` لـ AI endpoints.
+
+**الحل:**
+
+```yaml
+services:
+  - type: web
+    name: mohamy-pro-saudi
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://mohamy-pro-saudi.onrender.com
+```
+
+### خطوات النشر خطوة بخطوة
+
+1. **تحديث `render.yaml`** كما أعلاه
+2. **إضافة Environment Variables** في Render Dashboard:
+   - `GEMINI_API_KEY` ← من Google AI Studio
+   - `NODE_ENV=production`
+3. **ربط GitHub Repository** → Auto Deploy
+4. **إضافة Domain** في Firebase Auth → Authorized Domains
+5. **اختبار Live Demo:**
+   - تسجيل دخول Google ✅
+   - لوحة القيادة ✅
+   - إنشاء فاتورة ✅
+   - صياغة ذكية (AI) ✅
+
+### بيانات العرض التجريبي (Demo Seed)
+
+يوجد بالفعل `scripts/demo-seed.ts` — يجب التأكد من أنه يعبئ:
+- ✅ 10 عملاء سعوديين
+- ✅ 5 قضايا في محاكم مختلفة
+- ✅ 3 فواتير (مدفوعة، غير مدفوعة، مسودة)
+- ✅ جلسات قادمة
+- ✅ مهام معلقة ومكتملة
+
+---
+
+## 16. خريطة إصلاح الأخطاء والاستقرار
+
+### 🔴 أخطاء حرجة (Critical Bugs)
+
+| # | الخطأ | الملف | خطوة إعادة الإنتاج | الإصلاح |
+|---|-------|-------|---------------------|---------|
+| B1 | نص عبري في رسالة نجاح الفاتورة: `"הפאתורة"` | Finance.tsx:47 | أنشئ فاتورة → لاحظ Toast | استبدال بـ `"الفاتورة"` |
+| B2 | نص غير عربي في زر حفظ الفاتورة: `"ਆلياً"` | Finance.tsx:110 | افتح نموذج إنشاء فاتورة | استبدال بـ `"آلياً"` |
+| B3 | كل مستخدم Google يحصل على `role: 'مدير مكتب'` | AuthProvider.tsx:26 | سجل بأي حساب Google | قراءة الدور من Firestore |
+| B4 | بوابة الموكلين تفتح بدون تسجيل دخول | ClientPortal.tsx | اذهب لـ `/client-portal` | إضافة نظام تسجيل دخول |
+| B5 | تعريف `Invoice` مكرر (سطر 100 و706) | types/index.ts | TypeScript compilation | حذف التعريف الأول |
+
+### 🟡 أخطاء عالية (High Bugs)
+
+| # | الخطأ | الملف | الإصلاح |
+|---|-------|-------|---------|
+| B6 | `PortalManagement` يعرض بيانات ثابتة (3 عملاء نفس الاسم) | PortalManagement.tsx:34 | ربطها بـ Clients store |
+| B7 | صفحة الإعدادات لا تحفظ التغييرات فعلياً | Settings.tsx | ربطها بـ Firestore |
+| B8 | `Sidebar` يستخدم `window.innerWidth` مباشرة (CSR-only) | Sidebar.tsx:66 | استخدام CSS media query |
+| B9 | زر "إضافة مهمة" في Dashboard لا يعمل | Dashboard.tsx:262 | ربطه بـ Dialog |
+
+### 🟢 أخطاء متوسطة ومنخفضة
+
+| # | الخطأ | الملف |
+|---|-------|-------|
+| B10 | زر "تصدير تقرير ZATCA" يعرض toast فقط | Finance.tsx:138 |
+| B11 | زر "تحميل PDF" يعرض toast فقط | Finance.tsx:251 |
+| B12 | WhatsApp link يحتوي رقم وهمي | Landing.tsx:312 |
+| B13 | بعض أزرار "التصدير" و"الطباعة" لا تعمل فعلياً | متعدد |
+
+---
+
+## 17. التوصيات الاستراتيجية والرؤية
+
+### 📌 استراتيجية العرض للمستثمر
+
+1. **نقطة البيع الرئيسية (USP):** "أول منصة SaaS قانونية سعودية 100% — مدعومة بالذكاء الاصطناعي ومتوافقة مع الأنظمة السعودية"
+
+2. **نقاط القوة للعرض:**
+   - واجهة فاخرة تنافس الحلول العالمية
+   - توافق ZATCA (ضريبة 15% + QR Code)
+   - مساعد ذكي مدرب على الأنظمة السعودية
+   - +38 وحدة وظيفية
+   - بوابة موكلين شفافة
+
+3. **أثناء العرض تجنب:**
+   - عرض صفحة بوابة الموكلين (بحاجة لإصلاح)
+   - عرض زر تصدير PDF (لا يعمل فعلياً)
+   - تسجيل دخول بحسابات متعددة (نفس الصلاحيات)
+
+### 📌 تقييم الجاهزية للسوق
+
+| المعيار | النتيجة |
+|---------|---------|
+| Product-Market Fit | ⭐⭐⭐⭐ — السوق السعودي بحاجة ماسة |
+| التميز التنافسي | ⭐⭐⭐⭐ — لا يوجد منافس محلي بنفس الجودة |
+| الجاهزية التقنية | ⭐⭐⭐ — MVP ممتاز، يحتاج Backend |
+| قابلية التوسع | ⭐⭐⭐ — البنية مرنة لكن تحتاج ترحيل |
+
+---
+
+---
+
+# 📋 الموجّهات الخبيرة (Super Prompts)
+
+## سوبر برومبت #1: إصلاح تسجيل الدخول بـ Google + إضافة Email/Password
+
+```
+أنت مهندس React Senior متخصص في Firebase Auth و Security.
+
+المطلوب: إصلاح وتطوير نظام تسجيل الدخول في ملف `src/views/Login.tsx` و `src/components/AuthProvider.tsx`.
+
+الوضع الحالي:
+- يدعم تسجيل دخول Google فقط
+- كل من يسجل يحصل على role: 'مدير مكتب' (خطأ أمني)
+- لا يوجد تسجيل بالبريد/كلمة المرور
+
+المطلوب بالتفصيل:
+1. في `Login.tsx`:
+   - أبقِ على تسجيل الدخول بـ Google كما هو
+   - أضف نموذج تسجيل دخول بـ Email + Password تحت زر Google
+   - أضف زر "إنشاء حساب جديد" يفتح Dialog لـ createUserWithEmailAndPassword
+   - استخدم Firebase `signInWithEmailAndPassword` و `createUserWithEmailAndPassword`
+   - أضف التحقق من صحة البريد وقوة كلمة المرور (8 أحرف على الأقل)
+   - أظهر رسائل خطأ عربية واضحة (بريد مستخدم سابقاً، كلمة مرور خاطئة، إلخ)
+   - استخدم shadcn/ui Input, Button, Label
+
+2. في `AuthProvider.tsx`:
+   - بدلاً من hardcoded role: 'مدير مكتب'
+   - اقرأ الدور من Firestore collection `users` بواسطة user.uid
+   - إذا لم يكن المستخدم موجوداً في `users`، أنشئ مستند جديد بـ role: 'محامي' (الافتراضي)
+   - أضف `tenantId` للمستخدم الجديد
+   - حافظ على التوافق مع demo mode
+
+3. لا تكسر أي شيء موجود (الوضع التجريبي، navigation, toast messages)
+
+الأنظمة المستخدمة: Firebase Auth v12, React 19, TypeScript, shadcn/ui, Zustand
+التنسيق: RTL عربي كامل
+```
+
+---
+
+## سوبر برومبت #2: إصلاح بوابة الموكلين بتسجيل دخول مستقل
+
+```
+أنت مهندس Full-Stack متخصص في SaaS و Multi-tenant architecture.
+
+المطلوب: إعادة بناء بوابة الموكلين (`src/views/ClientPortal.tsx`) بنظام تسجيل دخول مستقل.
+
+الفكرة التجارية:
+- المحامي صاحب المكتب يُنشئ حساب لكل موكل (عميل) من لوحة إدارة بوابة الموكلين
+- المحامي يحدد: اسم الموكل + البريد الإلكتروني + كلمة مرور مبدئية
+- الموكل يسجل الدخول بالبريد وكلمة المرور المعطاة له
+- الموكل يرى فقط: قضاياه الخاصة + مستنداته + جلساته + فواتيره
+- الموكل لا يرى أي بيانات لعملاء آخرين
+
+التنفيذ المطلوب:
+
+1. في `src/views/PortalManagement.tsx` (لوحة إدارة الموكلين — جانب المحامي):
+   - زر "إنشاء حساب موكل" يفتح Dialog يحتوي:
+     * اسم الموكل (يمكن اختياره من العملاء الموجودين)
+     * البريد الإلكتروني للموكل
+     * كلمة مرور مبدئية (يولّدها النظام أو يختارها المحامي)
+   - عند الحفظ:
+     * يُنشئ حساب Firebase Auth بـ `createUserWithEmailAndPassword` (من server-side أو Admin SDK)
+     * يُنشئ مستند في `users` collection بـ: { role: 'client', tenantId, linkedClientId }
+   - يعرض قائمة بالموكلين المسجلين مع: الاسم، البريد، آخر دخول، الحالة
+
+2. في `src/views/ClientPortal.tsx` (واجهة الموكل):
+   - إضافة شاشة تسجيل دخول خاصة (بريد + كلمة مرور فقط)
+   - بعد التسجيل:
+     * يقرأ `linkedClientId` من مستند المستخدم في Firestore
+     * يجلب قضايا هذا العميل فقط
+     * يعرض: القضايا، الجلسات القادمة، المستندات المشاركة، الفواتير
+   - لا يعرض أي بيانات عملاء آخرين أبداً (tenant + client isolation)
+
+3. في `src/App.tsx`:
+   - مسار `/client-portal` يبقى بدون Sidebar
+   - مسار `/client-portal/login` لشاشة تسجيل دخول الموكل
+   - إضافة `ClientProtectedRoute` خاص بالموكلين
+
+4. في `firestore.rules`:
+   - إضافة قاعدة تسمح للمستخدمين بـ role: 'client' بقراءة قضاياهم فقط
+   - مثال: allow read: if isClient() && resource.data.clientId == getUserLinkedClientId()
+
+القيود:
+- لا تكسر أي شيء في النظام الحالي
+- استخدم نفس Design System (shadcn/ui, Tailwind, motion)
+- RTL كامل + عربي
+- لا تنشئ API endpoints جديدة (استخدم Firebase مباشرة)
+```
+
+---
+
+## سوبر برومبت #3: اختبار كل وظيفة وزر في التطبيق (للديمو)
+
+```
+أنت مُختبر ضمان جودة (QA Engineer) محترف. مهمتك هي اختبار كل زر ووظيفة في تطبيق "محامي برو" بشكل منهجي قبل العرض على المستثمر.
+
+افتح التطبيق على http://localhost:3000 واتبع هذا السيناريو بالترتيب:
+
+═══ المرحلة 1: الصفحة الرئيسية (Landing) ═══
+□ تأكد من تحميل الصفحة بالكامل بدون أخطاء في الكونسول
+□ اضغط على كل رابط في Navigation bar (خدماتنا، من نحن، التقنية القانونية، تواصل معنا)
+□ تأكد من أن التمرير السلس (smooth scroll) يعمل
+□ اضغط على "طلب استشارة مجانية" — ماذا يحدث؟
+□ اضغط على "متابعة قضيتك" — يجب أن تنتقل لبوابة الموكلين
+□ اضغط على "بوابة الموكلين" في الـ navbar
+□ اضغط على "تسجيل الدخول" — يجب أن تنتقل لصفحة Login
+□ اضغط على زر WhatsApp الأخضر — هل يفتح واتساب؟
+□ تأكد من ظهور الأقسام: الخدمات (6 بطاقات)، الإحصائيات، الشهادات، CTA
+□ تأكد من أن الـ footer يحتوي معلومات تواصل صحيحة
+
+═══ المرحلة 2: تسجيل الدخول (Login) ═══
+□ افتح /login
+□ اضغط "تسجيل الدخول باستخدام Google"
+□ تأكد من فتح popup Google Auth
+□ بعد التسجيل، تأكد من الانتقال لـ /dashboard
+□ تأكد من ظهور toast "تم تسجيل الدخول بنجاح"
+□ جرب الوضع التجريبي (إذا كان غير production)
+□ تأكد من أن رسائل الخطأ العربية تظهر بشكل صحيح
+
+═══ المرحلة 3: لوحة القيادة (Dashboard) ═══
+□ تأكد من ظهور 4 بطاقات إحصائية (قضايا، عملاء، قيد الدراسة، منتهية)
+□ تأكد من ظهور مخطط الإيرادات (BarChart)
+□ تأكد من ظهور مخطط توزيع القضايا (PieChart)
+□ اضغط على checkbox لمهمة — تأكد من تحديدها
+□ اضغط "صياغة ذكية" — يجب أن يفتح Dialog
+□ في Dialog الصياغة: اختر نوع وثيقة، اكتب وقائع، اضغط "بدء الصياغة الآلية"
+□ تأكد من أن النتيجة تظهر (أو رسالة خطأ واضحة إذا لم يكن GEMINI_API_KEY مُعدّاً)
+
+═══ المرحلة 4: العملاء (Clients) ═══
+□ افتح /dashboard/clients
+□ تأكد من ظهور قائمة العملاء (10 عملاء)
+□ اضغط "إضافة عميل" — يجب فتح نموذج
+□ جرب إضافة عميل فرد: أدخل اسم + هوية وطنية + هاتف
+□ جرب إضافة عميل منشأة: أدخل اسم + سجل تجاري + رقم ضريبي
+□ تأكد من التحقق من صيغة الهاتف السعودي
+□ ابحث عن عميل بالاسم — هل البحث يعمل؟
+
+═══ المرحلة 5: القضايا (Cases) ═══
+□ افتح /dashboard/cases
+□ تأكد من ظهور 5 قضايا
+□ اضغط على قضية لتفاصيلها
+□ تأكد من ظهور: المحكمة، المدعي، المدعى عليه، رقم الوكالة
+□ اضغط "إضافة قضية" — جرب إنشاء قضية جديدة
+□ تأكد من أن قائمة المحاكم تحتوي 9 محاكم سعودية
+
+═══ المرحلة 6: المالية (Finance) ═══
+□ افتح /dashboard/finance
+□ تأكد من ظهور 4 بطاقات (إيرادات، ضريبة 15%، غير مدفوعة، صافي ربح)
+□ اضغط "إنشاء فاتورة ضريبية" — أدخل اسم عميل ومبلغ
+□ تأكد من حساب الضريبة 15% تلقائياً
+□ اضغط "استعراض" على فاتورة — تأكد من ظهور QR Code
+□ اضغط "تغيير الحالة" — تأكد من تغيير حالة الفاتورة
+□ اضغط "حذف" — تأكد من حذف الفاتورة
+□ اضغط "تصدير تقرير ZATCA" — ماذا يحدث؟
+□ اضغط "طباعة" / "تحميل PDF" — ماذا يحدث؟
+
+═══ المرحلة 7: باقي الأقسام (كل قسم اضغط عليه وتأكد) ═══
+□ تقويم الجلسات — هل يعرض جلسات قادمة؟
+□ المهام — هل يمكن إضافة/إكمال مهمة؟
+□ فريق العمل — هل يعرض أعضاء الفريق؟
+□ التحليلات — هل تعرض مخططات؟
+□ المصروفات — هل يمكن إضافة مصروف؟
+□ كل الأقسام في Sidebar — اضغط على كل واحد وتأكد من عدم وجود شاشة بيضاء
+
+═══ المرحلة 8: Sidebar والتنقل ═══
+□ تأكد من أن Sidebar يعرض كل الأقسام المناسبة
+□ تأكد من أن العنصر النشط مُميّز باللون الأخضر
+□ على شاشة صغيرة: تأكد من أن Sidebar يتحول لـ drawer
+□ تأكد من عمل زر الـ hamburger menu
+
+═══ التقرير ═══
+لكل اختبار، سجّل:
+- ✅ يعمل بنجاح
+- ⚠️ يعمل مع ملاحظة  
+- ❌ لا يعمل / خطأ
+- 📝 ملاحظة للموقف
+
+أرجع لي تقرير كامل بجميع النتائج.
+```
+
+---
+
+## سوبر برومبت #4: إصلاح الأخطاء الحرجة في الكود
+
+```
+أنت مهندس React/TypeScript Senior. المطلوب إصلاح الأخطاء التالية في مشروع "محامي برو" بشكل آمن بدون كسر أي وظيفة:
+
+═══ الإصلاح 1: النصوص العبرية في Finance.tsx ═══
+الملف: src/views/Finance.tsx
+السطر 47: استبدل "הפאתורة" بـ "الفاتورة"
+السطر 110: استبدل "ਆلياً" بـ "آلياً"
+
+═══ الإصلاح 2: تعريف Invoice المكرر ═══
+الملف: src/types/index.ts
+- يوجد تعريفان لـ Invoice (سطر ~100-110 وسطر ~706-717)
+- احذف التعريف الأول (سطر 100-110) واحتفظ بالثاني (الأحدث الذي يحتوي base, vat, total)
+- تأكد من أن كل الملفات التي تستخدم Invoice تعمل مع التعريف الجديد (base بدل amount)
+
+═══ الإصلاح 3: CaseSchema لا يتطابق مع KSACourtType ═══
+الملف: src/domain/schemas.ts
+في CaseSchema، المحاكم المذكورة تختلف عن KSACourtType:
+- 'محكمة التنفيذ' → غير موجود في KSACourtType
+- 'لجنة شبه قضائية' → المفروض 'لجان شبه قضائية'
+- ينقص: 'ديوان المظالم'
+وحّد القائمة لتتطابق تماماً مع KSACourtType في types/index.ts
+
+═══ الإصلاح 4: حذف الفاتورة بدون تحقق tenant ═══
+الملف: src/services/legalDataService.ts
+في دالة deleteInvoice: أضف التحقق من tenantId قبل الحذف
+
+═══ الإصلاح 5: Sidebar يستخدم window.innerWidth مباشرة ═══
+الملف: src/components/layout/Sidebar.tsx
+السطر 66: استبدل `style={{ transform: ... }}` بالاعتماد فقط على Tailwind classes
+
+═══ القيود ═══
+- لا تغيّر أي API أو structure
+- لا تضف مكتبات جديدة
+- تأكد من أن البناء (build) يمر بدون أخطاء بعد الإصلاحات
+- اختبر كل إصلاح يدوياً
+```
+
+---
+
+## سوبر برومبت #5: تحسين الأداء والـ Re-render
+
+```
+أنت خبير React Performance Senior. قم بتحليل وتحسين الأداء في مشروع "محامي برو".
+
+الهدف الأول: إزالة useAppStore التدريجي
+- الملف src/store/useAppStore.ts هو @deprecated ويُسبب re-render شامل
+- ابحث عن كل الملفات التي تستورد useAppStore
+- في كل ملف، استبدل useAppStore بالمخزن المتخصص المناسب:
+  * cases → useCasesStore
+  * clients → useClientsStore
+  * auth data → useAuthStore
+  * finance data → useFinanceStore
+  * teams → useTeamStore
+- تأكد من استخدام selectors محددة: useXStore(state => state.specificField)
+- لا تستبدل الملف حتى تتأكد أن الاستبدال لا يكسر شيئاً
+
+الهدف الثاني: مراجعة selectors في كل Store
+- تأكد من أن كل مكون يستخدم selector محدد وليس الـ store كامل
+- مثال سيء: const store = useCasesStore()
+- مثال جيد: const cases = useCasesStore(state => state.cases)
+
+الهدف الثالث: تحسين المكونات الثقيلة
+- في Dashboard.tsx: تأكد من أن MemoizedBarChart و MemoizedPieChart يعملان بكفاءة
+- في Finance.tsx: أضف React.memo للصفوف (TableRow) إذا كانت القائمة طويلة
+- في Clients.tsx: أضف virtualization إذا كان العدد > 100 عميل
+
+القيود: لا تضف مكتبات جديدة. لا تكسر أي وظيفة موجودة.
+```
+
+---
+
+## سوبر برومبت #6: تأمين قواعد البيانات والـ Multi-Tenancy
+
+```
+أنت مهندس أمن قواعد بيانات وحلول سحابية (Cloud Security Engineer).
+
+المطلوب: مراجعة وتحسين Firestore Security Rules وأمن البيانات.
+
+الملفات المعنية:
+- firestore.rules
+- storage.rules
+- src/lib/tenant.ts
+- src/services/legalDataService.ts
+- src/components/AuthProvider.tsx
+
+المشاكل الحالية:
+1. getCurrentTenantId() يُعيد دائماً 'demo-tenant'
+2. حذف الفاتورة لا يتحقق من tenantId
+3. كل المستخدمين الجدد يحصلون على role: 'مدير مكتب'
+4. Firestore Rules تعتمد على users collection لكن لا يتم إنشاء مستندات فيها
+
+الحل المطلوب:
+1. عدّل AuthProvider.tsx:
+   - عند الـ onAuthStateChanged، اقرأ مستند المستخدم من Firestore: users/{uid}
+   - إذا لم يكن موجوداً، أنشئه بـ: { role: 'محامي', tenantId: generateTenantId() }
+   - استخدم الدور من Firestore وليس hardcoded
+
+2. عدّل tenant.ts:
+   - اقرأ tenantId من مستند المستخدم في Firestore
+   - cache النتيجة في الذاكرة لمنع القراءة المتكررة
+
+3. عدّل legalDataService.ts:
+   - أضف tenantId verification لـ deleteInvoice
+   - أضف audit logging لكل عملية حذف
+
+4. تأكد من أن firestore.rules:
+   - تمنع قراءة أي مستند بـ tenantId مختلف عن المستخدم
+   - تتحقق من schema المستندات عند الكتابة
+   - تسمح لـ 'client' role بقراءة بياناته فقط
+
+القيود: لا تُغيّر بنية الـ collections. لا تكسر أي دالة. لا تحذف demo mode.
+```
+
+---
+
+## سوبر برومبت #7: إعداد النشر للمستثمر (Investor Demo Deployment)
+
+```
+أنت مهندس DevOps متخصص في نشر تطبيقات SaaS.
+
+المطلوب: إعداد المشروع للنشر على Render.com بحيث يعمل الـ Frontend + Backend (server.js) معاً.
+
+المشكلة الحالية:
+render.yaml يُنشر كـ "static" (ملفات HTML فقط) لكن المشروع يحتاج server.js لـ AI endpoints.
+
+الحل خطوة بخطوة:
+
+1. عدّل render.yaml:
+   - غيّر من type: static → type: web, runtime: node
+   - buildCommand: npm install && npm run build
+   - startCommand: node server.js
+   - أضف health check: /api/health
+   - أضف environment variables: GEMINI_API_KEY, NODE_ENV
+
+2. تأكد من أن server.js:
+   - يخدم dist/ بشكل صحيح
+   - يتعامل مع SPA routing (/* → index.html)
+   - يعمل على PORT من environment variable
+
+3. عدّل Dockerfile ليتوافق مع البنية الجديدة
+
+4. أضف في Firebase Console:
+   - Authorized domain لـ *.onrender.com
+   - Authorized domain لأي دومين مخصص
+
+5. اختبر:
+   - npm run build → node server.js → http://localhost:3000
+   - تسجيل الدخول يعمل
+   - AI endpoints تعمل
+   - SPA routing يعمل
+
+القيود: لا تغيّر الكود الأساسي. تأكد من أن dev mode لا يزال يعمل (npm run dev).
+```
+
+---
+
+## سوبر برومبت #8: إضافة اختبارات آلية
+
+```
+أنت مهندس ضمان جودة (QA Engineer) متخصص في Vitest + React Testing Library.
+
+المشروع يستخدم: vitest 4.1.3, @testing-library/react 16.3.2, jsdom 29.0.2
+
+المطلوب: كتابة اختبارات وحدة للملفات التالية (بالأولوية):
+
+1. src/lib/finance.ts — اختبر:
+   - calculateVAT(1000) === 150
+   - calculateVAT(0) === 0
+   - calculateVAT(-1) يرمي خطأ
+   - calculateTotalWithVAT(1000) === 1150
+
+2. src/lib/validation.ts — اختبر:
+   - formatSaudiPhone('0512345678') === '+966512345678'
+   - formatSaudiPhone('+966512345678') === '+966512345678'
+   - formatSaudiPhone('512345678') === '+966512345678'
+
+3. src/lib/zatca.ts — اختبر:
+   - generateZatcaTLV returns Base64 string
+   - Output contains all 5 TLV tags
+
+4. src/domain/legalWorkflow.ts — اختبر:
+   - canTransitionCaseStatus('تحت الدراسة', 'نشطة') === true
+   - canTransitionCaseStatus('مغلقة', 'نشطة') === false
+   - mapCaseStatusToStage('نشطة') === 'hearing'
+   - assertDeadlineDate (ماضي يرمي خطأ)
+
+5. src/domain/schemas.ts — اختبر:
+   - ClientSchema.safeParse مع بيانات صحيحة
+   - ClientSchema.safeParse مع هاتف غير سعودي
+   - CaseSchema.safeParse مع محكمة غير معترف بها
+
+ضع كل اختبار في مجلد __tests__ القريب من الملف المُختبر.
+شغّل: npm run test وتأكد من نجاح الكل.
+```
+
+---
+
+> [!IMPORTANT]
+> **أولويات الإصلاح قبل عرض المستثمر (بالترتيب):**
+> 1. 🔴 إصلاح النصوص العبرية (5 دقائق)
+> 2. 🔴 إضافة تسجيل دخول Email/Password (2-3 ساعات)
+> 3. 🔴 إصلاح صلاحيات المستخدمين (1-2 ساعة)
+> 4. 🟡 إصلاح بوابة الموكلين (4-6 ساعات)
+> 5. 🟡 تحديث render.yaml للنشر (1 ساعة)
+> 6. 🟢 اختبار كل الأزرار والوظائف (2-3 ساعات)

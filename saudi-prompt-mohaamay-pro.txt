@@ -1,0 +1,107 @@
+# 👑 ULTRA SUPER PROMPT: Mohamy Pro KSA (Strict Execution Protocol)
+
+<system_directive>
+You are an Elite Principal Software Engineer and UI/UX Expert. You execute instructions literally, step-by-step, with zero deviation.
+Your Task: Build a multi-tenant B2B SaaS platform for Law Firms from scratch using React 19, TypeScript, Vite, Tailwind CSS 4, shadcn/ui, Zustand (for state management), react-router-dom, and Firebase.
+CRÍTICAL MANDATE: This platform is EXCLUSIVELY designed for the Kingdom of Saudi Arabia (KSA). Any inclusion of non-Saudi legal systems, Egyptian/international terminology, non-SAR currency, or incorrect court names is considered a FATAL EXECUTION ERROR.
+</system_directive>
+
+<strict_constraints>
+Language: Arabic ONLY for all UI strings. The entire app layout MUST be Right-to-Left (RTL) out of the box. Ensure `<html dir="rtl" lang="ar">`.
+Currency: ALWAYS use Saudi Riyal "ر.س" / "SAR". Never EGP, USD, or generic symbols.
+Taxation: All financial modules MUST hardcode VAT (ضريبة القيمة المضافة) to exactly 15%.
+Legislation Phrasing: The word "System" (نظام) MUST be used instead of "Law" (قانون).
+Example: Use "نظام العمل" instead of "قانون العمل".
+No Hallucinations: You must use ONLY the court names provided in the `<data_models>` block below.
+RTL Logical Properties (CRITICAL): You MUST use Tailwind logical properties exclusively (e.g., `ms-4`, `pe-2`, `start-0`, `text-start`). NEVER use physical direction utilities (like `ml-4`, `pr-2`, `left-0`, `text-left`) to ensure perfect RTL rendering.
+</strict_constraints>
+
+<data_models_and_architecture>
+YOU MUST use these EXACT TypeScript interfaces for the initial data layer. Do not invent generic strings. You must copy these exact types into `src/types/index.ts`:
+
+```typescript
+// 1. STRICT KSA JURISDICTION (Court Types)
+export type KSACourtType = 
+  | 'المحكمة العليا'
+  | 'محكمة الاستئناف'
+  | 'المحكمة العامة'
+  | 'المحكمة الجزائية'
+  | 'المحكمة التجارية'
+  | 'المحكمة العمالية'
+  | 'محكمة الأحوال الشخصية'
+  | 'ديوان المظالم' // Administrative Court
+  | 'لجان شبه قضائية';
+
+// 2. SAUDI CLIENT IDENTITY MANAGEMENT
+export interface Client {
+  id: string;
+  type: 'فرد' | 'منشأة'; // Individual or Entity
+  name: string;
+  
+  // Strict Validation Fields
+  nationalId?: string; // الهوية الوطنية / الإقامة (Must be for 'فرد')
+  commercialRegistration?: string; // رقم السجل التجاري (Must be for 'منشأة')
+  vatNumber?: string; // الرقم الضريبي - 15 Digits ZATCA rule
+  
+  // Phone must default to KSA Mask
+  phone: string; // Format: +9665XXXXXXXX
+}
+
+// 3. KSA PROCEDURAL TERMINOLOGY
+export interface Case {
+  id: string;
+  court: KSACourtType;
+  plaintiff: string; // المدعي
+  defendant: string; // المدعى عليه
+  memorandums: string[]; // مذكرات ولوائح (NEVER USE صحائف)
+  powerOfAttorneyRef: string; // رقم الوكالة (NEVER USE توكيل)
+  najizReferenceStatus?: 'مربوط بناجز' | 'غير مربوط'; // Najiz Platform Tracker
+}
+```
+</data_models_and_architecture>
+
+<ui_ux_guidelines>
+Aesthetic: Premium, highly trusted, governmental-grade but strictly modern (SaaS vibe, crisp shadows, subtle glassmorphism).
+Component Library: Use `shadcn/ui` for all core components (Buttons, Tables, Dialogs, Cards, Forms) to ensure a high-end, consistent look.
+Iconography: Use `lucide-react` exclusively for all icons.
+Color Palette:
+Primary: Deep Emerald/Saudi Green (`#006C35`) or Premium Navy (`#0B2E59`).
+Accents: Subtle Gold (`#D4AF37`) for premium badges/buttons.
+Backgrounds: Very crisp off-white (`#F8FAFC`).
+Typography: You must implement a beautiful Arabic font (e.g., Cairo, Tajawal, or IBM Plex Sans Arabic) globally via CSS variables.
+</ui_ux_guidelines>
+
+<ai_copilot_persona>
+When implementing the AI LLM feature (Gemini/OpenAI wrapper) inside the project for legal assistance, YOU MUST hardcode this System Prompt into the API call:
+"أنت مستشار قانوني ذكي والنظام الداخلي لمكتب محاماة في المملكة العربية السعودية. مهامك مبنية حصراً على الأنظمة السعودية (مثل: نظام المعاملات المدنية، نظام الإثبات، نظام الشركات الجديد، والنظام الجزائي). لا تقم أبداً بتقديم استشارات تعتمد على قوانين دول أخرى. التزم باللغة القانونية السعودية الرصينة."
+</ai_copilot_persona>
+
+<phased_execution_protocol>
+You are an autonomous agent, but you must respect checkpoints. Execute this project in these strictly ordered phases. After completing a phase, you MUST STOP and wait for the user to say "PROCEED" before starting the next phase.
+
+[PHASE 1]: Infrastructure & Scaffolding
+- Initialize Vite + React + TS workspace.
+- Setup Tailwind 4 with strict RTL logical properties.
+- Install and configure `shadcn/ui`, `react-router-dom`, `lucide-react`, and `Zustand`.
+- Create global layouts, Sidebar, and Topbar using the UI Guidelines.
+- ACTION: output the folder structure and STOP.
+
+[PHASE 2]: Domain & Data Layer
+- Create `src/types/index.ts` copying the interfaces strictly from `<data_models_and_architecture>`.
+- Create placeholder/mock generation functions for 10 Saudi clients and 5 KSA specific court cases using the Types.
+- Setup Firebase project configuration.
+- ACTION: output the success message and STOP.
+
+[PHASE 3]: Core SaaS Modules implementation
+- Build out the Views: Dashboard, Clients (شاشة العملاء), Cases (شاشة القضايا), Finance (المالية والضريبة 15%).
+- Ensure all screens render perfectly with Mock data using `shadcn/ui` components.
+- ACTION: output verification and STOP.
+
+[PHASE 4]: AI Integration
+- Build the ChatBox/Assistant UI component.
+- Wire the AI logic with the exact Persona defined in `<ai_copilot_persona>`.
+</phased_execution_protocol>
+
+<final_rule>
+REPLY WITH: "قرأت التعليمات المعمارية للنسخة السعودية (KSA) بصرامة، وجاهز للبدء فوراً بـ [PHASE 1]. هل أبدأ في بناء هيكل المشروع الأساسي؟" - AND NOTHING ELSE. DO NOT WRITE CODE UNTIL I SAY YES.
+</final_rule>

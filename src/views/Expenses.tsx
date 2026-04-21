@@ -1,0 +1,197 @@
+import { motion } from "motion/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Receipt, Wallet, TrendingDown, History, Search, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useFinanceStore } from '@/store/useFinanceStore';
+
+export default function Expenses() {
+  const expenses = useFinanceStore((state) => state.expenses);
+  const addExpense = useFinanceStore((state) => state.addExpense);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredExpenses = expenses.filter(exp => 
+    exp.caseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    exp.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+  const pendingReimbursement = expenses
+    .filter(e => e.status === 'معلق')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const stats = [
+    { title: "إجمالي المصروفات", value: `${totalExpenses.toLocaleString()} ر.س`, icon: Wallet, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
+    { title: "بانتظار الاسترداد", value: `${pendingReimbursement.toLocaleString()} ر.س`, icon: TrendingDown, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20" },
+    { title: "عدد العمليات", value: expenses.length.toString(), icon: History, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+  ];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إدارة المصروفات</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">تتبع تكاليف القضايا، الرسوم القضائية، والمصروفات النثرية.</p>
+        </div>
+        <Dialog>
+          <DialogTrigger render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}>
+            <Plus size={18} />
+            تسجيل مصروف جديد
+          </DialogTrigger>
+          <DialogContent className="dark:bg-navy-900 dark:text-white">
+            <DialogHeader>
+              <DialogTitle>تسجيل مصروف جديد</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="case">القضية</Label>
+                <Select>
+                  <SelectTrigger className="dark:bg-navy-800">
+                    <SelectValue placeholder="اختر القضية" />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-navy-800">
+                    <SelectItem value="c1">شركة الراجحي ضد شركة النهضة</SelectItem>
+                    <SelectItem value="c2">الحق العام ضد خالد الشمري</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="category">التصنيف</Label>
+                <Select>
+                  <SelectTrigger className="dark:bg-navy-800">
+                    <SelectValue placeholder="اختر التصنيف" />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-navy-800">
+                    <SelectItem value="court">رسوم قضائية</SelectItem>
+                    <SelectItem value="expert">أتعاب خبراء</SelectItem>
+                    <SelectItem value="travel">تنقلات</SelectItem>
+                    <SelectItem value="other">أخرى</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="amount">المبلغ (ر.س)</Label>
+                <Input id="amount" type="number" className="dark:bg-navy-800" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="desc">الوصف</Label>
+                <Input id="desc" className="dark:bg-navy-800" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" className="dark:border-white/10" onClick={() => toast.info("تم الإلغاء")}>إلغاء</Button>
+              <Button className="bg-primary-500 text-white" onClick={() => {
+                addExpense({
+                  id: `EXP-${Date.now()}`,
+                  caseId: 'C-1001',
+                  caseName: 'شركة الراجحي ضد شركة النهضة',
+                  category: 'رسوم قضائية',
+                  amount: 0,
+                  date: new Date().toISOString().split('T')[0],
+                  status: 'معلق',
+                  description: '',
+                });
+                toast.success("تم حفظ المصروف بنجاح");
+              }}>حفظ المصروف</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map((stat) => (
+          <Card key={stat.title} className="border-none shadow-sm dark:bg-navy-800">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className={cn("p-3 rounded-xl", stat.bg)}>
+                  <stat.icon className={cn("w-6 h-6", stat.color)} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
+                  <p className="text-2xl font-bold text-navy-900 dark:text-white">{stat.value}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="border-none shadow-sm dark:bg-navy-800">
+        <CardHeader className="border-b border-slate-50 dark:border-white/5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle className="text-lg font-bold text-navy-900 dark:text-white">سجل المصروفات</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <Input 
+                  placeholder="بحث في المصروفات..." 
+                  className="pr-10 w-64 dark:bg-navy-900 dark:border-white/10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button variant="outline" size="icon" className="dark:border-white/10" onClick={() => toast.success("تم تفعيل التصفية")}>
+                <Filter size={16} />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-50/50 dark:bg-white/5">
+              <TableRow>
+                <TableHead className="text-start font-bold text-navy-900 dark:text-white">التاريخ</TableHead>
+                <TableHead className="text-start font-bold text-navy-900 dark:text-white">القضية</TableHead>
+                <TableHead className="text-start font-bold text-navy-900 dark:text-white">التصنيف</TableHead>
+                <TableHead className="text-start font-bold text-navy-900 dark:text-white">الوصف</TableHead>
+                <TableHead className="text-start font-bold text-navy-900 dark:text-white">المبلغ</TableHead>
+                <TableHead className="text-start font-bold text-navy-900 dark:text-white">الحالة</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredExpenses.map((exp) => (
+                <TableRow key={exp.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                  <TableCell className="text-sm dark:text-slate-300">{exp.date}</TableCell>
+                  <TableCell className="font-bold text-navy-900 dark:text-white">{exp.caseName}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="dark:border-white/10 dark:text-slate-300">
+                      {exp.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate">
+                    {exp.description}
+                  </TableCell>
+                  <TableCell className="font-bold text-navy-900 dark:text-white">
+                    {exp.amount.toLocaleString()} ر.س
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={cn(
+                      "font-bold",
+                      exp.status === 'تم السداد' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
+                      exp.status === 'معلق' ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" :
+                      "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400"
+                    )}>
+                      {exp.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}

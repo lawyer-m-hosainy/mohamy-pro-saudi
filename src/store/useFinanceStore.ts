@@ -1,0 +1,61 @@
+import { create } from 'zustand';
+import { Expense, TimeEntry, ReceivableAccount, TrustAccount, PricingModel } from '../types';
+
+
+interface FinanceState {
+  expenses: Expense[];
+  timeEntries: TimeEntry[];
+  receivables: ReceivableAccount[];
+  trustAccounts: TrustAccount[];
+  pricingModels: PricingModel[];
+  
+  setExpenses: (expenses: Expense[]) => void;
+  addExpense: (expense: Expense) => void;
+  setTimeEntries: (entries: TimeEntry[]) => void;
+  setReceivables: (receivables: ReceivableAccount[]) => void;
+  addCollectionAction: (receivableId: string, action: ReceivableAccount['actions'][number]) => void;
+  reconcileReceivable: (receivableId: string) => void;
+  closeReceivable: (receivableId: string) => void;
+  setTrustAccounts: (accounts: TrustAccount[]) => void;
+  addTrustAccount: (account: TrustAccount) => void;
+  addTimeEntry: (entry: TimeEntry) => void;
+  setPricingModels: (models: PricingModel[]) => void;
+}
+
+export const useFinanceStore = create<FinanceState>((set) => ({
+  expenses: [],
+  timeEntries: [],
+  receivables: [],
+  trustAccounts: [],
+  pricingModels: [],
+
+  setExpenses: (expenses) => set({ expenses }),
+  addExpense: (expense) => set((state) => ({ expenses: [expense, ...state.expenses] })),
+  setTimeEntries: (timeEntries) => set({ timeEntries }),
+  setReceivables: (receivables) => set({ receivables }),
+  
+  addCollectionAction: (receivableId, action) => set((state) => ({
+    receivables: state.receivables.map((r) =>
+      r.id === receivableId ? { ...r, actions: [...r.actions, action] } : r
+    ),
+  })),
+  reconcileReceivable: (receivableId) => set((state) => ({
+    receivables: state.receivables.map((r) =>
+      r.id === receivableId ? { ...r, isReconciled: true } : r
+    ),
+  })),
+  closeReceivable: (receivableId) => set((state) => ({
+    receivables: state.receivables.map((r) => {
+      if (r.id !== receivableId) return r;
+      if (!r.isReconciled) return r;
+      return { ...r, status: "مغلق" };
+    }),
+  })),
+  
+  setTrustAccounts: (trustAccounts) => set({ trustAccounts }),
+  addTrustAccount: (account) =>
+    set((state) => ({ trustAccounts: [account, ...state.trustAccounts] })),
+  addTimeEntry: (entry) =>
+    set((state) => ({ timeEntries: [entry, ...state.timeEntries] })),
+  setPricingModels: (pricingModels) => set({ pricingModels }),
+}));
