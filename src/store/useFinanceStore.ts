@@ -18,6 +18,7 @@ interface FinanceState {
   closeReceivable: (receivableId: string) => void;
   setTrustAccounts: (accounts: TrustAccount[]) => void;
   addTrustAccount: (account: TrustAccount) => void;
+  disburseTrustAccount: (accountId: string) => void;
   addTimeEntry: (entry: TimeEntry) => void;
   setPricingModels: (models: PricingModel[]) => void;
 }
@@ -55,6 +56,11 @@ export const useFinanceStore = create<FinanceState>((set) => ({
   setTrustAccounts: (trustAccounts) => set({ trustAccounts }),
   addTrustAccount: (account) =>
     set((state) => ({ trustAccounts: [account, ...state.trustAccounts] })),
+  disburseTrustAccount: (accountId) => set((state) => ({
+    trustAccounts: state.trustAccounts.map((a) =>
+      a.id === accountId ? { ...a, status: "مصروف" } : a
+    ),
+  })),
   addTimeEntry: (entry) =>
     set((state) => ({ timeEntries: [entry, ...state.timeEntries] })),
   setPricingModels: (pricingModels) => set({ pricingModels }),

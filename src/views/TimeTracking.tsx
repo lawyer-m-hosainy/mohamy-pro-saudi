@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Play, Pause, Plus, Calendar, User, Scale } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useCasesStore } from '@/store/useCasesStore';
 import { useTeamStore } from '@/store/useTeamStore';
@@ -27,6 +27,25 @@ export default function TimeTracking() {
   const [manualDate, setManualDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [manualHours, setManualHours] = useState("1");
   const [manualMinutes, setManualMinutes] = useState("0");
+  
+  const [timerSeconds, setTimerSeconds] = useState(0);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isTracking) {
+      interval = setInterval(() => {
+        setTimerSeconds(s => s + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTracking]);
+
+  const formatTime = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <motion.div 
@@ -42,11 +61,18 @@ export default function TimeTracking() {
         <div className="flex items-center gap-3">
           <Card className="border-none shadow-sm dark:bg-navy-800 px-4 py-2 flex items-center gap-4">
             <div className="text-right">
-              <p className="text-[10px] text-slate-500 uppercase font-bold">الوقت الحالي</p>
-              <p className="text-xl font-mono font-bold">00:45:12</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold">الوقت الفعلي</p>
+              <p className="text-xl font-mono font-bold">{formatTime(timerSeconds)}</p>
             </div>
             <Button 
-              onClick={() => setIsTracking(!isTracking)}
+              onClick={() => {
+                if (!isTracking) {
+                  toast.success("تم بدء المؤقت بنجاح");
+                } else {
+                  toast.info("تم إيقاف المؤقت مؤقتاً");
+                }
+                setIsTracking(!isTracking);
+              }}
               className={isTracking ? "bg-rose-500 hover:bg-rose-600 text-white" : "bg-emerald-500 hover:bg-emerald-600 text-white"}
               size="icon"
             >
