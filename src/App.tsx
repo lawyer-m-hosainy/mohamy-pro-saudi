@@ -5,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { fetchCases, fetchClients } from "@/services/legalDataService";
-import { useAppStore } from "@/store/useAppStore";
+// import { useAppStore } from "@/store/useAppStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useClientsStore } from "@/store/useClientsStore";
 import { useCasesStore } from "@/store/useCasesStore";
@@ -89,7 +89,7 @@ export default function App() {
           setClients(remoteClients);
         } else {
           setClients(
-            useAppStore
+            useClientsStore
               .getState()
               .clients.map((c) => ({ ...c, tenantId: c.tenantId || tenantId }))
           );
@@ -99,7 +99,7 @@ export default function App() {
         } else {
           // Keep demo behavior but ensure local data respects tenant-aware model.
           setCases(
-            useAppStore
+            useCasesStore
               .getState()
               .cases.map((c) => ({ ...c, tenantId: c.tenantId || tenantId }))
           );
@@ -117,6 +117,7 @@ export default function App() {
 
   useEffect(() => {
     const runHealthCheck = async () => {
+      if (import.meta.env.DEV) return;
       try {
         await checkAppHealth();
         logEvent("info", { event: "healthcheck_ok" });

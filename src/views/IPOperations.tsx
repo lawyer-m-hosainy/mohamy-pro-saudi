@@ -50,7 +50,7 @@ export default function IPOperations() {
         <Badge className="bg-primary-100 text-primary-700">IP Ops</Badge>
       </div>
 
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-sm dark:bg-navy-800">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2"><Bell size={16} /> تقويم مهل التجديد والاعتراض</CardTitle>
         </CardHeader>
@@ -68,7 +68,7 @@ export default function IPOperations() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileBadge2 size={16} /> سجلات التقديم</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {ipFilings.map((f) => (
@@ -83,7 +83,7 @@ export default function IPOperations() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><ShieldCheck size={16} /> التجديدات</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {ipRenewals.map((r) => (
@@ -104,7 +104,7 @@ export default function IPOperations() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><Gavel size={16} /> الاعتراضات</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {ipOppositions.map((o) => (
@@ -123,7 +123,7 @@ export default function IPOperations() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-base">إجراءات الإنفاذ</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {ipEnforcementActions.map((a) => (

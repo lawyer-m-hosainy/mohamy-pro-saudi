@@ -102,7 +102,7 @@ const MemoizedInvoiceRow = React.memo(({
             </Table>
 
             <div className="flex justify-between items-end pt-6">
-              <div className="p-2 border border-slate-100 dark:border-white/10 rounded-lg bg-white">
+              <div className="p-2 border border-slate-100 dark:border-white/10 rounded-lg bg-white dark:bg-navy-900">
                 <QRCodeSVG 
                   value={generateZatcaTLV(SELLER_NAME, VAT_NUMBER, inv.date, inv.total.toString(), inv.vat.toString())} 
                   size={100}

@@ -26,6 +26,8 @@ interface ComplianceState {
   setRegulatoryObligations: (obligations: RegulatoryObligation[]) => void;
   setCompliance: (compliance: ComplianceRecord[]) => void;
   addComplianceRecord: (record: ComplianceRecord) => void;
+  updateComplianceRecord: (id: string, updates: Partial<ComplianceRecord>) => void;
+  removeComplianceRecord: (id: string) => void;
   setPrecedents: (precedents: LegalPrecedent[]) => void;
   setQAReviews: (reviews: QAReview[]) => void;
   addQAReview: (review: QAReview) => void;
@@ -60,21 +62,25 @@ export const useComplianceStore = create<ComplianceState>((set) => ({
       id: "A-001",
       title: "دليل صياغة عقود التأسيس للشركات ذات المسؤولية المحدودة",
       category: "Procedure",
-      version: "1.2",
+      version: 2,
       isVerified: true,
       updatedAt: "2024-03-15",
+      createdAt: "2024-01-10",
+      authorId: "U-001",
+      contentUrl: "/docs/llc-guide.pdf",
       tags: ["شركات", "عقود", "نماذج"],
-      content: "هذا الدليل يوضح..."
     },
     {
       id: "A-002",
       title: "أحدث التعديلات على نظام الإفلاس السعودي 1445",
       category: "Research",
-      version: "1.0",
+      version: 1,
       isVerified: true,
       updatedAt: "2024-04-10",
+      createdAt: "2024-04-10",
+      authorId: "U-002",
+      contentUrl: "/docs/bankruptcy-amendments.pdf",
       tags: ["نظام الإفلاس", "أبحاث", "تحديثات"],
-      content: "بحث مفصل حول التعديلات..."
     }
   ],
   specializedTracks: [],
@@ -87,6 +93,12 @@ export const useComplianceStore = create<ComplianceState>((set) => ({
   setRegulatoryObligations: (regulatoryObligations) => set({ regulatoryObligations }),
   setCompliance: (compliance) => set({ compliance }),
   addComplianceRecord: (record) => set((state) => ({ compliance: [record, ...state.compliance] })),
+  updateComplianceRecord: (id, updates) => set((state) => ({
+    compliance: state.compliance.map(r => r.id === id ? { ...r, ...updates } : r)
+  })),
+  removeComplianceRecord: (id) => set((state) => ({
+    compliance: state.compliance.filter(r => r.id !== id)
+  })),
   setPrecedents: (precedents) => set({ precedents }),
   setQAReviews: (qaReviews) => set({ qaReviews }),
   addQAReview: (review) =>

@@ -168,7 +168,7 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <Button size="lg" className="bg-navy-900 hover:bg-navy-800 dark:bg-white dark:text-navy-900 dark:hover:bg-slate-100 rounded-full px-8" onClick={() => navigate('/client-portal')}>
+              <Button size="lg" className="bg-navy-900 hover:bg-navy-800 dark:bg-white dark:bg-navy-900 dark:text-navy-900 dark:hover:bg-slate-100 rounded-full px-8" onClick={() => navigate('/client-portal')}>
                 اكتشف بوابة الموكلين
               </Button>
             </div>
@@ -235,7 +235,7 @@ export default function Landing() {
           <p className="text-primary-100 text-lg mb-10 max-w-2xl mx-auto">
             تواصل معنا اليوم للحصول على استشارة قانونية مبدئية. فريقنا جاهز لدراسة قضيتك وتقديم أفضل الحلول القانونية.
           </p>
-          <Button size="lg" className="bg-white text-primary-600 hover:bg-slate-50 h-14 px-10 text-lg rounded-full shadow-xl" onClick={() => window.location.href='#contact'}>
+          <Button size="lg" className="bg-white dark:bg-navy-900 text-primary-600 hover:bg-slate-50 h-14 px-10 text-lg rounded-full shadow-xl" onClick={() => window.location.href='#contact'}>
             تواصل معنا الآن
           </Button>
         </div>

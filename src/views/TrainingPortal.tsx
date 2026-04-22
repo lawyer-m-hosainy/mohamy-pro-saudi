@@ -76,14 +76,14 @@ export default function TrainingPortal() {
               </div>
               <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
                 <div 
-                  className="bg-white h-full rounded-full transition-all duration-1000" 
+                  className="bg-white dark:bg-navy-900 h-full rounded-full transition-all duration-1000" 
                   ref={(el) => { if (el) el.style.width = `${trainingPathways[0]?.overallProgress}%`; }} 
                 />
               </div>
             </div>
 
             <div className="mt-8 flex items-center gap-4">
-              <Button className="bg-white text-primary-700 hover:bg-white/90 font-bold px-8">متابعة التعلم</Button>
+              <Button className="bg-white dark:bg-navy-900 text-primary-700 hover:bg-white/90 font-bold px-8">متابعة التعلم</Button>
               <div className="flex -space-x-2 rtl:space-x-reverse">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-primary-600 bg-slate-200 overflow-hidden">
@@ -201,7 +201,7 @@ export default function TrainingPortal() {
              <Card className="border-none shadow-sm dark:bg-navy-800 bg-emerald-50/50 dark:bg-emerald-900/5">
                <CardContent className="p-6">
                  <div className="flex items-start gap-4">
-                   <div className="p-3 bg-white dark:bg-white/10 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-800">
+                   <div className="p-3 bg-white dark:bg-white/10 rounded-xl shadow-sm dark:bg-navy-800 border border-emerald-100 dark:border-emerald-800">
                      <Target className="w-5 h-5 text-emerald-600" />
                    </div>
                    <div>
@@ -214,7 +214,7 @@ export default function TrainingPortal() {
              <Card className="border-none shadow-sm dark:bg-navy-800 bg-amber-50/50 dark:bg-amber-900/5">
                <CardContent className="p-6">
                  <div className="flex items-start gap-4">
-                   <div className="p-3 bg-white dark:bg-white/10 rounded-xl shadow-sm border border-amber-100 dark:border-amber-800">
+                   <div className="p-3 bg-white dark:bg-white/10 rounded-xl shadow-sm dark:bg-navy-800 border border-amber-100 dark:border-amber-800">
                      <Star className="w-5 h-5 text-amber-600" />
                    </div>
                    <div>

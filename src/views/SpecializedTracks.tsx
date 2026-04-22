@@ -56,14 +56,14 @@ export default function SpecializedTracks() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm flex items-center gap-2"><BriefcaseBusiness size={16} /> KPI عمالي</CardTitle></CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{kpi.laborTotal ? Math.round((kpi.laborOnTime / kpi.laborTotal) * 100) : 0}%</p>
             <p className="text-xs text-slate-500">نسبة الالتزام بالمواعيد</p>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Scale size={16} /> KPI جزائي</CardTitle></CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{kpi.criminalTotal ? Math.round((kpi.criminalOnTime / kpi.criminalTotal) * 100) : 0}%</p>
@@ -74,7 +74,7 @@ export default function SpecializedTracks() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {specializedTracks.map((t) => (
-          <Card key={t.id} className="border-none shadow-sm">
+          <Card key={t.id} className="border-none shadow-sm dark:bg-navy-800">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">{t.id} • {t.caseType}</CardTitle>
               <Badge className={t.status === "متأخر" ? "bg-destructive/10 text-destructive" : t.status === "مغلق" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}>

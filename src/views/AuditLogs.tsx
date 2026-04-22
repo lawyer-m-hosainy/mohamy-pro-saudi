@@ -45,7 +45,7 @@ export default function AuditLogs() {
           <input 
             type="text" 
             placeholder="البحث في العمليات، الموظفين، أو الوحدات..." 
-            className="w-full ps-10 h-10 rounded-md border-none bg-white dark:bg-navy-800 shadow-sm focus:ring-2 focus:ring-primary-500"
+            className="w-full ps-10 h-10 rounded-md border-none bg-white dark:bg-navy-800 shadow-sm dark:bg-navy-800 focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <Button variant="outline" className="gap-2">

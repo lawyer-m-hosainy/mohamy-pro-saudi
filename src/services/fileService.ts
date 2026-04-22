@@ -35,7 +35,7 @@ function validateUpload(file: File) {
 
 async function writeUploadAudit(caseId: string, path: string, file: File) {
   try {
-    await addDoc(collection(db, "auditLogs"), {
+    await addDoc(collection(db, "audit_logs"), {
       tenantId: getCurrentTenantId(),
       userId: auth.currentUser?.uid || "unknown",
       action: "document_upload",

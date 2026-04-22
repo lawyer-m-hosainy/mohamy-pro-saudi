@@ -91,7 +91,7 @@ export default function CLM() {
         <Badge className="bg-primary-100 text-primary-700">CLM</Badge>
       </div>
 
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-sm dark:bg-navy-800">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2"><BellRing size={16} /> تنبيهات التجديد والالتزامات</CardTitle>
         </CardHeader>
@@ -111,7 +111,7 @@ export default function CLM() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 border-none shadow-sm">
+        <Card className="lg:col-span-1 border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-base">طلبات العقود</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {contractRequests.map((c) => (
@@ -127,7 +127,7 @@ export default function CLM() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-none shadow-sm">
+        <Card className="lg:col-span-2 border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">إدارة النسخ والاعتماد</CardTitle>
             {selected && <Badge className={stageColor(selected.stage)}>{selected.stage}</Badge>}

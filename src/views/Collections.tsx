@@ -97,21 +97,21 @@ export default function Collections() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm flex items-center gap-2"><HandCoins size={16} /> إجمالي المتأخرات</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{totalOutstanding.toLocaleString()} ر.س</p></CardContent>
         </Card>
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm flex items-center gap-2"><BarChart3 size={16} /> معدل التسوية</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{receivables.length ? Math.round((settledCount / receivables.length) * 100) : 0}%</p></CardContent>
         </Card>
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle size={16} /> ملفات غير مسواة</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{receivables.filter((r) => !r.isReconciled).length}</p></CardContent>
         </Card>
       </div>
 
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-sm dark:bg-navy-800">
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileWarning size={16} /> Aging Report</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {Object.entries(aging).map(([bucket, amount]) => (
@@ -123,7 +123,7 @@ export default function Collections() {
         </CardContent>
       </Card>
 
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-sm dark:bg-navy-800">
         <CardHeader><CardTitle className="text-base">Collection Performance</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {receivables.map((r) => (

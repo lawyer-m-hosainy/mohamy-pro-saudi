@@ -99,7 +99,7 @@ export default function AdvisoryDesk() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 border-none shadow-sm">
+        <Card className="lg:col-span-1 border-none shadow-sm dark:bg-navy-800">
           <CardHeader>
             <CardTitle className="text-base">Inbox الاستشارات</CardTitle>
           </CardHeader>
@@ -132,7 +132,7 @@ export default function AdvisoryDesk() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-none shadow-sm">
+        <Card className="lg:col-span-2 border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">مراجعة وكتابة الرأي</CardTitle>
             {selected && <Badge className={statusColor(selected.status)}>{selected.status}</Badge>}

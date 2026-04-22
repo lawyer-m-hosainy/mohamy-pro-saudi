@@ -21,8 +21,8 @@ export function ProtectedRoute({
   }
 
   if (!user && isDemoMode) {
-    if ((import.meta as any).env?.MODE === "production") {
-      // Demo mode is not allowed in production
+    if ((import.meta as any).env?.VITE_ENABLE_DEMO !== "true") {
+      // Demo mode is disabled unless explicitly enabled via environment variable
       return <Navigate to="/login" state={{ from: location }} replace />;
     }
 

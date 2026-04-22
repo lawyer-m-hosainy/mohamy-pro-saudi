@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Upload, Search, Download, Trash2, Folder, File, Filter } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCasesStore } from "@/store/useCasesStore";
+import React from "react";
 
 type DocRow = {
   id: string;
@@ -28,6 +30,39 @@ function formatBytes(n: number) {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const DocumentRow = memo(({ doc, onDownload, onDelete }: { doc: DocRow, onDownload: (doc: DocRow) => void, onDelete: (id: string) => void }) => {
+  return (
+    <TableRow className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+            <File size={16} />
+          </div>
+          <span className="font-bold text-navy-900 dark:text-white">{doc.name}</span>
+        </div>
+      </TableCell>
+      <TableCell className="font-mono text-sm text-slate-500">{doc.case}</TableCell>
+      <TableCell>
+        <Badge variant="outline" className="text-slate-600 dark:text-slate-400">
+          {doc.type}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-sm text-slate-500">{doc.size}</TableCell>
+      <TableCell className="text-sm text-slate-500">{doc.date}</TableCell>
+      <TableCell className="text-end">
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary-600" onClick={() => onDownload(doc)}>
+            <Download size={16} />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-destructive" onClick={() => onDelete(doc.id)}>
+            <Trash2 size={16} />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+});
+
 export default function Documents() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const cases = useCasesStore((s) => s.cases) || [];
@@ -40,12 +75,39 @@ export default function Documents() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "name">("date_desc");
+
+  const handleDownload = useCallback((doc: DocRow) => {
+    const blob = new Blob(["محتوى المستند التجريبي"], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = doc.name;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`تم تحميل المستند: ${doc.name}`);
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    toast.success(`تم حذف المستند من السجل`);
+  }, []);
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.name.includes(searchTerm) || doc.case.includes(searchTerm);
     const matchesFolder = activeFolder ? doc.type === activeFolder : true;
     return matchesSearch && matchesFolder;
+  }).sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name);
+    if (sortBy === "date_asc") return new Date(a.date).getTime() - new Date(b.date).getTime();
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / itemsPerPage));
+  const currentDocuments = filteredDocuments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <motion.div 
@@ -164,13 +226,22 @@ export default function Documents() {
                   placeholder="ابحث عن مستند..." 
                   className="pr-10 bg-slate-50 dark:bg-white/5 border-none"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 />
               </div>
-              <Button variant="outline" className="gap-2" onClick={() => toast.info("قريباً: التصفية المتقدمة حسب تاريخ الرفع والباحث")}>
-                <Filter size={16} />
-                تصفية
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 dark:border-white/10">
+                    <Filter size={16} />
+                    تصفية وترتيب
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10">
+                  <DropdownMenuItem onClick={() => setSortBy("date_desc")} className="cursor-pointer dark:focus:bg-white/5">الأحدث أولاً</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("date_asc")} className="cursor-pointer dark:focus:bg-white/5">الأقدم أولاً</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("name")} className="cursor-pointer dark:focus:bg-white/5">حسب الاسم (أ-ي)</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -186,50 +257,45 @@ export default function Documents() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDocuments.length === 0 ? (
+                {currentDocuments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-12 text-slate-500">
                       لا توجد مستندات مطابقة للبحث
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredDocuments.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
-                            <File size={16} />
-                          </div>
-                          <span className="font-bold text-navy-900 dark:text-white">{doc.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm text-slate-500">{doc.case}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-slate-600 dark:text-slate-400">
-                          {doc.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-500">{doc.size}</TableCell>
-                      <TableCell className="text-sm text-slate-500">{doc.date}</TableCell>
-                      <TableCell className="text-end">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary-600" onClick={() => toast.success(`تم تحميل المستند: ${doc.name}`)}>
-                            <Download size={16} />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-destructive" onClick={() => {
-                            setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-                            toast.success(`تم حذف ${doc.name} من السجل`);
-                          }}>
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  currentDocuments.map((doc) => (
+                    <DocumentRow key={doc.id} doc={doc} onDownload={handleDownload} onDelete={handleDelete} />
                   ))
                 )}
               </TableBody>
             </Table>
           </CardContent>
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-slate-50 dark:border-white/5 bg-white dark:bg-navy-800 flex items-center justify-between">
+              <span className="text-sm text-slate-500">
+                صفحة {currentPage} من {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  السابق
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  التالي
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </motion.div>

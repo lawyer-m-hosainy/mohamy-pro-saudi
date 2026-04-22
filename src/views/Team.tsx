@@ -13,14 +13,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Edit, Trash2 } from "lucide-react";
 
 export default function Team() {
   const teamMembers = useTeamStore((state) => state.teamMembers);
   const addTeamMember = useTeamStore((state) => state.addTeamMember);
+  const updateTeamMember = useTeamStore((state) => state.updateTeamMember);
+  const removeTeamMember = useTeamStore((state) => state.removeTeamMember);
   const [addOpen, setAddOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [newMember, setNewMember] = useState({ name: "", email: "", role: "محامي متدرب" as any });
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<any>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<any>(null);
+
+  const handleEditSave = () => {
+    if (!memberToEdit?.name.trim() || !memberToEdit?.email.trim()) {
+      toast.error("يرجى ملء جميع الحقول");
+      return;
+    }
+    updateTeamMember(memberToEdit.id, memberToEdit);
+    setEditOpen(false);
+    toast.success("تم تحديث بيانات العضو بنجاح");
+  };
+
+  const handleDeleteConfirm = () => {
+    if (memberToDelete) {
+      removeTeamMember(memberToDelete.id);
+      setDeleteOpen(false);
+      toast.success("تم حذف العضو بنجاح");
+    }
+  };
 
   const totalCases = teamMembers.reduce((acc, curr) => acc + curr.activeCases, 0);
   const totalPendingTasks = teamMembers.reduce((acc, curr) => acc + curr.pendingTasks, 0);
@@ -137,12 +165,31 @@ export default function Team() {
                     <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{member.role}</p>
                   </div>
                 </div>
-                <Badge className={cn(
-                  "font-bold",
-                  member.status === 'نشط' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400"
-                )}>
-                  {member.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className={cn(
+                    "font-bold",
+                    member.status === 'نشط' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400"
+                  )}>
+                    {member.status}
+                  </Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white">
+                        <MoreVertical size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
+                      <DropdownMenuItem onClick={() => { setMemberToEdit(member); setEditOpen(true); }} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
+                        <Edit size={16} className="text-slate-500" />
+                        <span>تعديل</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setMemberToDelete(member); setDeleteOpen(true); }} className="cursor-pointer text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 gap-2 flex items-center">
+                        <Trash2 size={16} />
+                        <span>حذف</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
@@ -223,6 +270,71 @@ export default function Team() {
           )}
         </DialogContent>
       </Dialog>
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="dark:bg-navy-900 dark:text-white">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات العضو</DialogTitle>
+          </DialogHeader>
+          {memberToEdit && (
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>الاسم</Label>
+                <Input value={memberToEdit.name} onChange={(e) => setMemberToEdit({...memberToEdit, name: e.target.value})} className="dark:bg-navy-800" />
+              </div>
+              <div className="space-y-2">
+                <Label>البريد الإلكتروني</Label>
+                <Input type="email" value={memberToEdit.email} onChange={(e) => setMemberToEdit({...memberToEdit, email: e.target.value})} className="dark:bg-navy-800" />
+              </div>
+              <div className="space-y-2">
+                <Label>الدور</Label>
+                <Select value={memberToEdit.role} onValueChange={(v) => setMemberToEdit({...memberToEdit, role: v})}>
+                  <SelectTrigger className="dark:bg-navy-800">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-navy-800">
+                    <SelectItem value="محامي شريك">محامي شريك</SelectItem>
+                    <SelectItem value="محامي مستشار">محامي مستشار</SelectItem>
+                    <SelectItem value="محامي">محامي</SelectItem>
+                    <SelectItem value="محامي متدرب">محامي متدرب</SelectItem>
+                    <SelectItem value="سكرتير">سكرتير</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>الحالة</Label>
+                <Select value={memberToEdit.status} onValueChange={(v) => setMemberToEdit({...memberToEdit, status: v})}>
+                  <SelectTrigger className="dark:bg-navy-800">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-navy-800">
+                    <SelectItem value="نشط">نشط</SelectItem>
+                    <SelectItem value="غير نشط">غير نشط</SelectItem>
+                    <SelectItem value="في إجازة">في إجازة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleEditSave} className="w-full bg-primary-500 text-white hover:bg-primary-600">حفظ التعديلات</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete AlertDialog */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="dark:bg-navy-900 dark:text-white dark:border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف العضو '{memberToDelete?.name}' بشكل نهائي من النظام.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="dark:bg-navy-800 dark:hover:bg-white/5 mt-0">إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700 text-white">تأكيد الحذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

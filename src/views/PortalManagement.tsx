@@ -352,7 +352,7 @@ export default function PortalManagement() {
 
         <div className="space-y-6">
           {/* Portal Link Card */}
-          <Card className="border-none shadow-sm bg-primary-600 text-white">
+          <Card className="border-none shadow-sm dark:bg-navy-800 bg-primary-600 text-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center gap-2">
                 <LogIn size={20} />

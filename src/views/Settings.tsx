@@ -156,21 +156,21 @@ export default function Settings() {
               <div className="grid grid-cols-3 gap-4">
                 <button 
                   onClick={() => setTheme("light")}
-                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${theme === 'light' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-white/5 hover:border-slate-200'}`}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${theme === 'light' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:border-white/10'}`}
                 >
                   <Sun className={theme === 'light' ? 'text-primary-600' : 'text-slate-400'} />
                   <span className="text-sm font-bold">فاتح</span>
                 </button>
                 <button 
                   onClick={() => setTheme("dark")}
-                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${theme === 'dark' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-white/5 hover:border-slate-200'}`}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${theme === 'dark' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:border-white/10'}`}
                 >
                   <Moon className={theme === 'dark' ? 'text-primary-600' : 'text-slate-400'} />
                   <span className="text-sm font-bold">داكن</span>
                 </button>
                 <button 
                   onClick={() => setTheme("system")}
-                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${theme === 'system' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-white/5 hover:border-slate-200'}`}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${theme === 'system' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:border-white/10'}`}
                 >
                   <Monitor className={theme === 'system' ? 'text-primary-600' : 'text-slate-400'} />
                   <span className="text-sm font-bold">تلقائي</span>

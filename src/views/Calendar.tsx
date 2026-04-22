@@ -151,8 +151,8 @@ export default function SessionsCalendar() {
                       className={cn(
                         "w-full text-start p-3 rounded-lg border transition-all duration-200",
                         isSelected
-                          ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm"
-                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 hover:shadow-sm"
+                          ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm dark:bg-navy-800"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 hover:shadow-sm dark:bg-navy-800"
                       )}
                     >
                       <div className="flex items-center justify-between mb-1">

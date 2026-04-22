@@ -72,7 +72,7 @@ export default function Enforcement() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 border-none shadow-sm">
+        <Card className="lg:col-span-1 border-none shadow-sm dark:bg-navy-800">
           <CardHeader>
             <CardTitle className="text-base">قائمة ملفات التنفيذ</CardTitle>
           </CardHeader>
@@ -98,7 +98,7 @@ export default function Enforcement() {
                   className={`w-full text-start p-3.5 rounded-lg border-2 transition-all duration-200 ${
                     selected?.id === item.id
                       ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-md shadow-primary-500/10"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 hover:shadow-sm"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 hover:shadow-sm dark:bg-navy-800"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
@@ -124,7 +124,7 @@ export default function Enforcement() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-none shadow-sm">
+        <Card className="lg:col-span-2 border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">تفاصيل ملف التنفيذ</CardTitle>
             <Button size="sm" variant="outline" onClick={logSensitiveAction} disabled={!selected}>تسجيل تدقيق العرض</Button>

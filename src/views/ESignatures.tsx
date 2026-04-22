@@ -7,9 +7,16 @@ import { PenTool, Send, CheckCircle2, Clock, AlertCircle, FileText, Download } f
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUIStore } from '@/store/useUIStore';
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function ESignatures() {
   const eSignatures = useUIStore((state) => state.eSignatures);
+  const addESignature = useUIStore((state) => state.addESignature);
+  const [newRequestOpen, setNewRequestOpen] = useState(false);
+  const [requestData, setRequestData] = useState({ documentName: "", recipientName: "", recipientEmail: "" });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -35,11 +42,52 @@ export default function ESignatures() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">مركز التوقيع الإلكتروني</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">إرسال المستندات والعقود للتوقيع الرقمي الآمن وتتبع حالتها.</p>
         </div>
-        <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => toast.success("تم تنفيذ العملية")}>
+        <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => setNewRequestOpen(true)}>
           <Send size={18} />
           طلب توقيع جديد
         </Button>
       </div>
+
+      <Dialog open={newRequestOpen} onOpenChange={setNewRequestOpen}>
+        <DialogContent className="dark:bg-navy-900 dark:text-white border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle>إرسال طلب توقيع جديد</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>اسم المستند</Label>
+              <Input value={requestData.documentName} onChange={e => setRequestData({...requestData, documentName: e.target.value})} className="dark:bg-white/5" placeholder="عقد شراكة..." />
+            </div>
+            <div className="space-y-2">
+              <Label>اسم المستلم</Label>
+              <Input value={requestData.recipientName} onChange={e => setRequestData({...requestData, recipientName: e.target.value})} className="dark:bg-white/5" placeholder="اسم الطرف الثاني" />
+            </div>
+            <div className="space-y-2">
+              <Label>البريد الإلكتروني للمستلم</Label>
+              <Input type="email" value={requestData.recipientEmail} onChange={e => setRequestData({...requestData, recipientEmail: e.target.value})} className="dark:bg-white/5" placeholder="email@example.com" />
+            </div>
+            <Button className="w-full bg-primary-600 hover:bg-primary-700 text-white mt-4" onClick={() => {
+              if (!requestData.documentName || !requestData.recipientName || !requestData.recipientEmail) {
+                toast.error("يرجى ملء جميع الحقول");
+                return;
+              }
+              if (addESignature) {
+                addESignature({
+                  id: `ESIG-${Date.now()}`,
+                  documentName: requestData.documentName,
+                  recipientName: requestData.recipientName,
+                  recipientEmail: requestData.recipientEmail,
+                  status: 'بانتظار التوقيع',
+                  sentDate: new Date().toISOString().split('T')[0],
+                });
+              }
+              setNewRequestOpen(false);
+              setRequestData({ documentName: "", recipientName: "", recipientEmail: "" });
+              toast.success("تم إرسال طلب التوقيع بنجاح عبر البريد الإلكتروني");
+            }}>إرسال الطلب</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-none shadow-sm dark:bg-navy-800">
@@ -121,10 +169,21 @@ export default function ESignatures() {
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
                     <TableCell className="text-end">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => toast.success("تم تنفيذ العملية")}>
+                        <Button variant="ghost" size="sm" className="gap-1 text-slate-400 hover:text-primary-600" onClick={() => {
+                          const blob = new Blob(["محتوى العقد الموقع"], { type: "text/plain;charset=utf-8" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = request.documentName + ".txt";
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast.success(`تم تحميل المستند: ${request.documentName}`);
+                        }}>
                           <Download size={14} /> تحميل
                         </Button>
-                        <Button variant="ghost" size="sm">تذكير</Button>
+                        {request.status === 'بانتظار التوقيع' && (
+                          <Button variant="ghost" size="sm" onClick={() => toast.success(`تم إرسال تذكير إلى ${request.recipientEmail}`)}>تذكير</Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

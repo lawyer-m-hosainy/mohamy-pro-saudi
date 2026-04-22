@@ -24,6 +24,55 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 
+const ClientRow = React.memo(({ client, onEdit, onDelete }: { client: any, onEdit: (c: any) => void, onDelete: (id: string) => void }) => {
+  return (
+    <TableRow className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            {client.type === 'منشأة' ? <Building2 size={16} /> : <User size={16} />}
+          </div>
+          <span className="font-bold text-navy-900 dark:text-white">{client.name}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant="secondary" className={client.type === 'منشأة' ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400" : "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"}>
+          {client.type}
+        </Badge>
+      </TableCell>
+      <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
+        {client.nationalId || client.commercialRegistration}
+      </TableCell>
+      <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
+        {client.vatNumber || '-'}
+      </TableCell>
+      <TableCell className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
+        <Phone size={14} className="text-slate-400" />
+        <span dir="ltr">{client.phone}</span>
+      </TableCell>
+      <TableCell className="text-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-navy-900 dark:hover:text-white">
+              <MoreHorizontal size={18} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
+            <DropdownMenuItem onClick={() => onEdit(client)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
+              <Edit size={16} className="text-slate-500" />
+              <span>تعديل</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDelete(client.id)} className="cursor-pointer text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 gap-2 flex items-center">
+              <Trash2 size={16} />
+              <span>حذف</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+});
+
 export default function Clients() {
   const clients = useClientsStore(state => state.clients);
   const addClient = useClientsStore(state => state.addClient);
@@ -34,6 +83,26 @@ export default function Clients() {
   const [filterType, setFilterType] = useState<"الكل" | "فرد" | "منشأة">("الكل");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  const handleEditClick = React.useCallback((client: any) => {
+    setEditingClientId(client.id);
+    setFormData({
+      name: client.name || "",
+      type: (client.type as "فرد" | "منشأة") || "فرد",
+      nationalId: client.nationalId || "",
+      commercialRegistration: client.commercialRegistration || "",
+      vatNumber: client.vatNumber || "",
+      phone: client.phone || "",
+    });
+    setIsOpen(true);
+  }, []);
+
+  const handleDeleteClick = React.useCallback((id: string) => {
+    if (confirm("هل أنت متأكد من حذف هذا العميل؟")) {
+      deleteClient(id);
+      toast.success("تم حذف العميل بنجاح");
+    }
+  }, [deleteClient]);
 
   const filteredClients = useMemo(() => {
     return (clients || []).filter(c => {
@@ -264,66 +333,7 @@ export default function Clients() {
             </TableHeader>
             <TableBody>
               {currentClients.length > 0 ? currentClients.map((client) => (
-                <TableRow key={client.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
-                        {client.type === 'منشأة' ? <Building2 size={16} /> : <User size={16} />}
-                      </div>
-                      <span className="font-bold text-navy-900 dark:text-white">{client.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className={client.type === 'منشأة' ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400" : "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400"}>
-                      {client.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
-                    {client.nationalId || client.commercialRegistration}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-400">
-                    {client.vatNumber || '-'}
-                  </TableCell>
-                  <TableCell className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                    <Phone size={14} className="text-slate-400" />
-                    <span dir="ltr">{client.phone}</span>
-                  </TableCell>
-                  <TableCell className="text-end">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-navy-900 dark:hover:text-white">
-                          <MoreHorizontal size={18} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
-                        <DropdownMenuItem onClick={() => {
-                          setEditingClientId(client.id);
-                          setFormData({
-                            name: client.name || "",
-                            type: (client.type as "فرد" | "منشأة") || "فرد",
-                            nationalId: client.nationalId || "",
-                            commercialRegistration: client.commercialRegistration || "",
-                            vatNumber: client.vatNumber || "",
-                            phone: client.phone || "",
-                          });
-                          setIsOpen(true);
-                        }} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
-                          <Edit size={16} className="text-slate-500" />
-                          <span>تعديل</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          if (confirm("هل أنت متأكد من حذف هذا العميل؟")) {
-                            deleteClient(client.id);
-                            toast.success("تم حذف العميل بنجاح");
-                          }
-                        }} className="cursor-pointer text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 gap-2 flex items-center">
-                          <Trash2 size={16} />
-                          <span>حذف</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                <ClientRow key={client.id} client={client} onEdit={handleEditClick} onDelete={handleDeleteClick} />
               )) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-slate-500">

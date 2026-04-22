@@ -209,7 +209,7 @@ export default function ConflictCheck() {
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  className="gap-2 border-slate-200 bg-white dark:bg-white/5 shadow-sm"
+                  className="gap-2 border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm dark:bg-navy-800"
                   onClick={handleGenerateCertificate}
                 >
                   <Printer size={16} />
@@ -314,7 +314,7 @@ export default function ConflictCheck() {
                           onChange={(e) => setDecisionNotes(e.target.value)}
                         />
                         <Button 
-                          className="w-full bg-white text-primary-700 hover:bg-white/90 font-bold"
+                          className="w-full bg-white dark:bg-navy-900 text-primary-700 hover:bg-white/90 font-bold"
                           onClick={handleSaveProfessionalDecision}
                         >
                           حفظ القرار المهني

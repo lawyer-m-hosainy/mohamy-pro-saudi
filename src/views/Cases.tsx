@@ -17,6 +17,16 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 import {
@@ -25,6 +35,128 @@ import {
   MemorandumsDialog,
   useCaseActions
 } from "./cases-components";
+
+const CaseRow = React.memo(({ 
+  c, 
+  isExpanded, 
+  onToggleExpand, 
+  handleLinkToNajiz, 
+  onEdit, 
+  onDelete,
+  sessions,
+  expenses,
+  tasks,
+  deadlines
+}: any) => {
+  return (
+    <React.Fragment>
+      <TableRow 
+        className={cn(
+          "transition-colors cursor-pointer group",
+          isExpanded ? "bg-primary-50/30 dark:bg-primary-900/10" : "hover:bg-slate-50/50 dark:hover:bg-white/5"
+        )}
+        onClick={() => onToggleExpand(c.id)}
+      >
+        <TableCell className="p-0 text-center">
+          <div className="flex items-center justify-center">
+            {isExpanded ? (
+              <ChevronUp size={18} className="text-primary-500" />
+            ) : (
+              <ChevronDown size={18} className="text-slate-400 group-hover:text-primary-500 transition-colors" />
+            )}
+          </div>
+        </TableCell>
+        <TableCell className="font-bold text-primary-600 dark:text-primary-400">
+          {c.id}
+        </TableCell>
+        <TableCell className="text-sm text-slate-700 dark:text-slate-300">{c.court}</TableCell>
+        <TableCell>
+          <div className="text-xs space-y-1">
+            <p><span className="text-slate-400">المدعي:</span> <span className="font-bold text-navy-900 dark:text-white">{c.plaintiff}</span></p>
+            <p><span className="text-slate-400">المدعى عليه:</span> <span className="font-bold text-navy-900 dark:text-white">{c.defendant}</span></p>
+          </div>
+        </TableCell>
+        <TableCell>
+          <Badge className={cn(
+            "font-bold",
+            c.status === 'نشطة' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100" : 
+            c.status === 'تحت الدراسة' ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100" : "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-400 hover:bg-slate-100"
+          )}>
+            {c.status}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <div className={cn(
+            "flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md w-fit",
+            c.najizReferenceStatus === 'مربوط بناجز' ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400" : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
+          )}>
+            {c.najizReferenceStatus === 'مربوط بناجز' ? <Link2 size={12} /> : <Link2Off size={12} />}
+            {c.najizReferenceStatus}
+          </div>
+        </TableCell>
+        <TableCell onClick={(e) => e.stopPropagation()}>
+          <MemorandumsDialog caseData={c} />
+        </TableCell>
+        <TableCell className="text-end" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-end gap-2">
+            {c.najizReferenceStatus !== 'مربوط بناجز' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 text-[10px] font-bold border-primary-200 dark:border-white/10 text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-white/5 gap-1"
+                onClick={() => handleLinkToNajiz(c.id)}
+              >
+                <Link2 size={12} />
+                ربط بناجز
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white">
+                  <MoreHorizontal size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
+                <DropdownMenuItem onClick={() => onEdit(c)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
+                  <Edit size={16} className="text-slate-500" />
+                  <span>تعديل</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDelete(c.id)} className="cursor-pointer text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 gap-2 flex items-center">
+                  <Trash2 size={16} />
+                  <span>حذف</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TableCell>
+      </TableRow>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <TableRow className="bg-slate-50/30 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
+            <TableCell colSpan={8} className="p-0">
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <CaseDetailsPanel 
+                  caseData={c} 
+                  sessions={sessions} 
+                  expenses={expenses} 
+                  tasks={tasks} 
+                  deadlines={deadlines}
+                />
+              </motion.div>
+            </TableCell>
+          </TableRow>
+        )}
+      </AnimatePresence>
+    </React.Fragment>
+  );
+});
 
 export default function Cases() {
   const cases = useCasesStore(state => state.cases);
@@ -37,11 +169,27 @@ export default function Cases() {
   const [expandedCase, setExpandedCase] = useState<string | null>(null);
   const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
   const [caseToEdit, setCaseToEdit] = useState<any>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [caseToDelete, setCaseToDelete] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("الكل");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  const handleToggleExpand = React.useCallback((id: string) => {
+    setExpandedCase(prev => prev === id ? null : id);
+  }, []);
+
+  const handleEditClick = React.useCallback((c: any) => {
+    setCaseToEdit(c);
+    setIsNewCaseOpen(true);
+  }, []);
+
+  const handleDeleteClick = React.useCallback((id: string) => {
+    setCaseToDelete(id);
+    setDeleteOpen(true);
+  }, []);
 
   const filteredCases = (cases || []).filter(c => {
     const matchesSearch = c.id?.includes(searchQuery) || 
@@ -138,126 +286,21 @@ export default function Cases() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentCases.length > 0 ? currentCases.map((c: any) => {
-                const isExpanded = expandedCase === c.id;
-                
-                return (
-                  <React.Fragment key={c.id}>
-                    <TableRow 
-                      className={cn(
-                        "transition-colors cursor-pointer group",
-                        isExpanded ? "bg-primary-50/30 dark:bg-primary-900/10" : "hover:bg-slate-50/50 dark:hover:bg-white/5"
-                      )}
-                      onClick={() => setExpandedCase(isExpanded ? null : c.id)}
-                    >
-                      <TableCell className="p-0 text-center">
-                        <div className="flex items-center justify-center">
-                          {isExpanded ? (
-                            <ChevronUp size={18} className="text-primary-500" />
-                          ) : (
-                            <ChevronDown size={18} className="text-slate-400 group-hover:text-primary-500 transition-colors" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-bold text-primary-600 dark:text-primary-400">
-                        {c.id}
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-700 dark:text-slate-300">{c.court}</TableCell>
-                      <TableCell>
-                        <div className="text-xs space-y-1">
-                          <p><span className="text-slate-400">المدعي:</span> <span className="font-bold text-navy-900 dark:text-white">{c.plaintiff}</span></p>
-                          <p><span className="text-slate-400">المدعى عليه:</span> <span className="font-bold text-navy-900 dark:text-white">{c.defendant}</span></p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={cn(
-                          "font-bold",
-                          c.status === 'نشطة' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100" : 
-                          c.status === 'تحت الدراسة' ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100" : "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-400 hover:bg-slate-100"
-                        )}>
-                          {c.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className={cn(
-                          "flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-md w-fit",
-                          c.najizReferenceStatus === 'مربوط بناجز' ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400" : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
-                        )}>
-                          {c.najizReferenceStatus === 'مربوط بناجز' ? <Link2 size={12} /> : <Link2Off size={12} />}
-                          {c.najizReferenceStatus}
-                        </div>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <MemorandumsDialog caseData={c} />
-                      </TableCell>
-                      <TableCell className="text-end" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
-                          {c.najizReferenceStatus !== 'مربوط بناجز' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-8 text-[10px] font-bold border-primary-200 dark:border-white/10 text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-white/5 gap-1"
-                              onClick={() => handleLinkToNajiz(c.id)}
-                            >
-                              <Link2 size={12} />
-                              ربط بناجز
-                            </Button>
-                          )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white">
-                                <MoreHorizontal size={18} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
-                              <DropdownMenuItem onClick={() => {
-                                setCaseToEdit(c);
-                                setIsNewCaseOpen(true);
-                              }} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
-                                <Edit size={16} className="text-slate-500" />
-                                <span>تعديل</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                if (confirm("هل أنت متأكد من حذف هذه القضية؟")) {
-                                  deleteCase(c.id);
-                                  toast.success("تم حذف القضية بنجاح");
-                                }
-                              }} className="cursor-pointer text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 gap-2 flex items-center">
-                                <Trash2 size={16} />
-                                <span>حذف</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <TableRow className="bg-slate-50/30 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                          <TableCell colSpan={8} className="p-0">
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3, ease: "easeInOut" }}
-                              className="overflow-hidden"
-                            >
-                              <CaseDetailsPanel 
-                                caseData={c} 
-                                sessions={sessions} 
-                                expenses={expenses} 
-                                tasks={tasks} 
-                                deadlines={deadlines}
-                              />
-                            </motion.div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </AnimatePresence>
-                  </React.Fragment>
-                );
-              }) : (
+              {currentCases.length > 0 ? currentCases.map((c: any) => (
+                <CaseRow 
+                  key={c.id} 
+                  c={c} 
+                  isExpanded={expandedCase === c.id} 
+                  onToggleExpand={handleToggleExpand} 
+                  handleLinkToNajiz={handleLinkToNajiz} 
+                  onEdit={handleEditClick} 
+                  onDelete={handleDeleteClick}
+                  sessions={sessions}
+                  expenses={expenses}
+                  tasks={tasks}
+                  deadlines={deadlines}
+                />
+              )) : (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                     لا توجد قضايا مطابقة للبحث أو معطيات مسجلة.
@@ -294,6 +337,26 @@ export default function Cases() {
           </div>
         )}
       </Card>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent className="dark:bg-navy-900 dark:text-white dark:border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف القضية وجميع المذكرات والجلسات المرتبطة بها بشكل نهائي.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="dark:bg-navy-800 dark:hover:bg-white/5 mt-0">إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (caseToDelete) {
+                deleteCase(caseToDelete);
+                toast.success("تم حذف القضية بنجاح");
+              }
+            }} className="bg-red-600 hover:bg-red-700 text-white">تأكيد الحذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

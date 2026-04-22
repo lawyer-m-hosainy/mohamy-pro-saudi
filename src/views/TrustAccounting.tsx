@@ -102,7 +102,7 @@ export default function TrustAccounting() {
       </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-none shadow-sm bg-navy-900 text-white">
+        <Card className="border-none shadow-sm dark:bg-navy-800 bg-navy-900 text-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <p className="text-navy-200 text-sm">إجمالي رصيد الأمانات</p>

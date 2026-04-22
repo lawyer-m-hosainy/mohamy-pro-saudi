@@ -20,10 +20,10 @@ import { toast } from "sonner";
 
 
 const categoryData = [
-  { name: 'تجاري', value: 40, color: '#006c35', bgClass: 'bg-[#006c35]' },
-  { name: 'عمالي', value: 25, color: '#d4af37', bgClass: 'bg-[#d4af37]' },
-  { name: 'جزائي', value: 20, color: '#0b2e59', bgClass: 'bg-[#0b2e59]' },
-  { name: 'أحوال شخصية', value: 15, color: '#338b5b', bgClass: 'bg-[#338b5b]' },
+  { name: 'تجاري', value: 40, color: 'var(--color-primary-500)', bgClass: 'bg-primary-500' },
+  { name: 'عمالي', value: 25, color: 'var(--color-accent-500)', bgClass: 'bg-accent-500' },
+  { name: 'جزائي', value: 20, color: 'var(--color-navy-300)', bgClass: 'bg-navy-300' },
+  { name: 'أحوال شخصية', value: 15, color: 'var(--color-primary-300)', bgClass: 'bg-primary-300' },
 ];
 
 const MemoizedBarChart = React.memo(({ data }: { data: any[] }) => (

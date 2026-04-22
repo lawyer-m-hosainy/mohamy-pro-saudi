@@ -23,7 +23,7 @@ export default function AddExpenseDialog({ caseData }: AddExpenseDialogProps) {
       id: `EXP-${Date.now()}`,
       caseId: caseData.id,
       caseName: `${caseData.plaintiff} ضد ${caseData.defendant}`,
-      category: String(fd.get('category')),
+      category: String(fd.get('category')) as "رسوم قضائية" | "أتعاب خبراء" | "تنقلات" | "أخرى",
       amount: Number(fd.get('amount')),
       date: String(fd.get('date')),
       status: 'معلق',

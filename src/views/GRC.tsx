@@ -54,22 +54,22 @@ export default function GRC() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm">Risk Heatmap - High</CardTitle></CardHeader>
           <CardContent><p className="text-3xl font-bold text-destructive">{heatmap.high}</p></CardContent>
         </Card>
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm">Risk Heatmap - Medium</CardTitle></CardHeader>
           <CardContent><p className="text-3xl font-bold text-amber-600">{heatmap.medium}</p></CardContent>
         </Card>
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader><CardTitle className="text-sm">Risk Heatmap - Low</CardTitle></CardHeader>
           <CardContent><p className="text-3xl font-bold text-emerald-600">{heatmap.low}</p></CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2"><AlertTriangle size={16} /> سجل المخاطر</CardTitle>
           </CardHeader>
@@ -91,7 +91,7 @@ export default function GRC() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2"><ShieldCheck size={16} /> Controls Dashboard</CardTitle>
           </CardHeader>
@@ -110,7 +110,7 @@ export default function GRC() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2"><FileSearch size={16} /> Issue Tracking</CardTitle>
           </CardHeader>
@@ -132,7 +132,7 @@ export default function GRC() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2"><Bell size={16} /> الالتزامات التنظيمية والتنبيهات</CardTitle>
           </CardHeader>

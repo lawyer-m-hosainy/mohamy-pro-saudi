@@ -210,7 +210,7 @@ export default function BDDashboard() {
                       {client?.name || "عميل محتمل"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] font-normal border-slate-200">
+                      <Badge variant="outline" className="text-[10px] font-normal border-slate-200 dark:border-white/10">
                         {model?.type} - {model?.description}
                       </Badge>
                     </TableCell>
@@ -261,7 +261,7 @@ export default function BDDashboard() {
               من المتوقع نمو قطاع "الاتصالات والتقنية" بنسبة 25% نتيجة المشاريع القائمة. يوصى بتركيز جهود تطوير الأعمال على حلول الملكية الفكرية المتقدمة.
             </p>
             <div className="flex items-center gap-4">
-              <Button className="bg-white text-primary-700 hover:bg-white/90">تحديث المحفظة</Button>
+              <Button className="bg-white dark:bg-navy-900 text-primary-700 hover:bg-white/90">تحديث المحفظة</Button>
               <Button variant="ghost" className="text-white hover:bg-white/10 underline">مشاهدة التقارير</Button>
             </div>
           </CardContent>

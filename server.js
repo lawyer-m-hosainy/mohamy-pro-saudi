@@ -7,8 +7,17 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import admin from 'firebase-admin';
+
 // Load environment variables
 dotenv.config();
+
+// Initialize Firebase Admin for token verification
+try {
+  admin.initializeApp();
+} catch (e) {
+  console.warn('Firebase Admin init warning:', e);
+}
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -107,7 +116,25 @@ const aiSecurityMiddleware = (req, res, next) => {
     next();
 };
 
-app.use('/api/ai', aiSecurityMiddleware);
+app.use('/api/ai', async (req, res, next) => {
+    // Auth Middleware to verify Firebase JWT
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'مطلوب مصادقة صالحة' });
+    }
+
+    const idToken = authHeader.split('Bearer ')[1];
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        req.user = decodedToken; // contains uid
+        // You can fetch tenantId from Firestore here if needed, or pass it via headers securely
+        req.tenantId = req.headers['x-tenant-id'] || 'default';
+        next();
+    } catch (error) {
+        console.error('Auth Token Error:', error.message);
+        return res.status(403).json({ error: 'التوكن غير صالح أو منتهي الصلاحية' });
+    }
+}, aiSecurityMiddleware);
 
 // AI Endpoint Routing
 app.post('/api/ai/legal-assistant', aiRateLimiter, async (req, res) => {

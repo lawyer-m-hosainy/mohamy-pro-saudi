@@ -54,9 +54,29 @@ service cloud.firestore {
                     getRole() != 'client';
     }
 
-    // 3. Global Multi-Tenant Fallback (Invoices, Clients, Tasks, etc.)
-    match /{path=**}/documents/{docId} {
-      // For any collection not explicitly matched above, isolate by tenantId
+    // 3. Clients Collection
+    match /clients/{docId} {
+      allow read: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
+      allow update, delete: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
+      allow create: if isAuthenticated() && request.resource.data.tenantId == getTenantId() && getRole() != 'client';
+    }
+
+    // 4. Invoices Collection
+    match /invoices/{docId} {
+      allow read: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
+      allow update, delete: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
+      allow create: if isAuthenticated() && request.resource.data.tenantId == getTenantId() && getRole() != 'client';
+    }
+
+    // 5. Audit Logs Collection
+    match /audit_logs/{docId} {
+      allow read: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
+      allow create: if isAuthenticated() && request.resource.data.tenantId == getTenantId() && getRole() != 'client';
+      allow update, delete: if false; // سجلات النظام للقراءة والإضافة فقط
+    }
+
+    // 6. Global Multi-Tenant Fallback (Tasks, Compliance, etc.)
+    match /{collection}/{docId} {
       allow read: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
       allow update, delete: if isAuthenticated() && resource.data.tenantId == getTenantId() && getRole() != 'client';
       allow create: if isAuthenticated() && request.resource.data.tenantId == getTenantId() && getRole() != 'client';

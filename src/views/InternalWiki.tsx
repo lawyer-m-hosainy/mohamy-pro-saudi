@@ -157,7 +157,7 @@ export default function InternalWiki() {
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <Input 
               placeholder={activeTab === 'assets' ? "البحث في المستندات والأبحاث..." : "البحث في المقالات..."}
-              className="ps-10 h-12 bg-white dark:bg-navy-800 border-none shadow-sm"
+              className="ps-10 h-12 bg-white dark:bg-navy-800 border-none shadow-sm dark:bg-navy-800"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -213,7 +213,7 @@ export default function InternalWiki() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm bg-primary-600 text-white">
+          <Card className="border-none shadow-sm dark:bg-navy-800 bg-primary-600 text-white">
             <CardContent className="p-6 text-center space-y-4">
               <BookOpen size={48} className="mx-auto opacity-20" />
               <h3 className="font-bold">ساهم في المعرفة</h3>

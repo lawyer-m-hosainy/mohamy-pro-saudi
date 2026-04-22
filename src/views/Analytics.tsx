@@ -37,7 +37,7 @@ const workloadData = [
 ];
 
 export default function Analytics() {
-  const cases = useAnalyticsStore((state) => state.cases);
+  const cases = useCasesStore((state) => state.cases);
   const clients = useClientsStore((state) => state.clients);
   const expenses = useFinanceStore((state) => state.expenses);
   const teamMembers = useTeamStore((state) => state.teamMembers);
@@ -47,13 +47,44 @@ export default function Analytics() {
 
   const handleGenerateReport = () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      toast.success("تم إنشاء التقرير الشامل بنجاح", {
-        description: "يمكنك الآن تحميل التقرير بصيغة PDF",
+    
+    try {
+      // Generate CSV for Revenue Data
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      csvContent += "الشهر,الإيرادات,المصروفات,الربح\n";
+      revenueData.forEach(row => {
+        csvContent += `${row.name},${row.revenue},${row.expenses},${row.profit}\n`;
+      });
+
+      // Add a separator and then Case Success Data
+      csvContent += "\nالنتيجة,النسبة\n";
+      caseSuccessData.forEach(row => {
+        csvContent += `${row.name},${row.value}%\n`;
+      });
+
+      // Add Workload Data
+      csvContent += "\nعضو الفريق,القضايا,المهام\n";
+      workloadData.forEach(row => {
+        csvContent += `${row.name},${row.cases},${row.tasks}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `تقرير_التحليلات_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("تم تصدير التقرير بنجاح", {
+        description: "تم تحميل ملف CSV الخاص بالتحليلات",
         icon: <CheckCircle2 className="text-emerald-500" />
       });
-    }, 2000);
+    } catch (error) {
+      toast.error("حدث خطأ أثناء تصدير التقرير");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const stats = [
@@ -82,7 +113,7 @@ export default function Analytics() {
             disabled={isGenerating}
           >
             {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-            {isGenerating ? 'جاري الإنشاء...' : 'تصدير تقرير PDF'}
+            {isGenerating ? 'جاري الإنشاء...' : 'تصدير تقرير CSV'}
           </Button>
           <Button className="bg-primary-500 text-white">تخصيص اللوحة</Button>
         </div>

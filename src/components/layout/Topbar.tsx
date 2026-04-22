@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useDeferredValue } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,6 +33,7 @@ export function Topbar() {
   const cases = useCasesStore(state => state.cases);
   const tasks = useTeamStore(state => state.tasks);
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const navigate = useNavigate();
   const { resolvedTheme, setTheme } = useTheme();
   const isDarkMode = resolvedTheme === "dark";
@@ -40,15 +41,15 @@ export function Topbar() {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    const query = searchQuery.toLowerCase();
+    if (!deferredSearchQuery.trim()) return null;
+    const query = deferredSearchQuery.toLowerCase();
     
     const filteredClients = clients.filter(c => c.name.toLowerCase().includes(query)).slice(0, 3);
     const filteredCases = cases.filter(c => c.id.toLowerCase().includes(query) || c.plaintiff.toLowerCase().includes(query) || c.defendant.toLowerCase().includes(query)).slice(0, 3);
     const filteredTasks = tasks.filter(t => t.title.toLowerCase().includes(query)).slice(0, 3);
     
     return { clients: filteredClients, cases: filteredCases, tasks: filteredTasks };
-  }, [searchQuery, clients, cases, tasks]);
+  }, [deferredSearchQuery, clients, cases, tasks]);
 
   const handleMarkAllAsRead = () => {
     notifications.forEach(n => {

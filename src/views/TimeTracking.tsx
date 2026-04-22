@@ -150,7 +150,7 @@ export default function TimeTracking() {
         </div>
   
         <Dialog open={manualOpen} onOpenChange={setManualOpen}>
-          <DialogContent className="sm:max-w-md border-none shadow-2xl dark:bg-navy-900 bg-white">
+          <DialogContent className="sm:max-w-md border-none shadow-2xl dark:bg-navy-900 bg-white dark:bg-navy-900">
             <DialogHeader>
               <DialogTitle className="text-navy-900 dark:text-white">
                 {editEntryId ? "تعديل سجل الوقت" : "إضافة وقت يدوياً"}

@@ -196,7 +196,7 @@ export default function Login() {
             <Button 
               onClick={handleGoogleLogin} 
               disabled={isLoading}
-              className="w-full flex justify-center py-6 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm bg-white dark:bg-navy-900 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5"
+              className="w-full flex justify-center py-6 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm dark:bg-navy-800 bg-white dark:bg-navy-900 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

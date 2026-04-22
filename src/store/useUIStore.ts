@@ -23,6 +23,7 @@ interface UIState {
   setWorkflows: (workflows: Workflow[]) => void;
   addAuditLog: (log: AuditLog) => void;
   setESignatures: (requests: ESignatureRequest[]) => void;
+  addESignature: (request: ESignatureRequest) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -84,6 +85,7 @@ export const useUIStore = create<UIState>()(
   setWorkflows: (workflows) => set({ workflows }),
   addAuditLog: (log) => set((state) => ({ auditLogs: [log, ...state.auditLogs] })),
   setESignatures: (eSignatures) => set({ eSignatures }),
+  addESignature: (request) => set((state) => ({ eSignatures: [request, ...state.eSignatures] })),
     }),
     {
       name: 'mohamy-ui-storage',
