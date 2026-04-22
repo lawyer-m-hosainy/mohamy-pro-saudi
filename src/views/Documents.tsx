@@ -37,7 +37,16 @@ export default function Documents() {
     { id: "d3", name: "مذكرة جوابية - عمالي.docx", case: "C-2024-003", type: "مذكرة", size: "500 KB", date: "2024-04-10", uploadedBy: "أحمد المحامي" },
     { id: "d4", name: "حكم ابتدائي - قضية تجارية.pdf", case: "C-2024-001", type: "حكم", size: "3.2 MB", date: "2024-04-12", uploadedBy: "خالد الشريك" },
   ]);
+  ]);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+
+  const filteredDocuments = documents.filter((doc) => {
+    const matchesSearch = doc.name.includes(searchTerm) || doc.case.includes(searchTerm);
+    const matchesFolder = activeFolder ? doc.type === activeFolder : true;
+    return matchesSearch && matchesFolder;
+  });
 
   return (
     <motion.div 
@@ -124,23 +133,23 @@ export default function Documents() {
             <CardTitle className="text-lg font-bold">المجلدات</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button variant="ghost" className="w-full justify-start gap-3 bg-slate-50 dark:bg-white/5 text-primary-600 dark:text-primary-400" onClick={() => toast.info("عرض جميع المستندات")}>
+            <Button variant="ghost" className={`w-full justify-start gap-3 ${activeFolder === null ? 'bg-slate-50 dark:bg-white/5 text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-400'}`} onClick={() => setActiveFolder(null)}>
               <Folder size={18} />
               جميع المستندات
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-slate-600 dark:text-slate-400" onClick={() => toast.info("تصفية: لوائح ومذكرات")}>
+            <Button variant="ghost" className={`w-full justify-start gap-3 ${activeFolder === 'لائحة' || activeFolder === 'مذكرة' ? 'bg-slate-50 dark:bg-white/5 text-primary-600' : 'text-slate-600 dark:text-slate-400'}`} onClick={() => setActiveFolder('مذكرة')}>
               <Folder size={18} />
               لوائح ومذكرات
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-slate-600 dark:text-slate-400" onClick={() => toast.info("تصفية: عقود واتفاقيات")}>
+            <Button variant="ghost" className={`w-full justify-start gap-3 ${activeFolder === 'عقد' || activeFolder === 'اتفاقية' ? 'bg-slate-50 dark:bg-white/5 text-primary-600' : 'text-slate-600 dark:text-slate-400'}`} onClick={() => setActiveFolder('عقد')}>
               <Folder size={18} />
               عقود واتفاقيات
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-slate-600 dark:text-slate-400" onClick={() => toast.info("تصفية: أحكام وقرارات")}>
+            <Button variant="ghost" className={`w-full justify-start gap-3 ${activeFolder === 'حكم' || activeFolder === 'قرار' ? 'bg-slate-50 dark:bg-white/5 text-primary-600' : 'text-slate-600 dark:text-slate-400'}`} onClick={() => setActiveFolder('حكم')}>
               <Folder size={18} />
               أحكام وقرارات
             </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-slate-600 dark:text-slate-400" onClick={() => toast.info("تصفية: مستندات العملاء")}>
+            <Button variant="ghost" className={`w-full justify-start gap-3 ${activeFolder === 'مستند العميل' ? 'bg-slate-50 dark:bg-white/5 text-primary-600' : 'text-slate-600 dark:text-slate-400'}`} onClick={() => setActiveFolder('مستند العميل')}>
               <Folder size={18} />
               مستندات العملاء
             </Button>
@@ -152,7 +161,12 @@ export default function Documents() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="relative w-full sm:w-96">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <Input placeholder="ابحث عن مستند..." className="pr-10 bg-slate-50 dark:bg-white/5 border-none" />
+                <Input 
+                  placeholder="ابحث عن مستند..." 
+                  className="pr-10 bg-slate-50 dark:bg-white/5 border-none"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
               <Button variant="outline" className="gap-2" onClick={() => toast.success("تم تفعيل التصفية")}>
                 <Filter size={16} />
@@ -173,39 +187,47 @@ export default function Documents() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {documents.map((doc) => (
-                  <TableRow key={doc.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
-                          <File size={16} />
-                        </div>
-                        <span className="font-bold text-navy-900 dark:text-white">{doc.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm text-slate-500">{doc.case}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-slate-600 dark:text-slate-400">
-                        {doc.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-slate-500">{doc.size}</TableCell>
-                    <TableCell className="text-sm text-slate-500">{doc.date}</TableCell>
-                    <TableCell className="text-end">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary-600" onClick={() => toast.success(`جاري تحميل ${doc.name}`)}>
-                          <Download size={16} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-destructive" onClick={() => {
-                          setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-                          toast.success(`تم حذف ${doc.name} من السجل`);
-                        }}>
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
+                {filteredDocuments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                      لا توجد مستندات مطابقة للبحث
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredDocuments.map((doc) => (
+                    <TableRow key={doc.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+                            <File size={16} />
+                          </div>
+                          <span className="font-bold text-navy-900 dark:text-white">{doc.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm text-slate-500">{doc.case}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-slate-600 dark:text-slate-400">
+                          {doc.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-500">{doc.size}</TableCell>
+                      <TableCell className="text-sm text-slate-500">{doc.date}</TableCell>
+                      <TableCell className="text-end">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-primary-600" onClick={() => toast.success(`تم تحميل المستند: ${doc.name}`)}>
+                            <Download size={16} />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-destructive" onClick={() => {
+                            setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+                            toast.success(`تم حذف ${doc.name} من السجل`);
+                          }}>
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
