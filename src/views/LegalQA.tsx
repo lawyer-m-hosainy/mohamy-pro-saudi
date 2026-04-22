@@ -29,6 +29,9 @@ export default function LegalQA() {
   const isPartner = hasPermission('*');
   const [newReviewOpen, setNewReviewOpen] = useState(false);
   const [newReviewCaseId, setNewReviewCaseId] = useState("");
+  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+  
+  const activeReview = qaReviews.find((r: any) => r.id === activeReviewId) || qaReviews[0];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -235,7 +238,15 @@ export default function LegalQA() {
                           </div>
                         </TableCell>
                         <TableCell className="text-end">
-                          <Button variant="ghost" size="sm" className="h-8 gap-1 text-primary-600" onClick={() => toast.success("تم تنفيذ العملية")}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className={cn("h-8 gap-1 text-primary-600 transition-colors", activeReview?.id === review.id ? "bg-primary-50 dark:bg-primary-900/20" : "")} 
+                            onClick={() => {
+                              setActiveReviewId(review.id);
+                              toast.success("تم فتح تفاصيل المراجعة");
+                            }}
+                          >
                             مراجعة الآن
                             <ChevronRight size={14} />
                           </Button>
@@ -275,20 +286,25 @@ export default function LegalQA() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              {qaReviews[0] && (
+              {activeReview ? (
                 <div className="space-y-4">
                   <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg mb-4">
                     <p className="text-xs font-bold text-navy-900 dark:text-white mb-1">العرض النشط:</p>
-                    <p className="text-xs text-slate-500">مراجعة مذكرة الرد - شركة الراجحي</p>
+                    <p className="text-xs text-slate-500">
+                      {(() => {
+                        const c = cases.find((c: any) => c.id === activeReview.caseId);
+                        return c ? `مراجعة ${c.plaintiff} ضد ${c.defendant}` : `طلب مراجعة ${activeReview.id}`;
+                      })()}
+                    </p>
                   </div>
-                  {qaReviews[0].checklist.map((item: any) => (
+                  {activeReview.checklist.map((item: any) => (
                     <div 
                       key={item.id} 
                       className={cn(
                         "flex items-start gap-3 group transition-opacity",
                         isPartner ? "cursor-pointer" : "opacity-70 cursor-not-allowed"
                       )} 
-                      onClick={() => isPartner && updateQAChecklist(qaReviews[0].id, item.id, !item.isMet)}
+                      onClick={() => isPartner && updateQAChecklist(activeReview.id, item.id, !item.isMet)}
                     >
                       <div className={cn(
                         "mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center transition-all",
@@ -313,19 +329,21 @@ export default function LegalQA() {
                       variant="outline" 
                       className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs"
                       disabled={!isPartner}
-                      onClick={() => updateQAStatus(qaReviews[0].id, 'Rejected')}
+                      onClick={() => updateQAStatus(activeReview.id, 'Rejected')}
                     >
                       مرفوض
                     </Button>
                     <Button 
                       className="bg-primary-500 hover:bg-primary-600 text-white text-xs"
                       disabled={!isPartner}
-                      onClick={() => updateQAStatus(qaReviews[0].id, 'Approved')}
+                      onClick={() => updateQAStatus(activeReview.id, 'Approved')}
                     >
                       اعتماد نهائي
                     </Button>
                   </div>
                 </div>
+              ) : (
+                <div className="text-center p-4 text-sm text-slate-500">لا توجد مراجعات نشطة</div>
               )}
             </CardContent>
           </Card>
