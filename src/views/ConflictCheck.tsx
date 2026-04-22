@@ -21,10 +21,12 @@ export default function ConflictCheck() {
   const [query, setQuery] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [currentResult, setCurrentResult] = useState<any>(null);
+  const [decisionNotes, setDecisionNotes] = useState("");
   const executeConflictCheck = useAnalyticsStore((state) => state.executeConflictCheck);
   const addConflictRecord = useComplianceStore((state) => state.addConflictRecord);
   const conflictHistory = useComplianceStore((state) => state.conflictHistory);
   const hasPermission = useAuthStore((state) => state.hasPermission);
+  const currentUser = useAuthStore((state) => state.currentUser);
   const isPartner = hasPermission('*');
 
   const handleCheck = () => {
@@ -49,6 +51,67 @@ export default function ConflictCheck() {
       case 'Waived': return <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border-none">تم التنازل</Badge>;
       default: return null;
     }
+  };
+
+  const handleGenerateCertificate = () => {
+    if (!currentResult) {
+      toast.error("نفّذ فحص التعارض أولاً قبل إصدار الشهادة");
+      return;
+    }
+
+    const certificateText = [
+      "شهادة فحص تعارض مصالح",
+      "----------------------------------------",
+      `الجهة المفحوصة: ${currentResult.query}`,
+      `حالة الفحص: ${currentResult.status === "Clear" ? "لا يوجد تعارض" : "تم رصد تعارض محتمل"}`,
+      `تاريخ الفحص: ${new Date(currentResult.checkedAt).toLocaleString("ar-SA")}`,
+      `عدد الارتباطات المكتشفة: ${currentResult.matches.length}`,
+      `المُصدر: ${currentUser?.name || "مستخدم النظام"}`,
+      "----------------------------------------",
+      "تم إصدار هذه الشهادة آلياً من نظام محامي برو.",
+    ].join("\n");
+
+    const blob = new Blob([certificateText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `certificate-${currentResult.query}-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success("تم إصدار الشهادة وتحميلها بنجاح");
+  };
+
+  const handleSaveProfessionalDecision = () => {
+    if (!currentResult) {
+      toast.error("لا يوجد فحص نشط لحفظ القرار عليه");
+      return;
+    }
+
+    if (!isPartner) {
+      toast.error("صلاحية الحفظ متاحة فقط للشريك المفوض");
+      return;
+    }
+
+    if (!decisionNotes.trim()) {
+      toast.error("يرجى كتابة ملاحظات القرار المهني قبل الحفظ");
+      return;
+    }
+
+    const updatedRecord = {
+      ...currentResult,
+      id: `CCR-DEC-${Date.now()}`,
+      resolutionNotes: decisionNotes.trim(),
+      resolutionDate: new Date().toISOString(),
+      resolvedBy: currentUser?.name || "محامي شريك",
+      status: currentResult.status === "Clear" ? "Clear" : "Waived",
+    };
+
+    addConflictRecord(updatedRecord);
+    setCurrentResult(updatedRecord);
+    toast.success("تم حفظ القرار المهني بنجاح");
   };
 
   return (
@@ -144,7 +207,11 @@ export default function ConflictCheck() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" className="gap-2 border-slate-200 bg-white dark:bg-white/5 shadow-sm">
+                <Button
+                  variant="outline"
+                  className="gap-2 border-slate-200 bg-white dark:bg-white/5 shadow-sm"
+                  onClick={handleGenerateCertificate}
+                >
                   <Printer size={16} />
                   إصدار شهادة
                 </Button>
@@ -243,10 +310,12 @@ export default function ConflictCheck() {
                         <textarea 
                           placeholder="ملاحظات الموافقة أو الرفض المهني..."
                           className="w-full h-24 bg-white/5 border border-white/20 rounded-lg p-3 text-xs focus:ring-1 focus:ring-white outline-none"
+                          value={decisionNotes}
+                          onChange={(e) => setDecisionNotes(e.target.value)}
                         />
                         <Button 
                           className="w-full bg-white text-primary-700 hover:bg-white/90 font-bold"
-                          disabled={!isPartner}
+                          onClick={handleSaveProfessionalDecision}
                         >
                           حفظ القرار المهني
                         </Button>
