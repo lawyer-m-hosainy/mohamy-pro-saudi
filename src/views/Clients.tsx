@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Search, Filter, MoreHorizontal, Phone, Building2, User, Edit, Trash2 } from "lucide-react";
-import { useClientsStore } from "@/store/useClientsStore";
-import React, { useState, useMemo } from "react";
+import React from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -16,15 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { clientSchema } from "@/lib/schemas";
-import { ZodError } from "zod";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { useClientsLogic } from "@/hooks/useClientsLogic";
 
 const ClientRow = React.memo(({ client, onEdit, onDelete }: { client: any, onEdit: (c: any) => void, onDelete: (id: string) => void }) => {
   return (
@@ -76,97 +73,25 @@ const ClientRow = React.memo(({ client, onEdit, onDelete }: { client: any, onEdi
 });
 
 export default function Clients() {
-  const clients = useClientsStore(state => state.clients);
-  const addClient = useClientsStore(state => state.addClient);
-  const updateClient = useClientsStore(state => state.updateClient);
-  const deleteClient = useClientsStore(state => state.deleteClient);
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"الكل" | "فرد" | "منشأة">("الكل");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
-
-  const handleEditClick = React.useCallback((client: any) => {
-    setEditingClientId(client.id);
-    setFormData({
-      name: client.name || "",
-      type: (client.type as "فرد" | "منشأة") || "فرد",
-      nationalId: client.nationalId || "",
-      commercialRegistration: client.commercialRegistration || "",
-      vatNumber: client.vatNumber || "",
-      phone: client.phone || "",
-    });
-    setIsOpen(true);
-  }, []);
-
-  const handleDeleteClick = React.useCallback((id: string) => {
-    if (confirm("هل أنت متأكد من حذف هذا العميل؟")) {
-      deleteClient(id);
-      toast.success("تم حذف العميل بنجاح");
-    }
-  }, [deleteClient]);
-
-  const filteredClients = useMemo(() => {
-    return (clients || []).filter(c => {
-      const matchesSearch = c.name?.includes(searchQuery) || 
-                            c.nationalId?.includes(searchQuery) || 
-                            c.commercialRegistration?.includes(searchQuery);
-      const matchesType = filterType === "الكل" || c.type === filterType;
-      return matchesSearch && matchesType;
-    });
-  }, [clients, searchQuery, filterType]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredClients.length / itemsPerPage));
-  const currentClients = useMemo(() => {
-    return filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  }, [filteredClients, currentPage, itemsPerPage]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [editingClientId, setEditingClientId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "فرد" as "فرد" | "منشأة",
-    nationalId: "",
-    commercialRegistration: "",
-    vatNumber: "",
-    phone: "",
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      clientSchema.parse(formData);
-      
-      if (editingClientId) {
-        updateClient(editingClientId, formData);
-        toast.success("تم تحديث بيانات العميل بنجاح");
-      } else {
-        const newClient = {
-          id: `C-${Date.now()}`,
-          ...formData,
-        };
-        addClient(newClient as any);
-        toast.success("تم إضافة العميل بنجاح");
-      }
-      
-      setIsOpen(false);
-      setEditingClientId(null);
-      setFormData({
-        name: "",
-        type: "فرد",
-        nationalId: "",
-        commercialRegistration: "",
-        vatNumber: "",
-        phone: "",
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        toast.error(error.errors[0].message);
-      } else {
-        toast.error("حدث خطأ غير متوقع");
-      }
-    }
-  };
+  const {
+    currentClients,
+    searchQuery,
+    filterType,
+    currentPage,
+    totalPages,
+    isOpen,
+    editingClientId,
+    formData,
+    setSearchQuery,
+    setFilterType,
+    setCurrentPage,
+    setIsOpen,
+    setFormData,
+    handleEditClick,
+    handleDeleteClick,
+    handleSubmit,
+    openNewClientDialog,
+  } = useClientsLogic();
 
   return (
     <motion.div 
@@ -182,20 +107,8 @@ export default function Clients() {
         
         <Dialog open={isOpen} onOpenChange={(open) => {
           setIsOpen(open);
-          if (!open) setEditingClientId(null);
         }}>
-          <Button type="button" className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => {
-            setEditingClientId(null);
-            setFormData({
-              name: "",
-              type: "فرد",
-              nationalId: "",
-              commercialRegistration: "",
-              vatNumber: "",
-              phone: "",
-            });
-            setIsOpen(true);
-          }}>
+          <Button type="button" className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={openNewClientDialog}>
             <UserPlus size={18} />
             إضافة عميل جديد
           </Button>

@@ -128,8 +128,8 @@ const aiSecurityMiddleware = (req, res, next) => {
     });
     next();
 };
-app.use('/api/ai', async (req, res, next) => {
-    // Auth Middleware to verify Firebase JWT
+// Auth Middleware to verify Firebase JWT
+const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'مطلوب مصادقة صالحة' });
@@ -138,14 +138,17 @@ app.use('/api/ai', async (req, res, next) => {
     try {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         req.user = decodedToken;
-        req.tenantId = req.headers['x-tenant-id'] || 'default';
+        req.tenantId = decodedToken.tenantId || req.headers['x-tenant-id'] || 'default';
+        req.userRole = decodedToken.role || req.headers['x-user-role'];
         next();
     }
     catch (error) {
         logger.error({ err: error }, 'Auth Token Error');
         return res.status(403).json({ error: 'التوكن غير صالح أو منتهي الصلاحية' });
     }
-}, aiSecurityMiddleware);
+};
+
+app.use('/api/ai', authMiddleware, aiSecurityMiddleware);
 // AI Endpoint Routing
 app.post('/api/ai/legal-assistant', aiRateLimiter, async (req, res) => {
     if (!ai) {
@@ -202,6 +205,90 @@ app.post('/api/ai/analyze', aiRateLimiter, async (req, res) => {
     catch (error) {
         logger.error({ err: error }, "AI Error");
         return res.status(502).json({ error: 'AI upstream error' });
+    }
+});
+
+// --- Server-side API Endpoints for Cases ---
+const db = admin.firestore();
+
+// 1. POST /api/cases
+app.post('/api/cases', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole === 'client') {
+            return res.status(403).json({ error: 'غير مصرح للعملاء بإنشاء قضايا' });
+        }
+        
+        const caseData = req.body;
+        if (caseData.tenantId && caseData.tenantId !== req.tenantId) {
+            return res.status(403).json({ error: 'لا يمكن إنشاء قضية في مساحة عمل مختلفة' });
+        }
+        
+        caseData.tenantId = req.tenantId;
+        caseData.createdAt = new Date().toISOString();
+        
+        const docRef = await db.collection('cases').add(caseData);
+        return res.status(201).json({ id: docRef.id, ...caseData });
+    } catch (error) {
+        logger.error({ err: error }, "Create Case Error");
+        return res.status(500).json({ error: 'حدث خطأ أثناء إنشاء القضية' });
+    }
+});
+
+// 2. PUT /api/cases/:id
+app.put('/api/cases/:id', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole === 'client') {
+            return res.status(403).json({ error: 'غير مصرح للعملاء بتعديل القضايا' });
+        }
+        
+        const caseId = req.params.id;
+        const caseRef = db.collection('cases').doc(caseId);
+        const caseDoc = await caseRef.get();
+        
+        if (!caseDoc.exists) {
+            return res.status(404).json({ error: 'القضية غير موجودة' });
+        }
+        
+        const existingCase = caseDoc.data();
+        if (existingCase.tenantId !== req.tenantId) {
+            return res.status(403).json({ error: 'غير مصرح لك بتعديل هذه القضية' });
+        }
+        
+        const updateData = req.body;
+        delete updateData.tenantId; // Prevent changing tenantId
+        
+        await caseRef.update(updateData);
+        return res.status(200).json({ id: caseId, ...existingCase, ...updateData });
+    } catch (error) {
+        logger.error({ err: error }, "Update Case Error");
+        return res.status(500).json({ error: 'حدث خطأ أثناء تعديل القضية' });
+    }
+});
+
+// 3. DELETE /api/cases/:id
+app.delete('/api/cases/:id', authMiddleware, async (req, res) => {
+    try {
+        if (req.userRole === 'client') {
+            return res.status(403).json({ error: 'غير مصرح للعملاء بحذف القضايا' });
+        }
+        
+        const caseId = req.params.id;
+        const caseRef = db.collection('cases').doc(caseId);
+        const caseDoc = await caseRef.get();
+        
+        if (!caseDoc.exists) {
+            return res.status(404).json({ error: 'القضية غير موجودة' });
+        }
+        
+        if (caseDoc.data().tenantId !== req.tenantId) {
+            return res.status(403).json({ error: 'غير مصرح لك بحذف هذه القضية' });
+        }
+        
+        await caseRef.delete();
+        return res.status(200).json({ success: true, message: 'تم حذف القضية بنجاح' });
+    } catch (error) {
+        logger.error({ err: error }, "Delete Case Error");
+        return res.status(500).json({ error: 'حدث خطأ أثناء حذف القضية' });
     }
 });
 // Serve frontend static files

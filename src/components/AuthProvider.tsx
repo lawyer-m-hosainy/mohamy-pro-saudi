@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { UserRole } from "@/types";
 import { setTenantIdCache } from "@/lib/tenant";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
@@ -22,7 +23,7 @@ const DEFAULT_TENANT_PREFIX = "tenant-";
  * - If the user document exists, reads role and tenantId from it.
  * - If the user document does NOT exist, creates it with a default role and tenant.
  */
-async function resolveUserProfile(user: User): Promise<{ role: UserRole; tenantId: string }> {
+async function resolveUserProfile(user: User): Promise<{ role: UserRole; tenantId: string } | null> {
   const userRef = doc(db, "users", user.uid);
   try {
     const snapshot = await getDoc(userRef);
@@ -48,13 +49,8 @@ async function resolveUserProfile(user: User): Promise<{ role: UserRole; tenantI
     await setDoc(userRef, newDoc);
     return { role: DEFAULT_ROLE, tenantId: newTenantId };
   } catch (error) {
-    // If Firestore read fails (e.g. rules, offline), fall back to safe defaults.
-    // This keeps the demo/dev flow working even when Firestore rules aren't deployed.
-    console.warn("Could not resolve user profile from Firestore, using defaults:", error);
-    return {
-      role: "مدير مكتب" as UserRole,
-      tenantId: "demo-tenant",
-    };
+    console.error("Could not resolve user profile from Firestore:", error);
+    return null;
   }
 }
 
@@ -64,9 +60,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
       if (firebaseUser) {
-        const { role, tenantId } = await resolveUserProfile(firebaseUser);
+        const profile = await resolveUserProfile(firebaseUser);
+        if (!profile) {
+          toast.error("تعذر تحميل ملف المستخدم. يرجى إعادة تسجيل الدخول.");
+          auth.signOut();
+          setTenantIdCache(null);
+          useAuthStore.getState().setCurrentUser(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        const { role, tenantId } = profile;
         // Cache tenantId for use by getCurrentTenantId()
         setTenantIdCache(tenantId);
         useAuthStore.getState().setCurrentUser({
@@ -76,7 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role,
           avatar: firebaseUser.photoURL || undefined,
         });
+        setUser(firebaseUser);
       } else {
+        setUser(null);
         setTenantIdCache(null);
         useAuthStore.getState().setCurrentUser(null);
       }

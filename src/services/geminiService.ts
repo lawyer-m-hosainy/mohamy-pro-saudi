@@ -1,7 +1,18 @@
+import { auth } from "@/lib/firebase";
+
 async function callAiApi<T extends Record<string, unknown>>(path: string, payload: T): Promise<string> {
+  const currentUser = auth.currentUser;
+  
+  if (!currentUser) {
+    throw new Error("UNAUTHORIZED: يرجى تسجيل الدخول أولاً لاستخدام المساعد الذكي.");
+  }
+  
+  const token = await currentUser.getIdToken();
+
   const response = await fetch(path, {
     method: "POST",
     headers: {
+      "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),

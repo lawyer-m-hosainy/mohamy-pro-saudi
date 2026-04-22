@@ -9,6 +9,8 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false
+      - key: VITE_ENCRYPTION_KEY
+        sync: false
       - key: NODE_ENV
         value: production
       - key: ALLOWED_ORIGINS

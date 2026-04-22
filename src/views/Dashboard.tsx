@@ -19,12 +19,14 @@ import { toast } from "sonner";
 
 
 
-const categoryData = [
-  { name: 'تجاري', value: 40, color: 'var(--color-primary-500)', bgClass: 'bg-primary-500' },
-  { name: 'عمالي', value: 25, color: 'var(--color-accent-500)', bgClass: 'bg-accent-500' },
-  { name: 'جزائي', value: 20, color: 'var(--color-navy-300)', bgClass: 'bg-navy-300' },
-  { name: 'أحوال شخصية', value: 15, color: 'var(--color-primary-300)', bgClass: 'bg-primary-300' },
-];
+const CATEGORY_COLORS: Record<string, { color: string; bgClass: string }> = {
+  'تجاري': { color: 'var(--color-primary-500)', bgClass: 'bg-primary-500' },
+  'عمالي': { color: 'var(--color-accent-500)', bgClass: 'bg-accent-500' },
+  'جزائي': { color: 'var(--color-navy-300)', bgClass: 'bg-navy-300' },
+  'أحوال شخصية': { color: 'var(--color-primary-300)', bgClass: 'bg-primary-300' },
+  'عام': { color: '#6366f1', bgClass: 'bg-indigo-500' },
+  'إداري': { color: '#f59e0b', bgClass: 'bg-amber-500' },
+};
 
 const MemoizedBarChart = React.memo(({ data }: { data: any[] }) => (
   <ResponsiveContainer width="100%" height="100%">
@@ -115,6 +117,23 @@ export default function Dashboard() {
     { title: "قضايا قيد الدراسة", value: cases.filter(c => c.status === 'تحت الدراسة').length, icon: Clock, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20" },
     { title: "قضايا منتهية", value: cases.filter(c => c.status === 'مغلقة').length, icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
   ], [cases, clients]);
+
+  const dynamicCategoryData = useMemo(() => {
+    if (cases.length === 0) {
+      return Object.entries(CATEGORY_COLORS).map(([name, c]) => ({
+        name, value: 0, color: c.color, bgClass: c.bgClass,
+      }));
+    }
+    const counts: Record<string, number> = {};
+    cases.forEach(c => { counts[c.type] = (counts[c.type] || 0) + 1; });
+    const total = cases.length;
+    return Object.entries(counts).map(([name, count]) => ({
+      name,
+      value: Math.round((count / total) * 100),
+      color: CATEGORY_COLORS[name]?.color || '#94a3b8',
+      bgClass: CATEGORY_COLORS[name]?.bgClass || 'bg-slate-400',
+    }));
+  }, [cases]);
 
   return (
     <motion.div 
@@ -241,9 +260,9 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 h-[300px] flex flex-col items-center">
-            <MemoizedPieChart data={categoryData} />
+            <MemoizedPieChart data={dynamicCategoryData} />
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 w-full">
-              {categoryData.map((item) => (
+              {dynamicCategoryData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <div className={cn("w-2 h-2 rounded-full", item.bgClass)} />
                   <span className="text-xs text-slate-500 dark:text-slate-400">{item.name}</span>

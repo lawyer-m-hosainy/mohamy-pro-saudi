@@ -3,6 +3,7 @@ import path from "node:path";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { encryptField } from "../src/lib/encryption";
 
 const DEMO_TENANT_ID = "demo-tenant";
 
@@ -26,9 +27,9 @@ function buildDemoClients() {
     tenantId: DEMO_TENANT_ID,
     type: i % 2 === 0 ? "منشأة" : "فرد",
     name,
-    commercialRegistration: i % 2 === 0 ? `1010${100000 + i}` : undefined,
-    nationalId: i % 2 !== 0 ? `10${22334455 + i}` : undefined,
-    vatNumber: i % 2 === 0 ? `3000${12345600000 + i}` : undefined,
+    commercialRegistration: i % 2 === 0 ? encryptField(`1010${100000 + i}`) : undefined,
+    nationalId: i % 2 !== 0 ? encryptField(`10${22334455 + i}`) : undefined,
+    vatNumber: i % 2 === 0 ? encryptField(`3000${12345600000 + i}`) : undefined,
     phone: `+9665${50000000 + i}`,
     email: `client${i + 1}@example.com`,
   }));
