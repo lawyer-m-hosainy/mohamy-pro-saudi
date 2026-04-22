@@ -29,7 +29,49 @@ interface FinanceState {
 export const useFinanceStore = create<FinanceState>((set) => ({
   expenses: [],
   timeEntries: [],
-  receivables: [],
+  receivables: [
+    {
+      id: "REC-99120",
+      clientId: "C-177617",
+      clientName: "شركة العزم للمقاولات",
+      caseId: "C-152468",
+      outstandingAmount: 25000,
+      dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days past due
+      status: "متأخر",
+      isReconciled: false,
+      actions: []
+    },
+    {
+      id: "REC-44321",
+      clientId: "C-334411",
+      clientName: "أحمد عبدالله العقاري",
+      caseId: "C-998822",
+      outstandingAmount: 120000,
+      dueDate: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000).toISOString(), // 65 days past due
+      status: "متأخر",
+      isReconciled: false,
+      actions: [
+        {
+          id: "CA-1",
+          receivableId: "REC-44321",
+          type: "إنذار قانوني",
+          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          createdBy: "النظام",
+          notes: "تم إرسال إنذار قانوني نهائي قبل الرفع لمحكمة التنفيذ"
+        }
+      ]
+    },
+    {
+      id: "REC-11223",
+      clientId: "C-556677",
+      clientName: "مؤسسة الرواد المحدودة",
+      outstandingAmount: 15000,
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+      status: "نشط",
+      isReconciled: false,
+      actions: []
+    }
+  ],
   trustAccounts: [],
   pricingModels: [],
 
