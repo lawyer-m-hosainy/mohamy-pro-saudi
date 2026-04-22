@@ -108,11 +108,11 @@ export default function Enforcement() {
         <div className="flex items-center gap-3">
           <Badge className="bg-primary-100 text-primary-700 hidden sm:inline-flex">قسم جديد</Badge>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                <Plus size={16} />
-                إضافة ملف تنفيذ
-              </Button>
+            <DialogTrigger 
+              render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}
+            >
+              <Plus size={16} />
+              إضافة ملف تنفيذ
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
