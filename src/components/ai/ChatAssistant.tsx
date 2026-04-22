@@ -4,7 +4,7 @@ import { MessageSquare, X, Send, Bot, User, Loader2, Maximize2, Minimize2 } from
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getLegalAssistantResponse } from "@/services/geminiService";
+import { getLegalAssistantResponse } from "@/services/ai";
 import { cn } from "@/lib/utils";
 
 interface Message {

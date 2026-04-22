@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, FileSearch, ListChecks, Scale, Loader2, Download, Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { analyzeLegalDocument } from "@/services/geminiService";
+import { analyzeLegalDocument } from "@/services/ai";
 
 export default function AIDocumentAnalyzer() {
   const [content, setContent] = useState("");

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sparkles, Download, Save, History, Wand2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { draftLegalDocument } from "@/services/geminiService";
+import { draftLegalDocument } from "@/services/ai";
 import { useCLMStore } from "@/store/useCLMStore";
 
 export default function Contracts() {

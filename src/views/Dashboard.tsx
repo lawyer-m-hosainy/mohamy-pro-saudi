@@ -8,7 +8,7 @@ import { useAnalyticsStore } from "@/store/useAnalyticsStore";
 import { useInvoicesStore } from "@/store/useInvoicesStore";
 import { cn } from "@/lib/utils";
 import React, { useState, useMemo, useEffect } from "react";
-import { draftLegalDocument } from "@/services/geminiService";
+import { draftLegalDocument } from "@/services/ai";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
