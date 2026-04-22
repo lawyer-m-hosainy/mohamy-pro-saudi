@@ -13,6 +13,7 @@ interface FinanceState {
   addExpense: (expense: Expense) => void;
   setTimeEntries: (entries: TimeEntry[]) => void;
   setReceivables: (receivables: ReceivableAccount[]) => void;
+  addReceivable: (receivable: ReceivableAccount) => void;
   addCollectionAction: (receivableId: string, action: ReceivableAccount['actions'][number]) => void;
   reconcileReceivable: (receivableId: string) => void;
   closeReceivable: (receivableId: string) => void;
@@ -89,6 +90,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
   addExpense: (expense) => set((state) => ({ expenses: [expense, ...state.expenses] })),
   setTimeEntries: (timeEntries) => set({ timeEntries }),
   setReceivables: (receivables) => set({ receivables }),
+  addReceivable: (receivable) => set((state) => ({ receivables: [receivable, ...state.receivables] })),
   
   addCollectionAction: (receivableId, action) => set((state) => ({
     receivables: state.receivables.map((r) =>

@@ -1,13 +1,15 @@
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { AlertTriangle, BarChart3, FileWarning, HandCoins } from "lucide-react";
+import { AlertTriangle, BarChart3, FileWarning, HandCoins, Plus } from "lucide-react";
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function daysPastDue(dueDate: string) {
   const due = new Date(dueDate).getTime();
@@ -30,7 +32,16 @@ export default function Collections() {
   const addCollectionAction = useFinanceStore((state) => state.addCollectionAction);
   const reconcileReceivable = useFinanceStore((state) => state.reconcileReceivable);
   const closeReceivable = useFinanceStore((state) => state.closeReceivable);
+  const addReceivable = useFinanceStore((state) => state.addReceivable);
   const addAuditLog = useUIStore((state) => state.addAuditLog);
+
+  // Form State
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newRec, setNewRec] = useState({
+    clientName: "",
+    amount: "",
+    dueDate: "",
+  });
 
   const aging = useMemo(() => {
     const buckets = { Current: 0, "1-30": 0, "31-60": 0, "61-90": 0, "90+": 0 } as Record<string, number>;
@@ -86,6 +97,33 @@ export default function Collections() {
     toast.success("تم إغلاق الملف المالي");
   };
 
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRec.clientName || !newRec.amount || !newRec.dueDate) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+    
+    addReceivable({
+      id: `REC-${Math.floor(Math.random() * 90000)}`,
+      clientId: `C-${Math.floor(Math.random() * 90000)}`,
+      clientName: newRec.clientName,
+      caseId: `C-${Math.floor(Math.random() * 90000)}`,
+      totalAmount: Number(newRec.amount),
+      collectedAmount: 0,
+      outstandingAmount: Number(newRec.amount),
+      dueDate: new Date(newRec.dueDate).toISOString(),
+      createdAt: new Date().toISOString(),
+      status: "مفتوح",
+      isReconciled: false,
+      actions: []
+    });
+    
+    toast.success("تم إضافة المطالبة بنجاح");
+    setIsAddOpen(false);
+    setNewRec({ clientName: "", amount: "", dueDate: "" });
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -93,7 +131,50 @@ export default function Collections() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">التحصيل والذمم</h1>
           <p className="text-slate-500 mt-1">إدارة المطالبات، الإنذارات، جداول السداد والتسويات مع ضوابط مالية.</p>
         </div>
-        <Badge className="bg-primary-100 text-primary-700">A/R</Badge>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-primary-100 text-primary-700 hidden sm:inline-flex">A/R</Badge>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}>
+              <Plus size={16} />
+              إضافة مطالبة
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>إضافة مطالبة مالية جديدة</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اسم العميل (المدين)</label>
+                  <Input 
+                    placeholder="مثال: شركة العزم" 
+                    value={newRec.clientName}
+                    onChange={(e) => setNewRec(prev => ({...prev, clientName: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">مبلغ المطالبة (ريال)</label>
+                  <Input 
+                    type="number" 
+                    placeholder="25000" 
+                    value={newRec.amount}
+                    onChange={(e) => setNewRec(prev => ({...prev, amount: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">تاريخ الاستحقاق (Due Date)</label>
+                  <Input 
+                    type="date" 
+                    value={newRec.dueDate}
+                    onChange={(e) => setNewRec(prev => ({...prev, dueDate: e.target.value}))}
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white mt-4">
+                  إضافة وإصدار مطالبة
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
