@@ -25,6 +25,7 @@ interface ComplianceState {
   setComplianceIssues: (issues: ComplianceIssue[]) => void;
   setRegulatoryObligations: (obligations: RegulatoryObligation[]) => void;
   setCompliance: (compliance: ComplianceRecord[]) => void;
+  addComplianceRecord: (record: ComplianceRecord) => void;
   setPrecedents: (precedents: LegalPrecedent[]) => void;
   setQAReviews: (reviews: QAReview[]) => void;
   addQAReview: (review: QAReview) => void;
@@ -85,6 +86,7 @@ export const useComplianceStore = create<ComplianceState>((set) => ({
   setComplianceIssues: (complianceIssues) => set({ complianceIssues }),
   setRegulatoryObligations: (regulatoryObligations) => set({ regulatoryObligations }),
   setCompliance: (compliance) => set({ compliance }),
+  addComplianceRecord: (record) => set((state) => ({ compliance: [record, ...state.compliance] })),
   setPrecedents: (precedents) => set({ precedents }),
   setQAReviews: (qaReviews) => set({ qaReviews }),
   addQAReview: (review) =>

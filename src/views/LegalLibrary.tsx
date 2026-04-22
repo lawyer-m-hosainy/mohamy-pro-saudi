@@ -213,7 +213,8 @@ export default function LegalLibrary() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </motion.div>
   );

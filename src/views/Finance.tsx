@@ -163,7 +163,7 @@ export default function Finance() {
 
   // Use useCallback so that MemoizedInvoiceRow dependencies don't change
   const handleUpdateStatus = useCallback((id: string, status: string) => {
-    updateInvoiceStatus(id, status);
+    updateInvoiceStatus(id, status as "مدفوعة" | "غير مدفوعة" | "مسودة");
   }, [updateInvoiceStatus]);
 
   const handleRemove = useCallback((id: string) => {

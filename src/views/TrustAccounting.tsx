@@ -185,13 +185,13 @@ export default function TrustAccounting() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        disabled={account.status === 'مصروف'}
+                        disabled={account.status === 'تم الصرف'}
                         onClick={() => {
                           disburseTrustAccount(account.id);
                           toast.success(`تم تنفيذ صرف أمانة ${account.clientName}`);
                         }}
                       >
-                        {account.status === 'مصروف' ? 'تم الصرف' : 'صرف'}
+                        {account.status === 'تم الصرف' ? 'تم الصرف' : 'صرف'}
                       </Button>
                     </TableCell>
                   </TableRow>

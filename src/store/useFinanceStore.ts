@@ -61,7 +61,7 @@ export const useFinanceStore = create<FinanceState>((set) => ({
     set((state) => ({ trustAccounts: [account, ...state.trustAccounts] })),
   disburseTrustAccount: (accountId) => set((state) => ({
     trustAccounts: state.trustAccounts.map((a) =>
-      a.id === accountId ? { ...a, status: "مصروف" } : a
+      a.id === accountId ? { ...a, status: "تم الصرف" } : a
     ),
   })),
   addTimeEntry: (entry) =>
