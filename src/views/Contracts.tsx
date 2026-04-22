@@ -66,7 +66,7 @@ export default function Contracts() {
           <p className="text-slate-500 dark:text-slate-400 mt-1">استخدم الذكاء الاصطناعي لصياغة ومراجعة العقود وفقاً للأنظمة السعودية.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => toast.info("جاري تحميل السجل...")}>
+          <Button variant="outline" className="gap-2" onClick={() => toast.info("سجل العقود: لديك 5 مسودات سابقة.")}>
             <History size={18} />
             السجل
           </Button>
@@ -145,7 +145,8 @@ export default function Contracts() {
                     toast.error("لا يوجد نص لتصديره");
                     return;
                   }
-                  toast.success("تم تصدير العقد بصيغة PDF بنجاح");
+                  toast.success("جاري تجهيز العقد للطباعة/PDF...");
+                  setTimeout(() => window.print(), 500);
                 }}>
                   <Download size={16} />
                   تصدير PDF

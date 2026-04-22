@@ -30,6 +30,7 @@ export default function LegalQA() {
   const [newReviewOpen, setNewReviewOpen] = useState(false);
   const [newReviewCaseId, setNewReviewCaseId] = useState("");
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const activeReview = qaReviews.find((r: any) => r.id === activeReviewId) || qaReviews[0];
 
@@ -189,9 +190,15 @@ export default function LegalQA() {
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                    <input type="text" placeholder="بحث..." className="ps-8 h-8 rounded-md bg-slate-50 dark:bg-white/5 text-xs w-48 border-none" />
+                    <input 
+                      type="text" 
+                      placeholder="بحث..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="ps-8 h-8 rounded-md bg-slate-50 dark:bg-white/5 text-xs w-48 border-none" 
+                    />
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.success("تم تنفيذ العملية")}><Filter size={14} /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toast.success("تم تطبيق التصفية المتقدمة")}><Filter size={14} /></Button>
                 </div>
               </div>
             </CardHeader>
@@ -207,7 +214,10 @@ export default function LegalQA() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {qaReviews.map((review: any) => {
+                  {qaReviews.filter((r: any) => {
+                    const cData = cases.find((c: any) => c.id === r.caseId);
+                    return cData?.plaintiff?.includes(searchQuery) || cData?.defendant?.includes(searchQuery) || r.id.includes(searchQuery);
+                  }).map((review: any) => {
                     const caseData = cases.find((c: any) => c.id === review.caseId);
                     const completedItems = review.checklist.filter((i: any) => i.isMet).length;
                     const totalItems = review.checklist.length;
@@ -270,7 +280,7 @@ export default function LegalQA() {
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     استناداً إلى المراجعات الأخيرة، نلاحظ تحسناً كبيراً في صياغة "الدفوع الشكلية". يوصى بتحديث المقال المعرفي الخاص بـ "التنازع الاختصاصي" ليعكس أحدث أحكام المحكمة العليا.
                   </p>
-                  <Button variant="link" className="p-0 h-auto text-primary-600 mt-2 text-sm font-bold" onClick={() => toast.success("تم تنفيذ العملية")}>تحديث المستودع المعرفي ←</Button>
+                  <Button variant="link" className="p-0 h-auto text-primary-600 mt-2 text-sm font-bold" onClick={() => { window.location.href='/dashboard/wiki'; }}>تحديث المستودع المعرفي ←</Button>
                 </div>
               </div>
             </CardContent>

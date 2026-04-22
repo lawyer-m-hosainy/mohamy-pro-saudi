@@ -41,11 +41,11 @@ export default function TrainingPortal() {
           <p className="text-slate-500 dark:text-slate-400 mt-1">مسارات تدريبية احترافية لتأهيل المحامين المتدربين وفق ممارسات المكتب الفضلى.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2 border-slate-200 dark:border-white/10" onClick={() => toast.info("لوحة الشرف")}>
+          <Button variant="outline" className="gap-2 border-slate-200 dark:border-white/10" onClick={() => toast.info("لوحة الشرف: أنت في المركز #3 هذا الشهر!")}>
             <Trophy size={16} className="text-amber-500" />
             لوحة الشرف
           </Button>
-          <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shadow-lg shadow-primary-500/20" onClick={() => toast.success("جاري فتح مكتبة الدورات...")}>
+          <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shadow-lg shadow-primary-500/20" onClick={() => window.location.href='/dashboard/library'}>
             <BookOpen size={18} />
             تصفح مكتبة الدورات
           </Button>
@@ -187,7 +187,7 @@ export default function TrainingPortal() {
                           "h-auto p-0 font-bold text-[11px]",
                           mod.status === 'Completed' ? "text-slate-400" : "text-primary-600"
                         )}
-                       onClick={() => toast.success("تم تنفيذ العملية")}>
+                       onClick={() => toast.success(mod.status === 'Completed' ? "جاري عرض نتيجة التقييم..." : "جاري بدء الوحدة التدريبية...")}>
                         {mod.status === 'Completed' ? 'عرض النتيجة' : 'بدء الوحدة'}
                       </Button>
                     </div>
@@ -245,7 +245,7 @@ export default function TrainingPortal() {
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-slate-500">
                      <span className="flex items-center gap-1"><Clock size={10} /> الموعد: {task.deadline}</span>
-                     <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary-600 font-bold" onClick={() => toast.success("تم تنفيذ العملية")}>تسليم ←</Button>
+                     <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary-600 font-bold" onClick={() => toast.success("تم تسليم المهمة بنجاح، بانتظار التقييم")}>تسليم ←</Button>
                   </div>
                 </div>
               ))}

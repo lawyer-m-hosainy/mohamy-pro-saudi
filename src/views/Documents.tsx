@@ -37,7 +37,6 @@ export default function Documents() {
     { id: "d3", name: "مذكرة جوابية - عمالي.docx", case: "C-2024-003", type: "مذكرة", size: "500 KB", date: "2024-04-10", uploadedBy: "أحمد المحامي" },
     { id: "d4", name: "حكم ابتدائي - قضية تجارية.pdf", case: "C-2024-001", type: "حكم", size: "3.2 MB", date: "2024-04-12", uploadedBy: "خالد الشريك" },
   ]);
-  ]);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
@@ -168,7 +167,7 @@ export default function Documents() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button variant="outline" className="gap-2" onClick={() => toast.success("تم تفعيل التصفية")}>
+              <Button variant="outline" className="gap-2" onClick={() => toast.info("قريباً: التصفية المتقدمة حسب تاريخ الرفع والباحث")}>
                 <Filter size={16} />
                 تصفية
               </Button>

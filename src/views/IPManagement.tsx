@@ -1,4 +1,4 @@
-﻿import { motion } from "motion/react";
+import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIPStore } from '@/store/useIPStore';
 
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 export default function IPManagement() {
   const ipRecords = useIPStore((state) => state.ipRecords);
+  const addIPRecord = useIPStore((state) => state.addIPRecord);
+  const renewIPRecord = useIPStore((state) => state.renewIPRecord);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
 
   return (
     <motion.div 
@@ -22,10 +31,41 @@ export default function IPManagement() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إدارة الملكية الفكرية</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">تتبع العلامات التجارية، براءات الاختراع، وحقوق المؤلف للعملاء.</p>
         </div>
-        <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => toast.success("تم تنفيذ العملية")}>
+        <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => setAddOpen(true)}>
           <Plus size={18} />
           تسجيل ملكية فكرية
         </Button>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent className="dark:bg-navy-900 dark:text-white">
+            <DialogHeader>
+              <DialogTitle>تسجيل ملكية فكرية جديدة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>الاسم / العنوان</Label>
+                <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="dark:bg-white/5 dark:border-white/10" placeholder="مثال: العلامة التجارية للمكتب" />
+              </div>
+              <Button onClick={() => {
+                if(!newTitle) {
+                  toast.error("يرجى إدخال الاسم");
+                  return;
+                }
+                addIPRecord({
+                  id: `IP-${Date.now()}`,
+                  title: newTitle,
+                  type: 'علامة تجارية',
+                  owner: 'العميل',
+                  registrationNumber: `REG-${Math.floor(Math.random() * 10000)}`,
+                  expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
+                  status: 'تحت الفحص'
+                });
+                setAddOpen(false);
+                setNewTitle("");
+                toast.success("تم تسجيل الملكية الفكرية");
+              }} className="w-full bg-primary-600 hover:bg-primary-700 text-white">حفظ في السجل</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -104,7 +144,10 @@ export default function IPManagement() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-end">
-                    <Button variant="ghost" size="sm" onClick={() => toast.success("تم تنفيذ العملية")}>تجديد</Button>
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      renewIPRecord(record.id);
+                      toast.success("تم تجديد الملكية الفكرية");
+                    }}>تجديد</Button>
                   </TableCell>
                 </TableRow>
               ))}

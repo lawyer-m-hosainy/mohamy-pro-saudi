@@ -14,6 +14,8 @@ interface IPState {
   setIPOppositions: (oppositions: IPOpposition[]) => void;
   setIPEnforcementActions: (actions: IPEnforcementAction[]) => void;
   setIPRecords: (records: IPRecord[]) => void;
+  addIPRecord: (record: IPRecord) => void;
+  renewIPRecord: (id: string) => void;
 
   updateIPRenewalStatus: (id: string, status: IPRenewal['status']) => void;
   updateIPOppositionStatus: (id: string, status: IPOpposition['status']) => void;
@@ -32,6 +34,12 @@ export const useIPStore = create<IPState>((set) => ({
   setIPOppositions: (ipOppositions) => set({ ipOppositions }),
   setIPEnforcementActions: (ipEnforcementActions) => set({ ipEnforcementActions }),
   setIPRecords: (ipRecords) => set({ ipRecords }),
+  addIPRecord: (record) => set((state) => ({ ipRecords: [...state.ipRecords, record] })),
+  renewIPRecord: (id) => set((state) => ({
+    ipRecords: state.ipRecords.map((r) =>
+      r.id === id ? { ...r, status: 'مسجلة' as const, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } : r
+    ),
+  })),
 
   updateIPRenewalStatus: (id, status) => set((state) => ({
     ipRenewals: state.ipRenewals.map((r) => (r.id === id ? { ...r, status, paid: status === 'مكتمل' ? true : r.paid } : r)),

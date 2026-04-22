@@ -73,7 +73,7 @@ export default function BDDashboard() {
             <Filter size={16} />
             تصفية
           </Button>
-          <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shadow-lg shadow-primary-500/20 transition-all hover:scale-[1.02]">
+          <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shadow-lg shadow-primary-500/20 transition-all hover:scale-[1.02]" onClick={() => toast.info("سيتم فتح نافذة إنشاء العرض")}>
             <Plus size={18} />
             إنشاء عرض سعر جديد
           </Button>
@@ -275,7 +275,7 @@ export default function BDDashboard() {
           <p className="text-slate-500 text-sm mb-6 max-w-[250px]">
             هل تحتاج إلى نموذج تسعير مخصص؟ يمكنك إنشاء نماذج جديدة تربط بين الساعات والمخرجات.
           </p>
-          <Button variant="outline" className="border-primary-500 text-primary-600 hover:bg-primary-50">بدء الإعداد</Button>
+          <Button variant="outline" className="border-primary-500 text-primary-600 hover:bg-primary-50" onClick={() => toast.info("قريباً: إضافة نماذج التسعير الديناميكية")}>بدء الإعداد</Button>
         </Card>
       </div>
     </motion.div>

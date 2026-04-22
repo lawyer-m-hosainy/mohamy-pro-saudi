@@ -12,11 +12,15 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useFinanceStore } from '@/store/useFinanceStore';
+import { useCasesStore } from '@/store/useCasesStore';
 
 export default function Expenses() {
   const expenses = useFinanceStore((state) => state.expenses);
   const addExpense = useFinanceStore((state) => state.addExpense);
+  const cases = useCasesStore((state) => state.cases) || [];
   const [searchQuery, setSearchQuery] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newExpense, setNewExpense] = useState({ caseId: "", category: "", amount: "", description: "" });
 
   const filteredExpenses = expenses.filter(exp => 
     exp.caseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -45,11 +49,11 @@ export default function Expenses() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إدارة المصروفات</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">تتبع تكاليف القضايا، الرسوم القضائية، والمصروفات النثرية.</p>
         </div>
-        <Dialog>
-          <DialogTrigger render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => setDialogOpen(true)}>
             <Plus size={18} />
             تسجيل مصروف جديد
-          </DialogTrigger>
+          </Button>
           <DialogContent className="dark:bg-navy-900 dark:text-white">
             <DialogHeader>
               <DialogTitle>تسجيل مصروف جديد</DialogTitle>
@@ -57,53 +61,62 @@ export default function Expenses() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="case">القضية</Label>
-                <Select>
+                <Select value={newExpense.caseId} onValueChange={(v) => v && setNewExpense(prev => ({ ...prev, caseId: v }))}>
                   <SelectTrigger className="dark:bg-navy-800">
                     <SelectValue placeholder="اختر القضية" />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-navy-800">
-                    <SelectItem value="c1">شركة الراجحي ضد شركة النهضة</SelectItem>
-                    <SelectItem value="c2">الحق العام ضد خالد الشمري</SelectItem>
+                    {cases.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.plaintiff} ضد {c.defendant}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="category">التصنيف</Label>
-                <Select>
+                <Select value={newExpense.category} onValueChange={(v) => v && setNewExpense(prev => ({ ...prev, category: v }))}>
                   <SelectTrigger className="dark:bg-navy-800">
                     <SelectValue placeholder="اختر التصنيف" />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-navy-800">
-                    <SelectItem value="court">رسوم قضائية</SelectItem>
-                    <SelectItem value="expert">أتعاب خبراء</SelectItem>
-                    <SelectItem value="travel">تنقلات</SelectItem>
-                    <SelectItem value="other">أخرى</SelectItem>
+                    <SelectItem value="رسوم قضائية">رسوم قضائية</SelectItem>
+                    <SelectItem value="أتعاب خبراء">أتعاب خبراء</SelectItem>
+                    <SelectItem value="تنقلات">تنقلات</SelectItem>
+                    <SelectItem value="أخرى">أخرى</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="amount">المبلغ (ر.س)</Label>
-                <Input id="amount" type="number" className="dark:bg-navy-800" />
+                <Input id="amount" type="number" className="dark:bg-navy-800" value={newExpense.amount} onChange={(e) => setNewExpense(prev => ({ ...prev, amount: e.target.value }))} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="desc">الوصف</Label>
-                <Input id="desc" className="dark:bg-navy-800" />
+                <Input id="desc" className="dark:bg-navy-800" value={newExpense.description} onChange={(e) => setNewExpense(prev => ({ ...prev, description: e.target.value }))} />
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" className="dark:border-white/10" onClick={() => toast.info("تم الإلغاء")}>إلغاء</Button>
+              <Button variant="outline" className="dark:border-white/10" onClick={() => setDialogOpen(false)}>إلغاء</Button>
               <Button className="bg-primary-500 text-white" onClick={() => {
+                const amountNum = parseFloat(newExpense.amount);
+                if (!newExpense.caseId || !newExpense.category || isNaN(amountNum) || amountNum <= 0) {
+                  toast.error("يرجى ملء جميع الحقول وإدخال مبلغ صحيح");
+                  return;
+                }
+                const caseData = cases.find((c: any) => c.id === newExpense.caseId);
                 addExpense({
                   id: `EXP-${Date.now()}`,
-                  caseId: 'C-1001',
-                  caseName: 'شركة الراجحي ضد شركة النهضة',
-                  category: 'رسوم قضائية',
-                  amount: 0,
+                  caseId: newExpense.caseId,
+                  caseName: caseData ? `${caseData.plaintiff} ضد ${caseData.defendant}` : newExpense.caseId,
+                  category: newExpense.category as 'رسوم قضائية' | 'أتعاب خبراء' | 'تنقلات' | 'أخرى',
+                  amount: amountNum,
                   date: new Date().toISOString().split('T')[0],
                   status: 'معلق',
-                  description: '',
+                  description: newExpense.description,
                 });
                 toast.success("تم حفظ المصروف بنجاح");
+                setDialogOpen(false);
+                setNewExpense({ caseId: "", category: "", amount: "", description: "" });
               }}>حفظ المصروف</Button>
             </div>
           </DialogContent>

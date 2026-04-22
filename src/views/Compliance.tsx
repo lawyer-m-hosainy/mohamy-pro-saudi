@@ -8,8 +8,16 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useComplianceStore } from '@/store/useComplianceStore';
 
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
 export default function Compliance() {
   const compliance = useComplianceStore((state) => state.compliance);
+  const addComplianceRecord = useComplianceStore((state) => state.addComplianceRecord);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
 
   return (
     <motion.div 
@@ -22,10 +30,40 @@ export default function Compliance() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">الامتثال والحوكمة</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">متابعة التراخيص، السجلات التجارية، ومتطلبات الحوكمة القانونية.</p>
         </div>
-        <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
+        <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => setAddOpen(true)}>
           <Plus size={18} />
           إضافة سجل امتثال
         </Button>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent className="dark:bg-navy-900 dark:text-white">
+            <DialogHeader>
+              <DialogTitle>إضافة سجل امتثال جديد</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>عنوان السجل</Label>
+                <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="dark:bg-white/5 dark:border-white/10" placeholder="مثال: رخصة البلدية" />
+              </div>
+              <Button onClick={() => {
+                if(!newTitle) {
+                  toast.error("يرجى إدخال العنوان");
+                  return;
+                }
+                addComplianceRecord({
+                  id: `COMP-${Date.now()}`,
+                  title: newTitle,
+                  type: 'رخصة',
+                  expiryDate: new Date(Date.now() + 180*24*60*60*1000).toISOString().split('T')[0],
+                  status: 'ساري',
+                  reminderDays: 30
+                });
+                setAddOpen(false);
+                setNewTitle("");
+                toast.success("تم إضافة سجل الامتثال");
+              }} className="w-full bg-primary-600 hover:bg-primary-700 text-white">حفظ السجل</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -108,7 +146,7 @@ export default function Compliance() {
                   </TableCell>
                   <TableCell>قبل {record.reminderDays} يوم</TableCell>
                   <TableCell className="text-end">
-                    <Button variant="ghost" size="sm">تعديل</Button>
+                    <Button variant="ghost" size="sm" onClick={() => toast.info("فتح نافذة تعديل السجل...")}>تعديل</Button>
                   </TableCell>
                 </TableRow>
               ))}

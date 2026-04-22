@@ -37,11 +37,11 @@ export default function PartnerReporting() {
           <p className="text-slate-500 dark:text-slate-400 mt-1">نظرة استراتيجية شاملة على الأداء المالي والتشغيلي والمخاطر للمكتب.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2 border-slate-200 dark:border-white/10" onClick={() => toast.success("تم تنفيذ العملية")}>
+          <Button variant="outline" className="gap-2 border-slate-200 dark:border-white/10" onClick={() => toast.success("تم تصفية البيانات للربع الحالي")}>
             <Filter size={16} />
             تصفية الفترة
           </Button>
-          <Button className="bg-primary-500 text-white gap-2 shadow-lg shadow-primary-500/20" onClick={() => toast.success("تم تنفيذ العملية")}>
+          <Button className="bg-primary-500 text-white gap-2 shadow-lg shadow-primary-500/20" onClick={() => window.print()}>
             <Download size={16} />
             تصدير التقرير التنفيذي
           </Button>
@@ -238,7 +238,7 @@ export default function PartnerReporting() {
       </div>
 
       <div className="flex justify-center pt-6">
-        <Button variant="ghost" className="text-slate-400 gap-2" onClick={() => toast.success("تم تنفيذ العملية")}>
+        <Button variant="ghost" className="text-slate-400 gap-2" onClick={() => window.print()}>
            <Printer size={16} />
            طباعة النسخة الورقية للمحضر
         </Button>

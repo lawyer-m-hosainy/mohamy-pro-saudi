@@ -65,7 +65,7 @@ export default function Landing() {
               نقدم استشارات قانونية متكاملة وتمثيل قضائي احترافي للشركات والأفراد، معتمدين على أحدث التقنيات لضمان الشفافية وسرعة الإنجاز في جميع محاكم المملكة.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-              <Button size="lg" className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white h-14 px-8 text-lg rounded-full shadow-xl shadow-primary-500/20 transition-transform hover:scale-105">
+              <Button size="lg" className="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white h-14 px-8 text-lg rounded-full shadow-xl shadow-primary-500/20 transition-transform hover:scale-105" onClick={() => window.location.href='#contact'}>
                 طلب استشارة مجانية
                 <ArrowLeft className="mr-2 w-5 h-5" />
               </Button>
@@ -235,7 +235,7 @@ export default function Landing() {
           <p className="text-primary-100 text-lg mb-10 max-w-2xl mx-auto">
             تواصل معنا اليوم للحصول على استشارة قانونية مبدئية. فريقنا جاهز لدراسة قضيتك وتقديم أفضل الحلول القانونية.
           </p>
-          <Button size="lg" className="bg-white text-primary-600 hover:bg-slate-50 h-14 px-10 text-lg rounded-full shadow-xl">
+          <Button size="lg" className="bg-white text-primary-600 hover:bg-slate-50 h-14 px-10 text-lg rounded-full shadow-xl" onClick={() => window.location.href='#contact'}>
             تواصل معنا الآن
           </Button>
         </div>

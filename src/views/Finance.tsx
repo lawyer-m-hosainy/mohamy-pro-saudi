@@ -126,7 +126,10 @@ const MemoizedInvoiceRow = React.memo(({
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-white/5 p-4 flex justify-end gap-3">
-            <Button variant="outline" className="gap-2 dark:border-white/10" onClick={() => toast.success("جاري تحميل الفاتورة ك PDF...")}>
+            <Button variant="outline" className="gap-2 dark:border-white/10" onClick={() => {
+              toast.success("جاري تصدير الفاتورة كـ PDF...");
+              setTimeout(() => window.print(), 500);
+            }}>
               <Download size={16} />
               تحميل PDF
             </Button>
@@ -274,7 +277,16 @@ export default function Finance() {
       <Card className="border-none shadow-sm dark:bg-navy-800">
         <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 dark:border-white/5 pb-4">
           <CardTitle className="text-lg font-bold text-navy-900 dark:text-white">آخر الفواتير الصادرة</CardTitle>
-          <Button variant="ghost" className="text-primary-600 dark:text-primary-400 text-sm" onClick={() => toast.success("جاري تصدير تقرير ZATCA...")}>تصدير تقرير ZATCA</Button>
+          <Button variant="ghost" className="text-primary-600 dark:text-primary-400 text-sm" onClick={() => {
+            const jsonContent = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(invoices, null, 2));
+            const link = document.createElement("a");
+            link.setAttribute("href", jsonContent);
+            link.setAttribute("download", "zatca_report.json");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success("تم تصدير تقرير ZATCA بنجاح");
+          }}>تصدير تقرير ZATCA</Button>
         </CardHeader>
         <CardContent className="p-0">
           <Table>

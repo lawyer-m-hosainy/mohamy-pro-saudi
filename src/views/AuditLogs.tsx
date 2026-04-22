@@ -21,7 +21,19 @@ export default function AuditLogs() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">سجل العمليات (Audit Logs)</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">تتبع كافة الأنشطة والتغييرات التي تتم على النظام لضمان الشفافية والأمن.</p>
         </div>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" onClick={() => {
+          const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
+            "المستخدم,العملية,الوحدة,التفاصيل,التوقيت,IP\n" + 
+            auditLogs.map(l => `${l.userName},${l.action},${l.module},${l.details},${l.timestamp},${l.ipAddress || '192.168.1.1'}`).join('\n');
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", "audit_logs.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success("تم تصدير سجل العمليات");
+        }}>
           <Download size={18} />
           تصدير السجل
         </Button>
