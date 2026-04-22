@@ -33,12 +33,21 @@ async function resetDemo() {
   const auth = getAuth(app);
   const db = getFirestore(app, cfg.firestoreDatabaseId);
 
+  console.log("Authenticating demo admin...");
   await signInWithEmailAndPassword(auth, email, password);
 
+  console.log("Cleaning up collections...");
   const deletedClients = await removeCollectionDocsByTenant(db, "clients", DEMO_TENANT_ID);
   const deletedCases = await removeCollectionDocsByTenant(db, "cases", DEMO_TENANT_ID);
+  const deletedInvoices = await removeCollectionDocsByTenant(db, "invoices", DEMO_TENANT_ID);
+  const deletedTeam = await removeCollectionDocsByTenant(db, "team", DEMO_TENANT_ID);
 
-  console.log(`Reset complete: deleted ${deletedClients} clients and ${deletedCases} cases for tenant ${DEMO_TENANT_ID}.`);
+  console.log(`Reset complete: 
+    - deleted ${deletedClients} clients 
+    - deleted ${deletedCases} cases
+    - deleted ${deletedInvoices} invoices
+    - deleted ${deletedTeam} team members
+    for tenant ${DEMO_TENANT_ID}.`);
 }
 
 resetDemo().catch((err) => {

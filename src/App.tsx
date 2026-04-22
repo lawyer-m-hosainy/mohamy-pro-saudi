@@ -138,6 +138,11 @@ export default function App() {
     // @ts-ignore - next-themes version mismatch with React 19 types
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <AuthProvider>
+        {import.meta.env.PROD && (
+          <div className="bg-primary-600 text-white text-[10px] py-1 text-center font-bold sticky top-0 z-[100] shadow-sm select-none">
+            بيئة العرض التجريبي - محامي برو (لأغراض الاستعراض فقط)
+          </div>
+        )}
         <Toaster richColors position="top-center" />
         <BrowserRouter>
           <ErrorBoundary fallbackModule="التطبيق الرئيسي">

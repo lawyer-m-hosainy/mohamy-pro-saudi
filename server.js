@@ -8,20 +8,38 @@ import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import admin from 'firebase-admin';
-
+import compression from 'compression';
+import { pinoHttp } from 'pino-http';
+import pino from 'pino';
 // Load environment variables
 dotenv.config();
-
+// Initialize Logger
+const logger = pino({
+    level: process.env.LOG_LEVEL || 'info',
+    formatters: {
+        level: (label) => {
+            return { level: label.toUpperCase() };
+        },
+    },
+    timestamp: pino.stdTimeFunctions.isoTime,
+});
 // Initialize Firebase Admin for token verification
 try {
-  admin.initializeApp();
-} catch (e) {
-  console.warn('Firebase Admin init warning:', e);
+    if (admin.apps.length === 0) {
+        admin.initializeApp();
+    }
+}
+catch (e) {
+    logger.warn('Firebase Admin init warning:', e);
 }
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Structured Logging Middleware
+app.use(pinoHttp({ logger }));
+// Compression
+app.use(compression());
 // Security and utility middlewares
 app.use(helmet({
     contentSecurityPolicy: {
@@ -32,11 +50,11 @@ app.use(helmet({
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "blob:", "https://firebasestorage.googleapis.com", "https://picsum.photos"],
             connectSrc: [
-                "'self'", 
-                "https://firebasestorage.googleapis.com", 
-                "https://identitytoolkit.googleapis.com", 
-                "https://securetoken.googleapis.com", 
-                "https://*.firebaseio.com", 
+                "'self'",
+                "https://firebasestorage.googleapis.com",
+                "https://identitytoolkit.googleapis.com",
+                "https://securetoken.googleapis.com",
+                "https://*.firebaseio.com",
                 "wss://*.firebaseio.com",
                 "https://firestore.googleapis.com"
             ]
@@ -49,8 +67,7 @@ app.use(helmet({
         preload: true
     }
 }));
-
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:5173', 'http://localhost:3000', 'https://mohamy-pro.com'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:5173', 'http://localhost:3000', 'https://mohamy-pro.onrender.com'];
 app.use(cors({
     origin: allowedOrigins
 }));
@@ -76,66 +93,59 @@ app.get('/api/health', (req, res) => {
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 const systemInstruction = 'أنت مساعد قانوني سعودي. الإجابة استرشادية ويجب مراجعتها من محامٍ مرخص.';
-
 // AI Security Middleware
 const sanitizeInput = (text) => {
-    if (!text) return '';
+    if (!text)
+        return '';
     return text.toString().replace(/<[^>]*>?/gm, ''); // Remove HTML/Script tags
 };
-
 const aiSecurityMiddleware = (req, res, next) => {
-    // 1. Logging
-    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    console.log(`[AI Request] IP: ${clientIp} | Time: ${new Date().toISOString()} | Path: ${req.baseUrl || req.path}`);
-
-    // 2. Length Validation & Sanitization
+    // Length Validation & Sanitization
     if (req.body.userMessage !== undefined) {
         const msg = String(req.body.userMessage);
-        if (msg.length > 5000) return res.status(400).json({ error: 'يجب أن يكون طول الرسالة أقل من 5000 حرف' });
+        if (msg.length > 5000)
+            return res.status(400).json({ error: 'يجب أن يكون طول الرسالة أقل من 5000 حرف' });
         req.body.userMessage = sanitizeInput(msg);
     }
     if (req.body.facts !== undefined) {
         const facts = String(req.body.facts);
-        if (facts.length > 10000) return res.status(400).json({ error: 'يجب أن يكون طول الوقائع أقل من 10000 حرف' });
+        if (facts.length > 10000)
+            return res.status(400).json({ error: 'يجب أن يكون طول الوقائع أقل من 10000 حرف' });
         req.body.facts = sanitizeInput(facts);
     }
     if (req.body.content !== undefined) {
         const content = String(req.body.content);
-        if (content.length > 50000) return res.status(400).json({ error: 'يجب أن يكون طول المحتوى أقل من 50000 حرف' });
+        if (content.length > 50000)
+            return res.status(400).json({ error: 'يجب أن يكون طول المحتوى أقل من 50000 حرف' });
         req.body.content = sanitizeInput(content);
     }
-
-    // 3. Response Timeout (30 seconds)
+    // Response Timeout (30 seconds)
     req.setTimeout(30000);
     res.setTimeout(30000, () => {
         if (!res.headersSent) {
             res.status(408).json({ error: 'انتهى وقت الطلب (Timeout)' });
         }
     });
-
     next();
 };
-
 app.use('/api/ai', async (req, res, next) => {
     // Auth Middleware to verify Firebase JWT
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'مطلوب مصادقة صالحة' });
     }
-
     const idToken = authHeader.split('Bearer ')[1];
     try {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
-        req.user = decodedToken; // contains uid
-        // You can fetch tenantId from Firestore here if needed, or pass it via headers securely
+        req.user = decodedToken;
         req.tenantId = req.headers['x-tenant-id'] || 'default';
         next();
-    } catch (error) {
-        console.error('Auth Token Error:', error.message);
+    }
+    catch (error) {
+        logger.error({ err: error }, 'Auth Token Error');
         return res.status(403).json({ error: 'التوكن غير صالح أو منتهي الصلاحية' });
     }
 }, aiSecurityMiddleware);
-
 // AI Endpoint Routing
 app.post('/api/ai/legal-assistant', aiRateLimiter, async (req, res) => {
     if (!ai) {
@@ -151,7 +161,7 @@ app.post('/api/ai/legal-assistant', aiRateLimiter, async (req, res) => {
         return res.status(200).json({ text: response.text || '' });
     }
     catch (error) {
-        console.error("AI Error:", error);
+        logger.error({ err: error }, "AI Error");
         return res.status(502).json({ error: 'AI upstream error' });
     }
 });
@@ -171,7 +181,7 @@ app.post('/api/ai/draft', aiRateLimiter, async (req, res) => {
         return res.status(200).json({ text: response.text || '' });
     }
     catch (error) {
-        console.error("AI Error:", error);
+        logger.error({ err: error }, "AI Error");
         return res.status(502).json({ error: 'AI upstream error' });
     }
 });
@@ -190,7 +200,7 @@ app.post('/api/ai/analyze', aiRateLimiter, async (req, res) => {
         return res.status(200).json({ text: response.text || '' });
     }
     catch (error) {
-        console.error("AI Error:", error);
+        logger.error({ err: error }, "AI Error");
         return res.status(502).json({ error: 'AI upstream error' });
     }
 });
@@ -203,13 +213,13 @@ if (fs.existsSync(distPath)) {
     });
 }
 else {
-    console.warn("⚠️ Warning: 'dist' folder not found. Frontend will not be served.");
+    logger.warn("'dist' folder not found. Frontend will not be served.");
     app.get('/', (req, res) => res.send('API is running. Frontend build (dist) not found.'));
 }
 // Start Server
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+    logger.info(`🚀 Server is running on port ${PORT}`);
     if (!GEMINI_API_KEY) {
-        console.warn('⚠️ Warning: GEMINI_API_KEY is not set. AI features will not work.');
+        logger.warn('⚠️ Warning: GEMINI_API_KEY is not set. AI features will not work.');
     }
 });
