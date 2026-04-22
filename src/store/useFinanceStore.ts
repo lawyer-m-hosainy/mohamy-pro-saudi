@@ -20,6 +20,9 @@ interface FinanceState {
   addTrustAccount: (account: TrustAccount) => void;
   disburseTrustAccount: (accountId: string) => void;
   addTimeEntry: (entry: TimeEntry) => void;
+  updateTimeEntry: (id: string, updates: Partial<TimeEntry>) => void;
+  deleteTimeEntry: (id: string) => void;
+  toggleTimeEntryBilledStatus: (id: string) => void;
   setPricingModels: (models: PricingModel[]) => void;
 }
 
@@ -63,5 +66,18 @@ export const useFinanceStore = create<FinanceState>((set) => ({
   })),
   addTimeEntry: (entry) =>
     set((state) => ({ timeEntries: [entry, ...state.timeEntries] })),
+  updateTimeEntry: (id, updates) => set((state) => ({
+    timeEntries: state.timeEntries.map((te) => 
+      te.id === id ? { ...te, ...updates } : te
+    )
+  })),
+  deleteTimeEntry: (id) => set((state) => ({
+    timeEntries: state.timeEntries.filter((te) => te.id !== id)
+  })),
+  toggleTimeEntryBilledStatus: (id) => set((state) => ({
+    timeEntries: state.timeEntries.map((te) =>
+      te.id === id ? { ...te, isBilled: !te.isBilled } : te
+    )
+  })),
   setPricingModels: (pricingModels) => set({ pricingModels }),
 }));

@@ -17,6 +17,9 @@ import { useTeamStore } from '@/store/useTeamStore';
 export default function TimeTracking() {
   const timeEntries = useFinanceStore((state) => state.timeEntries);
   const addTimeEntry = useFinanceStore((state) => state.addTimeEntry);
+  const updateTimeEntry = useFinanceStore((state) => state.updateTimeEntry);
+  const deleteTimeEntry = useFinanceStore((state) => state.deleteTimeEntry);
+  const toggleTimeEntryBilledStatus = useFinanceStore((state) => state.toggleTimeEntryBilledStatus);
   const cases = useCasesStore((state) => state.cases) ?? [];
   const teamMembers = useTeamStore((state) => state.teamMembers) ?? [];
   const [isTracking, setIsTracking] = useState(false);
@@ -27,6 +30,7 @@ export default function TimeTracking() {
   const [manualDate, setManualDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [manualHours, setManualHours] = useState("1");
   const [manualMinutes, setManualMinutes] = useState("0");
+  const [editEntryId, setEditEntryId] = useState<string | null>(null);
   
   const [timerSeconds, setTimerSeconds] = useState(0);
 
@@ -79,18 +83,29 @@ export default function TimeTracking() {
               {isTracking ? <Pause size={20} /> : <Play size={20} />}
             </Button>
           </Card>
-          <Button type="button" className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => setManualOpen(true)}>
-            <Plus size={18} />
-            إضافة يدوية
-          </Button>
+            <Button type="button" className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => {
+              setEditEntryId(null);
+              setManualCaseId("");
+              setManualLawyerId("");
+              setManualDesc("");
+              setManualDate(new Date().toISOString().slice(0, 10));
+              setManualHours("1");
+              setManualMinutes("0");
+              setManualOpen(true);
+            }}>
+              <Plus size={18} />
+              إضافة يدوية
+            </Button>
+          </div>
         </div>
-      </div>
-
-      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
-        <DialogContent className="sm:max-w-md border-none shadow-2xl dark:bg-navy-900 bg-white">
-          <DialogHeader>
-            <DialogTitle className="text-navy-900 dark:text-white">إضافة وقت يدوياً</DialogTitle>
-          </DialogHeader>
+  
+        <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+          <DialogContent className="sm:max-w-md border-none shadow-2xl dark:bg-navy-900 bg-white">
+            <DialogHeader>
+              <DialogTitle className="text-navy-900 dark:text-white">
+                {editEntryId ? "تعديل سجل الوقت" : "إضافة وقت يدوياً"}
+              </DialogTitle>
+            </DialogHeader>
           <form
             className="space-y-4 py-2"
             onSubmit={(e) => {
@@ -106,16 +121,29 @@ export default function TimeTracking() {
                 toast.error("أدخل مدة صحيحة");
                 return;
               }
-              addTimeEntry({
-                id: `TE-${Date.now()}`,
-                caseId: manualCaseId,
-                lawyerId: manualLawyerId,
-                description: manualDesc.trim() || "عمل يدوي",
-                duration: durationMin,
-                date: manualDate,
-                isBilled: false,
-              });
-              toast.success("تم تسجيل الوقت");
+              
+              if (editEntryId) {
+                updateTimeEntry(editEntryId, {
+                  caseId: manualCaseId,
+                  lawyerId: manualLawyerId,
+                  description: manualDesc.trim() || "عمل يدوي",
+                  duration: durationMin,
+                  date: manualDate,
+                });
+                toast.success("تم تعديل السجل بنجاح");
+              } else {
+                addTimeEntry({
+                  id: `TE-${Date.now()}`,
+                  caseId: manualCaseId,
+                  lawyerId: manualLawyerId,
+                  description: manualDesc.trim() || "عمل يدوي",
+                  duration: durationMin,
+                  date: manualDate,
+                  isBilled: false,
+                });
+                toast.success("تم تسجيل الوقت");
+              }
+              
               setManualOpen(false);
               setManualDesc("");
             }}
@@ -244,12 +272,49 @@ export default function TimeTracking() {
                       {Math.floor(entry.duration / 60)}س {entry.duration % 60}د
                     </TableCell>
                     <TableCell>
-                      <Badge variant={entry.isBilled ? "secondary" : "outline"} className={entry.isBilled ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" : ""}>
+                      <Badge 
+                        variant={entry.isBilled ? "secondary" : "outline"} 
+                        className={cn("cursor-pointer select-none transition-colors", entry.isBilled ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40" : "hover:bg-slate-100 dark:hover:bg-white/10")}
+                        onClick={() => {
+                          toggleTimeEntryBilledStatus(entry.id);
+                          toast.success(entry.isBilled ? 'تم تغيير الحالة إلى: بانتظار الفوترة' : 'تم تغيير الحالة إلى: تمت الفوترة');
+                        }}
+                      >
                         {entry.isBilled ? 'تمت الفوترة' : 'بانتظار الفوترة'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-end">
-                      <Button variant="ghost" size="sm">تعديل</Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setEditEntryId(entry.id);
+                            setManualCaseId(entry.caseId);
+                            setManualLawyerId(entry.lawyerId);
+                            setManualDesc(entry.description);
+                            setManualDate(entry.date);
+                            setManualHours(Math.floor(entry.duration / 60).toString());
+                            setManualMinutes((entry.duration % 60).toString());
+                            setManualOpen(true);
+                          }}
+                        >
+                          تعديل
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={() => {
+                            if (window.confirm("هل أنت متأكد من حذف هذا السجل؟")) {
+                              deleteTimeEntry(entry.id);
+                              toast.success("تم حذف السجل بنجاح");
+                            }
+                          }}
+                        >
+                          حذف
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
