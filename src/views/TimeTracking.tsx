@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, Play, Pause, Plus, Calendar, User, Scale } from "lucide-react";
+import { Play, Pause, Plus, Calendar, User, Scale, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
 import { useFinanceStore } from '@/store/useFinanceStore';
@@ -59,6 +59,13 @@ export default function TimeTracking() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const totalWeekMinutes = timeEntries.reduce((sum, e) => sum + e.duration, 0);
+  const totalWeekHours = (totalWeekMinutes / 60).toFixed(1);
+  const billedWeekMinutes = timeEntries.filter(e => e.isBilled).reduce((sum, e) => sum + e.duration, 0);
+  const billedWeekHours = (billedWeekMinutes / 60).toFixed(1);
+  const estimatedValue = billedWeekMinutes * 500; // 500 SAR/min rate
+  const formatSAR = (n: number) => n.toLocaleString('ar-SA');
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -103,6 +110,27 @@ export default function TimeTracking() {
               >
                 تصفير
               </Button>
+              {timerSeconds > 0 && !isTracking && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => {
+                    setEditEntryId(null);
+                    setManualCaseId("");
+                    setManualLawyerId("");
+                    setManualDesc("");
+                    setManualDate(new Date().toISOString().slice(0, 10));
+                    setManualHours(Math.floor(timerSeconds / 3600).toString() || "0");
+                    setManualMinutes((Math.floor(timerSeconds / 60) % 60).toString());
+                    setManualOpen(true);
+                  }}
+                >
+                  <Save size={14} />
+                  حفظ
+                </Button>
+              )}
             </div>
           </Card>
             <Button type="button" className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => {
@@ -136,7 +164,7 @@ export default function TimeTracking() {
                 toast.error("اختر القضية والمحامي");
                 return;
               }
-              const h = Math.max(0, parseInt(manualHours, 10) || 0);
+              const h = Math.min(24, Math.max(0, parseInt(manualHours, 10) || 0));
               const m = Math.max(0, Math.min(59, parseInt(manualMinutes, 10) || 0));
               const durationMin = h * 60 + m;
               if (durationMin <= 0) {
@@ -212,7 +240,7 @@ export default function TimeTracking() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
                   <Label>ساعات</Label>
-                  <Input type="number" min={0} value={manualHours} onChange={(e) => setManualHours(e.target.value)} />
+                  <Input type="number" min={0} max={24} value={manualHours} onChange={(e) => setManualHours(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label>دقائق</Label>
@@ -231,19 +259,19 @@ export default function TimeTracking() {
         <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardContent className="p-6">
             <p className="text-sm text-slate-500 mb-1">إجمالي ساعات الأسبوع</p>
-            <h3 className="text-2xl font-bold">32.5 ساعة</h3>
+            <h3 className="text-2xl font-bold">{totalWeekHours} ساعة</h3>
           </CardContent>
         </Card>
         <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardContent className="p-6">
             <p className="text-sm text-slate-500 mb-1">ساعات قابلة للفلترة</p>
-            <h3 className="text-2xl font-bold text-emerald-600">28.0 ساعة</h3>
+            <h3 className="text-2xl font-bold text-emerald-600">{billedWeekHours} ساعة</h3>
           </CardContent>
         </Card>
         <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardContent className="p-6">
             <p className="text-sm text-slate-500 mb-1">القيمة المتوقعة</p>
-            <h3 className="text-2xl font-bold text-primary-600">14,000 ر.س</h3>
+            <h3 className="text-2xl font-bold text-primary-600">{formatSAR(estimatedValue)} ر.س</h3>
           </CardContent>
         </Card>
       </div>
@@ -266,7 +294,13 @@ export default function TimeTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {timeEntries.map((entry) => {
+              {timeEntries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                    لا توجد سجلات وقت بعد
+                  </TableCell>
+                </TableRow>
+              ) : timeEntries.map((entry) => {
                 const lawyer = teamMembers.find(m => m.id === entry.lawyerId);
                 const caseItem = cases.find(c => c.id === entry.caseId);
                 return (
@@ -274,13 +308,13 @@ export default function TimeTracking() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <User size={14} className="text-slate-400" />
-                        {lawyer?.name}
+                        {lawyer?.name || entry.lawyerId}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Scale size={14} className="text-slate-400" />
-                        {caseItem?.plaintiff} ضد {caseItem?.defendant}
+                        {caseItem ? `${caseItem.plaintiff} ضد ${caseItem.defendant}` : entry.caseId}
                       </div>
                     </TableCell>
                     <TableCell className="max-w-xs truncate">{entry.description}</TableCell>
