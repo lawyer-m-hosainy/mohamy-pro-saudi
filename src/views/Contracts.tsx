@@ -30,9 +30,7 @@ export default function Contracts() {
       toast.success("تم توليد مسودة العقد بنجاح");
     } catch (error) {
       console.error(error);
-      const fallback = `مسودة عقد ${category} (عرض توضيحي محلي)\n\nبناءً على الوصف:\n${prompt}\n\nيرجى مراجعة البنود مع مستشارك القانوني قبل التوقيع.\n\n(ملاحظة: هذا الرد يظهر في بيئة التطوير المحلية إذا لم يكن خادم Backend قيد التشغيل)`;
-      setGeneratedContent(fallback);
-      toast.success("تم توليد المسودة (نسخة العرض المحلي)");
+      toast.error("حدث خطأ غير متوقع");
     } finally {
       setIsGenerating(false);
     }
