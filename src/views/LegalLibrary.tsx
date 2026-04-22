@@ -15,6 +15,10 @@ export default function LegalLibrary() {
   const precedents = useComplianceStore((state) => state.precedents);
   const addPrecedent = useComplianceStore((state) => state.addPrecedent);
   const [addOpen, setAddOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [selectedPrecedentId, setSelectedPrecedentId] = useState<string | null>(null);
+
+  const selectedPrecedent = precedents.find(p => p.id === selectedPrecedentId);
 
   return (
     <motion.div 
@@ -87,6 +91,57 @@ export default function LegalLibrary() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent className="sm:max-w-lg border-none shadow-2xl dark:bg-navy-900">
+          <DialogHeader>
+            <DialogTitle className="font-bold flex items-center gap-2">
+              <FileText className="text-primary-500" />
+              {selectedPrecedent?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedPrecedent && (
+            <div className="space-y-6 pt-4">
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="text-primary-600 border-primary-100 dark:border-primary-900/30">
+                  {selectedPrecedent.category}
+                </Badge>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Calendar size={14} />
+                  {selectedPrecedent.date}
+                </div>
+              </div>
+              
+              <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                <h4 className="text-sm font-bold mb-2">الملخص والتفاصيل</h4>
+                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                  {selectedPrecedent.summary}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {selectedPrecedent.tags.map(tag => (
+                  <div key={tag} className="flex items-center gap-1 text-[10px] bg-slate-100 dark:bg-white/5 px-2 py-1 rounded text-slate-500">
+                    <Tag size={10} />
+                    {tag}
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 flex justify-end gap-2 border-t border-slate-100 dark:border-white/5">
+                <Button variant="outline" onClick={() => setViewOpen(false)}>إغلاق</Button>
+                <Button className="gap-2 bg-primary-600 hover:bg-primary-700 text-white" onClick={() => {
+                  toast.success(`تم تحميل المستند: ${selectedPrecedent.title}`);
+                  setViewOpen(false);
+                }}>
+                  <Download size={16} />
+                  تحميل المستند
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Card className="border-none shadow-sm dark:bg-navy-800">
         <CardContent className="p-4">
           <div className="relative">
@@ -131,11 +186,14 @@ export default function LegalLibrary() {
               </div>
 
               <div className="pt-4 flex items-center gap-2 border-t border-slate-100 dark:border-white/5">
-                <Button variant="outline" size="sm" className="flex-1 gap-2" onClick={() => toast.success("تم تنفيذ العملية")}>
+                <Button variant="outline" size="sm" className="flex-1 gap-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 transition-colors" onClick={() => toast.success(`تم بدء تحميل المستند: ${precedent.title}`)}>
                   <Download size={14} />
                   تحميل
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 gap-2">
+                <Button variant="outline" size="sm" className="flex-1 gap-2 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 transition-colors" onClick={() => {
+                  setSelectedPrecedentId(precedent.id);
+                  setViewOpen(true);
+                }}>
                   <ExternalLink size={14} />
                   عرض
                 </Button>
