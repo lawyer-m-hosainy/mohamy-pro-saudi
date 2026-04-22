@@ -34,7 +34,8 @@ export function Topbar() {
   const tasks = useTeamStore(state => state.tasks);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDarkMode = resolvedTheme === "dark";
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -159,11 +160,11 @@ export function Topbar() {
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
           className="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full"
           aria-label="تبديل المظهر"
         >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger render={<button aria-label="فتح الإشعارات" className="relative p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors" />}>

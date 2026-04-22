@@ -15,6 +15,7 @@ import { getCurrentTenantId } from "@/lib/tenant";
 import { checkAppHealth } from "@/observability/health";
 import { logEvent } from "@/observability/logger";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { Toaster } from "@/components/ui/sonner";
 
 const Login = lazy(() => import("./views/Login"));
 const Landing = lazy(() => import("./views/Landing"));
@@ -136,6 +137,7 @@ export default function App() {
     // @ts-ignore - next-themes version mismatch with React 19 types
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <AuthProvider>
+        <Toaster richColors position="top-center" />
         <BrowserRouter>
           <ErrorBoundary fallbackModule="التطبيق الرئيسي">
           <Suspense fallback={<RouteLoadingFallback />}>

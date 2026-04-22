@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Play, Pause, Plus, Calendar, User, Scale } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useCasesStore } from '@/store/useCasesStore';
 import { useTeamStore } from '@/store/useTeamStore';
@@ -33,15 +33,23 @@ export default function TimeTracking() {
   const [editEntryId, setEditEntryId] = useState<string | null>(null);
   
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
     if (isTracking) {
-      interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setTimerSeconds(s => s + 1);
       }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [isTracking]);
 
   const formatTime = (totalSeconds: number) => {
@@ -68,20 +76,34 @@ export default function TimeTracking() {
               <p className="text-[10px] text-slate-500 uppercase font-bold">الوقت الفعلي</p>
               <p className="text-xl font-mono font-bold">{formatTime(timerSeconds)}</p>
             </div>
-            <Button 
-              onClick={() => {
-                if (!isTracking) {
-                  toast.success("تم بدء المؤقت بنجاح");
-                } else {
-                  toast.info("تم إيقاف المؤقت مؤقتاً");
-                }
-                setIsTracking(!isTracking);
-              }}
-              className={isTracking ? "bg-rose-500 hover:bg-rose-600 text-white" : "bg-emerald-500 hover:bg-emerald-600 text-white"}
-              size="icon"
-            >
-              {isTracking ? <Pause size={20} /> : <Play size={20} />}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={() => {
+                  if (!isTracking) {
+                    toast.success("تم بدء المؤقت بنجاح");
+                  } else {
+                    toast.info("تم إيقاف المؤقت مؤقتاً");
+                  }
+                  setIsTracking(!isTracking);
+                }}
+                className={isTracking ? "bg-rose-500 hover:bg-rose-600 text-white" : "bg-emerald-500 hover:bg-emerald-600 text-white"}
+                size="icon"
+              >
+                {isTracking ? <Pause size={20} /> : <Play size={20} />}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsTracking(false);
+                  setTimerSeconds(0);
+                  toast.info("تمت إعادة ضبط المؤقت");
+                }}
+              >
+                تصفير
+              </Button>
+            </div>
           </Card>
             <Button type="button" className="bg-primary-500 hover:bg-primary-600 text-white gap-2" onClick={() => {
               setEditEntryId(null);

@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 
 
@@ -59,6 +61,7 @@ const MemoizedPieChart = React.memo(({ data }: { data: any[] }) => (
 ));
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const cases = useCasesStore(state => state.cases);
   const clients = useClientsStore(state => state.clients);
   const tasks = useTeamStore(state => state.tasks);
@@ -207,8 +210,8 @@ export default function Dashboard() {
                 <div className={cn("p-3 rounded-xl", stat.bg)}>
                   <stat.icon className={cn("w-6 h-6", stat.color || "text-slate-600")} />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{stat.title}</p>
                   <p className="text-2xl font-bold text-navy-900 dark:text-white">{stat.value}</p>
                 </div>
               </CardContent>
@@ -259,7 +262,17 @@ export default function Dashboard() {
               <ListTodo className="w-5 h-5 text-primary-500" />
               المهام الحالية
             </CardTitle>
-            <Button variant="ghost" size="sm" className="text-primary-600">إضافة مهمة</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary-600"
+              onClick={() => {
+                navigate("/dashboard/tasks");
+                toast.info("تم فتح صفحة المهام لإضافة مهمة جديدة");
+              }}
+            >
+              إضافة مهمة
+            </Button>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-slate-50 dark:divide-white/5">
@@ -294,7 +307,12 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-slate-400"
+                    onClick={() => toast.info(`تنبيه المهمة: ${task.title}`)}
+                  >
                     <AlertCircle size={16} />
                   </Button>
                 </div>

@@ -11,8 +11,10 @@ import { ar } from "date-fns/locale";
 import { cn, formatHijriDate } from "@/lib/utils";
 import { useCasesStore } from '@/store/useCasesStore';
 import { AddSessionDialog } from "./cases-components";
+import { useNavigate } from "react-router-dom";
 
 export default function SessionsCalendar() {
+  const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const sessions = useCasesStore((state) => state.sessions);
   const deadlines = useCasesStore((state) => state.deadlines);
@@ -184,7 +186,7 @@ export default function SessionsCalendar() {
             <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center justify-between">
               <div className="flex flex-col">
                 <span>جلسات يوم {date ? format(date, "eeee, d MMMM yyyy", { locale: ar }) : "المحدد"}</span>
-                {date && <span className="text-sm font-normal text-slate-500 dark:text-slate-400 mt-1">{formatHijriDate(date)} هـ</span>}
+                {date && <span className="text-sm font-normal text-slate-500 dark:text-slate-400 mt-1">{formatHijriDate(date)}</span>}
               </div>
               <Badge variant="outline" className="text-primary-600 dark:text-primary-400 border-primary-100 dark:border-white/10">
                 {totalEvents} مواعيد
@@ -219,7 +221,15 @@ export default function SessionsCalendar() {
                           )}
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="text-primary-600 dark:text-primary-400 border-primary-100 dark:border-white/10">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-primary-600 dark:text-primary-400 border-primary-100 dark:border-white/10"
+                        onClick={() => {
+                          navigate("/dashboard/cases");
+                          toast.info(`تم فتح القضايا لعرض تفاصيل ${session.caseId}`);
+                        }}
+                      >
                         عرض التفاصيل
                       </Button>
                     </div>
@@ -255,7 +265,12 @@ export default function SessionsCalendar() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" className="text-amber-600 dark:text-amber-400 border-amber-100 dark:border-white/10">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-amber-600 dark:text-amber-400 border-amber-100 dark:border-white/10"
+                        onClick={() => toast.success(`تمت مراجعة الموعد النهائي: ${deadline.title}`)}
+                      >
                         تحديث الحالة
                       </Button>
                     </div>
