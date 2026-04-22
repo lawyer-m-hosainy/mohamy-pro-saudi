@@ -35,8 +35,11 @@ export const useFinanceStore = create<FinanceState>((set) => ({
       clientId: "C-177617",
       clientName: "شركة العزم للمقاولات",
       caseId: "C-152468",
+      totalAmount: 25000,
+      collectedAmount: 0,
       outstandingAmount: 25000,
-      dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days past due
+      dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
       status: "متأخر",
       isReconciled: false,
       actions: []
@@ -46,8 +49,11 @@ export const useFinanceStore = create<FinanceState>((set) => ({
       clientId: "C-334411",
       clientName: "أحمد عبدالله العقاري",
       caseId: "C-998822",
+      totalAmount: 200000,
+      collectedAmount: 80000,
       outstandingAmount: 120000,
-      dueDate: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000).toISOString(), // 65 days past due
+      dueDate: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
       status: "متأخر",
       isReconciled: false,
       actions: [
@@ -65,9 +71,13 @@ export const useFinanceStore = create<FinanceState>((set) => ({
       id: "REC-11223",
       clientId: "C-556677",
       clientName: "مؤسسة الرواد المحدودة",
+      caseId: "C-112233",
+      totalAmount: 15000,
+      collectedAmount: 0,
       outstandingAmount: 15000,
-      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
-      status: "نشط",
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "مفتوح",
       isReconciled: false,
       actions: []
     }
