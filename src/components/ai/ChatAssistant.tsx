@@ -45,7 +45,7 @@ export function ChatAssistant() {
       const response = await getLegalAssistantResponse(userMessage, history);
       setMessages(prev => [...prev, { role: "model", text: response }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: "model", text: "عذراً، واجهت مشكلة في الاتصال. يرجى التأكد من إعداد مفتاح API الخاص بـ Gemini." }]);
+      setMessages(prev => [...prev, { role: "model", text: "عذراً، لا يمكنني الاتصال بالخادم حالياً. (هذا الخطأ يظهر في بيئة التطوير المحلية إذا لم يكن خادم Backend قيد التشغيل)" }]);
     } finally {
       setIsLoading(false);
     }
