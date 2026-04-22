@@ -36,18 +36,15 @@ async function resetDemo() {
   console.log("Authenticating demo admin...");
   await signInWithEmailAndPassword(auth, email, password);
 
+  const collections = ["clients", "cases", "invoices", "trustAccounts", "enforcement", "tasks", "team"];
+  
   console.log("Cleaning up collections...");
-  const deletedClients = await removeCollectionDocsByTenant(db, "clients", DEMO_TENANT_ID);
-  const deletedCases = await removeCollectionDocsByTenant(db, "cases", DEMO_TENANT_ID);
-  const deletedInvoices = await removeCollectionDocsByTenant(db, "invoices", DEMO_TENANT_ID);
-  const deletedTeam = await removeCollectionDocsByTenant(db, "team", DEMO_TENANT_ID);
+  for (const col of collections) {
+      const count = await removeCollectionDocsByTenant(db, col, DEMO_TENANT_ID);
+      console.log(`- Deleted ${count} items from ${col}`);
+  }
 
-  console.log(`Reset complete: 
-    - deleted ${deletedClients} clients 
-    - deleted ${deletedCases} cases
-    - deleted ${deletedInvoices} invoices
-    - deleted ${deletedTeam} team members
-    for tenant ${DEMO_TENANT_ID}.`);
+  console.log(`Reset complete for tenant ${DEMO_TENANT_ID}.`);
 }
 
 resetDemo().catch((err) => {

@@ -80,6 +80,46 @@ export async function fetchInvoices(): Promise<Invoice[]> {
   }
 }
 
+export async function fetchTrustAccounts(): Promise<any[]> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const snapshot = await getDocs(query(collection(db, "trustAccounts"), where("tenantId", "==", tenantId)));
+    return snapshot.docs.map(d => d.data());
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function fetchEnforcement(): Promise<any[]> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const snapshot = await getDocs(query(collection(db, "enforcement"), where("tenantId", "==", tenantId)));
+    return snapshot.docs.map(d => d.data());
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function fetchTasks(): Promise<any[]> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const snapshot = await getDocs(query(collection(db, "tasks"), where("tenantId", "==", tenantId)));
+    return snapshot.docs.map(d => d.data());
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function fetchTeam(): Promise<any[]> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const snapshot = await getDocs(query(collection(db, "team"), where("tenantId", "==", tenantId)));
+    return snapshot.docs.map(d => d.data());
+  } catch (error) {
+    return [];
+  }
+}
+
 export async function saveInvoice(invoice: Invoice, isUpdate: boolean = false): Promise<void> {
   try {
     const tenantId = getCurrentTenantId() || DEMO_TENANT_ID;

@@ -4,12 +4,14 @@ import { RootLayout } from "./components/layout/RootLayout";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { fetchCases, fetchClients } from "@/services/legalDataService";
-// import { useAppStore } from "@/store/useAppStore";
+import { fetchCases, fetchClients, fetchEnforcement, fetchInvoices, fetchTasks, fetchTeam, fetchTrustAccounts } from "@/services/legalDataService";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useClientsStore } from "@/store/useClientsStore";
 import { useCasesStore } from "@/store/useCasesStore";
 import { useTeamStore } from "@/store/useTeamStore";
+import { useInvoicesStore } from "@/store/useInvoicesStore";
+import { useFinanceStore } from "@/store/useFinanceStore";
+import { useEnforcementStore } from "@/store/useEnforcementStore";
 import { mockTasks, mockTeamMembers } from "@/mocks/data";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { checkAppHealth } from "@/observability/health";
@@ -66,46 +68,39 @@ function PermissionGate({ children, permission, fallback = <Navigate to="/dashbo
 export default function App() {
   const setClients = useClientsStore(state => state.setClients);
   const setCases = useCasesStore(state => state.setCases);
-
-  /** Team tasks/members are not loaded from Firestore yet — seed demo data once so /dashboard/tasks is usable. */
-  useEffect(() => {
-    const { tasks, teamMembers, setTasks, setTeamMembers } = useTeamStore.getState();
-    if (tasks.length === 0) {
-      setTasks(mockTasks);
-    }
-    if (teamMembers.length === 0) {
-      setTeamMembers(mockTeamMembers);
-    }
-  }, []);
+  const setTeamMembers = useTeamStore(state => state.setTeamMembers);
+  const setTasks = useTeamStore(state => state.setTasks);
+  const loadInvoices = useInvoicesStore(state => state.loadInvoices);
+  const setTrustAccounts = useFinanceStore(state => state.setTrustAccounts);
+  const setEnforcementCases = useEnforcementStore(state => state.setEnforcementCases);
 
   useEffect(() => {
     let mounted = true;
     const bootstrap = async () => {
       try {
-        const [remoteClients, remoteCases] = await Promise.all([fetchClients(), fetchCases()]);
-        const tenantId = getCurrentTenantId();
+        const [remoteClients, remoteCases, remoteTrust, remoteEnf, remoteTasks, remoteTeam] = await Promise.all([
+          fetchClients(), 
+          fetchCases(),
+          fetchTrustAccounts(),
+          fetchEnforcement(),
+          fetchTasks(),
+          fetchTeam()
+        ]);
+        
         if (!mounted) return;
-        if (remoteClients.length > 0) {
-          setClients(remoteClients);
-        } else {
-          setClients(
-            useClientsStore
-              .getState()
-              .clients.map((c) => ({ ...c, tenantId: c.tenantId || tenantId }))
-          );
-        }
-        if (remoteCases.length > 0) {
-          setCases(remoteCases);
-        } else {
-          // Keep demo behavior but ensure local data respects tenant-aware model.
-          setCases(
-            useCasesStore
-              .getState()
-              .cases.map((c) => ({ ...c, tenantId: c.tenantId || tenantId }))
-          );
-        }
-      } catch {
-        // Keep demo flow working with local mock data as fallback.
+
+        if (remoteClients?.length > 0) setClients(remoteClients);
+        if (remoteCases?.length > 0) setCases(remoteCases);
+        if (remoteTrust?.length > 0) setTrustAccounts(remoteTrust);
+        if (remoteEnf?.length > 0) setEnforcementCases(remoteEnf);
+        if (remoteTasks?.length > 0) setTasks(remoteTasks);
+        if (remoteTeam?.length > 0) setTeamMembers(remoteTeam);
+        
+        // Load invoices using its own store logic (which calls fetchInvoices)
+        void loadInvoices();
+        
+      } catch (error) {
+        console.error("Bootstrap error:", error);
       }
     };
 
@@ -113,7 +108,7 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [setClients, setCases]);
+  }, [setClients, setCases, setTrustAccounts, setEnforcementCases, setTasks, setTeamMembers, loadInvoices]);
 
   useEffect(() => {
     const runHealthCheck = async () => {
