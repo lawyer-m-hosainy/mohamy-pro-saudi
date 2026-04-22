@@ -176,7 +176,7 @@ export default function TimeTracking() {
                 <SelectTrigger className="dark:bg-white/5 dark:border-white/10">
                   <SelectValue placeholder="اختر قضية" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-full min-w-[300px]" side="bottom" align="start">
                   {cases.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.id} — {c.plaintiff} ضد {c.defendant}
@@ -191,7 +191,7 @@ export default function TimeTracking() {
                 <SelectTrigger className="dark:bg-white/5 dark:border-white/10">
                   <SelectValue placeholder="اختر عضو الفريق" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-full min-w-[200px]" side="bottom" align="start">
                   {teamMembers.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.name}
