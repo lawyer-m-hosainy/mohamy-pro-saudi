@@ -13,7 +13,7 @@ import { useState, useEffect } from "react";
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useCasesStore } from '@/store/useCasesStore';
 import { useTeamStore } from '@/store/useTeamStore';
-
+import { cn } from "@/lib/utils";
 export default function TimeTracking() {
   const timeEntries = useFinanceStore((state) => state.timeEntries);
   const addTimeEntry = useFinanceStore((state) => state.addTimeEntry);
