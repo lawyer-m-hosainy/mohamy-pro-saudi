@@ -12,9 +12,10 @@ import { useCasesStore } from '@/store/useCasesStore';
 interface AddSessionDialogProps {
   caseData?: Case;
   triggerContext?: 'calendar' | 'case_details';
+  onSessionAdded?: (date: Date) => void;
 }
 
-export default function AddSessionDialog({ caseData, triggerContext = 'case_details' }: AddSessionDialogProps) {
+export default function AddSessionDialog({ caseData, triggerContext = 'case_details', onSessionAdded }: AddSessionDialogProps) {
   const addSession = useCasesStore((state) => state.addSession);
   const cases = useCasesStore((state) => state.cases);
   const [selectedCaseId, setSelectedCaseId] = useState(caseData?.id || "");
@@ -40,6 +41,10 @@ export default function AddSessionDialog({ caseData, triggerContext = 'case_deta
       notes: String(formData.get('notes') || ''),
       status: 'قادمة'
     });
+    
+    const addedDate = new Date(String(formData.get('date')));
+    onSessionAdded?.(addedDate);
+    
     toast.success("تم جدولة الجلسة بنجاح");
     setIsOpen(false);
   };

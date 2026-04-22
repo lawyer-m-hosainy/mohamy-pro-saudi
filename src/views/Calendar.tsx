@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, Plus, ChevronRight, ChevronLeft, Scale } from "lucide-react";
+import { Clock, MapPin, Plus, ChevronRight, ChevronLeft, Scale, CalendarCheck, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, isAfter, startOfDay } from "date-fns";
 import { ar } from "date-fns/locale";
 import { cn, formatHijriDate } from "@/lib/utils";
 import { useCasesStore } from '@/store/useCasesStore';
@@ -27,33 +27,158 @@ export default function SessionsCalendar() {
 
   const totalEvents = selectedDaySessions.length + selectedDayDeadlines.length;
 
+  // Get dates that have sessions for calendar dot indicators
+  const sessionDates = useMemo(() => 
+    sessions.map(s => new Date(s.date)),
+    [sessions]
+  );
+
+  const deadlineDates = useMemo(() =>
+    deadlines.map(d => new Date(d.date)),
+    [deadlines]
+  );
+
+  // Upcoming sessions (today and future), sorted by date
+  const upcomingSessions = useMemo(() => {
+    const today = startOfDay(new Date());
+    return sessions
+      .filter(s => {
+        const sDate = new Date(s.date);
+        return isSameDay(sDate, today) || isAfter(sDate, today);
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [sessions]);
+
+  // Custom day content to show dots
+  const modifiers = useMemo(() => ({
+    hasSession: sessionDates,
+    hasDeadline: deadlineDates,
+  }), [sessionDates, deadlineDates]);
+
+  const modifiersClassNames = useMemo(() => ({
+    hasSession: "has-session-dot",
+    hasDeadline: "has-deadline-dot",
+  }), []);
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {/* Inline styles for calendar dots */}
+      <style>{`
+        .has-session-dot .rdp-day_button::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background-color: var(--color-primary-500);
+        }
+        .has-deadline-dot .rdp-day_button::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background-color: #f59e0b;
+        }
+        .has-session-dot.has-deadline-dot .rdp-day_button::after {
+          width: 12px;
+          height: 5px;
+          border-radius: 3px;
+          background: linear-gradient(to right, var(--color-primary-500) 50%, #f59e0b 50%);
+        }
+      `}</style>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">تقويم الجلسات</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">متابعة مواعيد الجلسات القضائية والتحضير لها.</p>
         </div>
-        <AddSessionDialog triggerContext="calendar" />
+        <AddSessionDialog triggerContext="calendar" onSessionAdded={setDate} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 border-none shadow-sm dark:bg-navy-800">
-          <CardContent className="p-4">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border-none dark:bg-navy-800 dark:text-white"
-              locale={ar}
-            />
-          </CardContent>
-        </Card>
+        {/* Calendar + Upcoming Sessions sidebar */}
+        <div className="lg:col-span-1 space-y-4">
+          <Card className="border-none shadow-sm dark:bg-navy-800">
+            <CardContent className="p-4">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                className="rounded-md border-none dark:bg-navy-800 dark:text-white"
+                locale={ar}
+                modifiers={modifiers}
+                modifiersClassNames={modifiersClassNames}
+              />
+            </CardContent>
+          </Card>
 
+          {/* Upcoming Sessions List */}
+          <Card className="border-none shadow-sm dark:bg-navy-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold text-navy-900 dark:text-white flex items-center gap-2">
+                <CalendarCheck size={16} className="text-primary-500" />
+                الجلسات القادمة ({upcomingSessions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 max-h-[280px] overflow-auto">
+              {upcomingSessions.length === 0 ? (
+                <div className="text-center py-6 text-slate-400">
+                  <CalendarCheck size={24} className="mx-auto mb-2 opacity-40" />
+                  <p className="text-xs">لا توجد جلسات قادمة</p>
+                </div>
+              ) : (
+                upcomingSessions.map((session) => {
+                  const sessionDate = new Date(session.date);
+                  const isToday = isSameDay(sessionDate, new Date());
+                  const isSelected = date && isSameDay(sessionDate, date);
+                  return (
+                    <button
+                      key={session.id}
+                      onClick={() => setDate(sessionDate)}
+                      className={cn(
+                        "w-full text-start p-3 rounded-lg border transition-all duration-200",
+                        isSelected
+                          ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-sm"
+                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 hover:shadow-sm"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-primary-600 dark:text-primary-400">{session.caseId}</span>
+                        {isToday && (
+                          <Badge className="bg-primary-500 text-white text-[9px] px-1.5 py-0">اليوم</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{session.caseName}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Clock size={10} />
+                          {format(sessionDate, "d MMM", { locale: ar })} • {session.time}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin size={10} />
+                          {session.court}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Day Details */}
         <Card className="lg:col-span-2 border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="border-b border-slate-50 dark:border-white/5">
             <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center justify-between">
@@ -86,6 +211,12 @@ export default function SessionsCalendar() {
                             <MapPin size={14} className="text-primary-500" />
                             {session.court}
                           </div>
+                          {session.notes && (
+                            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                              <AlertCircle size={14} className="text-slate-400" />
+                              {session.notes}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Button variant="outline" size="sm" className="text-primary-600 dark:text-primary-400 border-primary-100 dark:border-white/10">
@@ -137,7 +268,7 @@ export default function SessionsCalendar() {
                   <Clock className="text-slate-300 dark:text-slate-600" size={32} />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 font-medium">لا توجد جلسات مجدولة في هذا اليوم.</p>
-                <div className="mt-4"><AddSessionDialog triggerContext="calendar" /></div>
+                <div className="mt-4"><AddSessionDialog triggerContext="calendar" onSessionAdded={setDate} /></div>
               </div>
             )}
           </CardContent>
