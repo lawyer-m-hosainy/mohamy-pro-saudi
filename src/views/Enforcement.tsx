@@ -11,11 +11,11 @@ import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
 function statusClass(status: string) {
-  if (status === "مفتوح") return "bg-slate-100 text-slate-700";
-  if (status === "تحت إجراء 46") return "bg-amber-100 text-amber-700";
-  if (status === "حجز/منع") return "bg-destructive/10 text-destructive";
-  if (status === "محصل جزئي") return "bg-blue-100 text-blue-700";
-  return "bg-emerald-100 text-emerald-700";
+  if (status === "مفتوح") return "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300";
+  if (status === "تحت إجراء 46") return "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
+  if (status === "حجز/منع") return "bg-destructive/10 text-destructive dark:bg-red-900/20 dark:text-red-400";
+  if (status === "محصل جزئي") return "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400";
+  return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400";
 }
 
 export default function Enforcement() {
@@ -126,30 +126,30 @@ export default function Enforcement() {
 
         <Card className="lg:col-span-2 border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">تفاصيل ملف التنفيذ</CardTitle>
-            <Button size="sm" variant="outline" onClick={logSensitiveAction} disabled={!selected}>تسجيل تدقيق العرض</Button>
+            <CardTitle className="text-base text-navy-900 dark:text-white">تفاصيل ملف التنفيذ</CardTitle>
+            <Button size="sm" variant="outline" className="dark:border-white/20 dark:text-white dark:hover:bg-white/10" onClick={logSensitiveAction} disabled={!selected}>تسجيل تدقيق العرض</Button>
           </CardHeader>
           <CardContent>
             {!selected ? (
-              <p className="text-slate-500">لا توجد بيانات تنفيذ.</p>
+              <p className="text-slate-500 dark:text-slate-400">لا توجد بيانات تنفيذ.</p>
             ) : (
               <div className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="p-3 rounded-md bg-slate-50">
-                    <p className="text-xs text-slate-500">المطالبة</p>
-                    <p className="font-bold">{selected.amountClaimed.toLocaleString()} ر.س</p>
+                  <div className="p-3 rounded-md bg-slate-50 dark:bg-white/5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">المطالبة</p>
+                    <p className="font-bold text-navy-900 dark:text-white">{selected.amountClaimed.toLocaleString()} ر.س</p>
                   </div>
-                  <div className="p-3 rounded-md bg-emerald-50">
-                    <p className="text-xs text-emerald-600">المحصل</p>
-                    <p className="font-bold text-emerald-700">{selected.amountCollected.toLocaleString()} ر.س</p>
+                  <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-900/20">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">المحصل</p>
+                    <p className="font-bold text-emerald-700 dark:text-emerald-300">{selected.amountCollected.toLocaleString()} ر.س</p>
                   </div>
-                  <div className="p-3 rounded-md bg-blue-50">
-                    <p className="text-xs text-blue-600">رقم القضية الأصلية</p>
-                    <p className="font-bold text-blue-700">{selected.caseId}</p>
+                  <div className="p-3 rounded-md bg-blue-50 dark:bg-blue-900/20">
+                    <p className="text-xs text-blue-600 dark:text-blue-400">رقم القضية الأصلية</p>
+                    <p className="font-bold text-blue-700 dark:text-blue-300">{selected.caseId}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm text-navy-900 dark:text-slate-300">
                   <CalendarClock size={16} />
                   <span>مهلة المرحلة:</span>
                   <span className="font-bold">{selected.stageDeadline || "-"}</span>
@@ -159,12 +159,12 @@ export default function Enforcement() {
                 </div>
 
                 <div>
-                  <h3 className="font-bold mb-2 flex items-center gap-2"><Scale size={16} /> Timeline الإجراءات</h3>
-                  <div className="space-y-2 border-s ps-4">
+                  <h3 className="font-bold mb-2 flex items-center gap-2 text-navy-900 dark:text-white"><Scale size={16} /> Timeline الإجراءات</h3>
+                  <div className="space-y-2 border-s ps-4 border-slate-100 dark:border-white/10">
                     {selected.actions.map((a) => (
-                      <div key={a.id} className="p-2 rounded-md bg-slate-50">
-                        <p className="text-sm font-bold">{a.title}</p>
-                        <p className="text-xs text-slate-500">{a.date} • {a.type} • بواسطة {a.performedBy}</p>
+                      <div key={a.id} className="p-2 rounded-md bg-slate-50 dark:bg-white/5">
+                        <p className="text-sm font-bold text-navy-900 dark:text-white">{a.title}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{a.date} • {a.type} • بواسطة {a.performedBy}</p>
                       </div>
                     ))}
                   </div>
@@ -172,23 +172,23 @@ export default function Enforcement() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="font-bold mb-2 flex items-center gap-2"><ShieldAlert size={16} /> أوامر التنفيذ</h3>
+                    <h3 className="font-bold mb-2 flex items-center gap-2 text-navy-900 dark:text-white"><ShieldAlert size={16} /> أوامر التنفيذ</h3>
                     <div className="space-y-2">
                       {selected.orders.map((o) => (
-                        <div key={o.id} className="p-2 rounded-md border">
-                          <p className="text-sm">{o.type} - <span className="font-bold">{o.status}</span></p>
-                          <p className="text-xs text-slate-500">{o.issuedAt} • {o.referenceNumber || "-"}</p>
+                        <div key={o.id} className="p-2 rounded-md border border-slate-100 dark:border-white/10 bg-white/50 dark:bg-white/5">
+                          <p className="text-sm text-navy-900 dark:text-white">{o.type} - <span className="font-bold">{o.status}</span></p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{o.issuedAt} • {o.referenceNumber || "-"}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-bold mb-2 flex items-center gap-2"><HandCoins size={16} /> أصول المدين</h3>
+                    <h3 className="font-bold mb-2 flex items-center gap-2 text-navy-900 dark:text-white"><HandCoins size={16} /> أصول المدين</h3>
                     <div className="space-y-2">
                       {selected.assets.map((a) => (
-                        <div key={a.id} className="p-2 rounded-md border">
-                          <p className="text-sm">{a.type} - {a.description}</p>
-                          <p className="text-xs text-slate-500">
+                        <div key={a.id} className="p-2 rounded-md border border-slate-100 dark:border-white/10 bg-white/50 dark:bg-white/5">
+                          <p className="text-sm text-navy-900 dark:text-white">{a.type} - {a.description}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
                             قيمة تقديرية: {a.estimatedValue?.toLocaleString() || "-"} • {a.isFrozen ? "محجوز" : "غير محجوز"}
                           </p>
                         </div>
