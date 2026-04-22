@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Bell, CalendarClock, HandCoins, Scale, ShieldAlert } from "lucide-react";
+import { Bell, CalendarClock, HandCoins, Scale, ShieldAlert, Plus } from "lucide-react";
 import { useEnforcementStore } from '@/store/useEnforcementStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function statusClass(status: string) {
   if (status === "مفتوح") return "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300";
@@ -20,10 +21,19 @@ function statusClass(status: string) {
 
 export default function Enforcement() {
   const enforcementCases = useEnforcementStore((state) => state.enforcementCases);
+  const addEnforcementCase = useEnforcementStore((state) => state.addEnforcementCase);
   const addAuditLog = useUIStore((state) => state.addAuditLog);
   const currentUser = useAuthStore((state) => state.currentUser);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(enforcementCases[0]?.id || null);
+  
+  // Add Form State
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newCaseData, setNewCaseData] = useState({
+    clientName: "",
+    debtorName: "",
+    amountClaimed: "",
+  });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -61,6 +71,33 @@ export default function Enforcement() {
     toast.success("تم تسجيل عملية التدقيق بنجاح");
   };
 
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCaseData.clientName || !newCaseData.debtorName || !newCaseData.amountClaimed) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+    
+    addEnforcementCase({
+      id: `ENF-${Math.floor(Math.random() * 900000) + 100000}`,
+      caseId: `C-${Math.floor(Math.random() * 900000) + 100000}`,
+      clientId: `C-${Math.floor(Math.random() * 900000) + 100000}`,
+      clientName: newCaseData.clientName,
+      debtorName: newCaseData.debtorName,
+      amountClaimed: Number(newCaseData.amountClaimed),
+      amountCollected: 0,
+      status: "مفتوح",
+      createdAt: new Date().toISOString(),
+      actions: [],
+      orders: [],
+      assets: []
+    });
+    
+    toast.success("تم إنشاء ملف التنفيذ بنجاح");
+    setIsAddOpen(false);
+    setNewCaseData({ clientName: "", debtorName: "", amountClaimed: "" });
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -68,7 +105,52 @@ export default function Enforcement() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إدارة التنفيذ</h1>
           <p className="text-slate-500 mt-1">متابعة طلبات التنفيذ، إجراءات 46، أوامر الحجز والمنع والتحصيل.</p>
         </div>
-        <Badge className="bg-primary-100 text-primary-700">قسم جديد</Badge>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-primary-100 text-primary-700 hidden sm:inline-flex">قسم جديد</Badge>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
+                <Plus size={16} />
+                إضافة ملف تنفيذ
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>فتح ملف تنفيذ جديد</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اسم العميل (طالب التنفيذ)</label>
+                  <Input 
+                    placeholder="مثال: شركة العزم" 
+                    value={newCaseData.clientName}
+                    onChange={(e) => setNewCaseData(prev => ({...prev, clientName: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">المنفذ ضده</label>
+                  <Input 
+                    placeholder="مثال: مؤسسة الأفق" 
+                    value={newCaseData.debtorName}
+                    onChange={(e) => setNewCaseData(prev => ({...prev, debtorName: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">مبلغ المطالبة (ريال)</label>
+                  <Input 
+                    type="number" 
+                    placeholder="150000" 
+                    value={newCaseData.amountClaimed}
+                    onChange={(e) => setNewCaseData(prev => ({...prev, amountClaimed: e.target.value}))}
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white mt-4">
+                  حفظ وفتح الملف
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

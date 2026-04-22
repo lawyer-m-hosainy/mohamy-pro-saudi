@@ -5,6 +5,7 @@ import { EnforcementCase } from '../types';
 interface EnforcementState {
   enforcementCases: EnforcementCase[];
   setEnforcementCases: (cases: EnforcementCase[]) => void;
+  addEnforcementCase: (newCase: EnforcementCase) => void;
   addEnforcementAction: (caseId: string, action: EnforcementCase['actions'][number]) => void;
 }
 
@@ -98,6 +99,9 @@ export const useEnforcementStore = create<EnforcementState>((set) => ({
   enforcementCases: MOCK_ENFORCEMENT_CASES,
 
   setEnforcementCases: (enforcementCases) => set({ enforcementCases }),
+  addEnforcementCase: (newCase) => set((state) => ({ 
+    enforcementCases: [newCase, ...state.enforcementCases] 
+  })),
   addEnforcementAction: (enforcementCaseId, action) => set((state) => ({
     enforcementCases: state.enforcementCases.map((ec) =>
       ec.id === enforcementCaseId ? { ...ec, actions: [...ec.actions, action] } : ec
