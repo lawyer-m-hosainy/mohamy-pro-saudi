@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useFinanceStore } from '@/store/useFinanceStore';
+import { trustAccountSchema } from "@/lib/schemas";
+import { ZodError } from "zod";
 
 export default function TrustAccounting() {
   const trustAccounts = useFinanceStore((state) => state.trustAccounts || []) || [];
@@ -51,22 +53,36 @@ export default function TrustAccounting() {
               const amount = Number(fd.get("amount"));
               const type = depositType;
               const description = String(fd.get("description") || "").trim();
-              if (!clientName || !amount || amount <= 0) {
-                toast.error("أدخل اسم العميل ومبلغاً صحيحاً");
-                return;
+              const date = new Date().toISOString().slice(0, 10);
+
+              try {
+                trustAccountSchema.parse({
+                  clientName,
+                  amount,
+                  type,
+                  description,
+                  date
+                });
+
+                addTrustAccount({
+                  id: `TA-${Date.now()}`,
+                  clientId: `CLI-${Date.now()}`,
+                  clientName,
+                  amount,
+                  type: type || "أمانة",
+                  status: "نشط",
+                  description: description || "إيداع جديد",
+                  date: date,
+                });
+                toast.success("تم تسجيل الإيداع");
+                setDepositOpen(false);
+              } catch (error) {
+                if (error instanceof ZodError) {
+                  toast.error(error.errors[0].message);
+                } else {
+                  toast.error("حدث خطأ أثناء حفظ الإيداع");
+                }
               }
-              addTrustAccount({
-                id: `TA-${Date.now()}`,
-                clientId: `CLI-${Date.now()}`,
-                clientName,
-                amount,
-                type: type || "أمانة",
-                status: "نشط",
-                description: description || "إيداع جديد",
-                date: new Date().toISOString().slice(0, 10),
-              });
-              toast.success("تم تسجيل الإيداع");
-              setDepositOpen(false);
             }}
           >
             <div className="space-y-2">

@@ -14,6 +14,8 @@ import { useInvoicesStore } from "@/store/useInvoicesStore";
 import { generateInvoiceId } from "@/lib/invoice";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { invoiceSchema } from "@/lib/schemas";
+import { ZodError } from "zod";
 
 // Mock data for QR
 const SELLER_NAME = "مكتب د. عبدالمحسن القحطاني للمحاماة";
@@ -172,12 +174,13 @@ export default function Finance() {
 
   const handleCreateInvoice = async () => {
     const baseNum = parseFloat(newInvoice.base);
-    if (!newInvoice.clientName || isNaN(baseNum) || baseNum <= 0) {
-      toast.error("يرجى إدخال اسم العميل والمبلغ الأساسي");
-      return;
-    }
-
+    
     try {
+      invoiceSchema.parse({
+        ...newInvoice,
+        base: baseNum
+      });
+
       await addInvoice({
         id: generateInvoiceId(),
         clientId: newInvoice.clientId || `C-${Date.now()}`,
@@ -189,8 +192,12 @@ export default function Finance() {
       toast.success("تم تسجيل الفاتورة بنجاح في السجلات المعزولة والآمنة");
       setIsDialogOpen(false);
       setNewInvoice({ clientName: "", clientId: "", base: "" });
-    } catch(err) {
-      toast.error("حدث خطأ أثناء حفظ الفاتورة");
+    } catch (error) {
+      if (error instanceof ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("حدث خطأ أثناء حفظ الفاتورة");
+      }
     }
   };
 

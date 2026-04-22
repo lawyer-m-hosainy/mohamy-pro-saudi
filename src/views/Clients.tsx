@@ -17,6 +17,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { clientSchema } from "@/lib/schemas";
+import { ZodError } from "zod";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -131,33 +133,39 @@ export default function Clients() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) {
-      toast.error("يرجى ملء البيانات الأساسية");
-      return;
-    }
-
-    if (editingClientId) {
-      updateClient(editingClientId, formData);
-      toast.success("تم تحديث بيانات العميل بنجاح");
-    } else {
-      const newClient = {
-        id: `C-${Date.now()}`,
-        ...formData,
-      };
-      addClient(newClient as any);
-      toast.success("تم إضافة العميل بنجاح");
-    }
     
-    setIsOpen(false);
-    setEditingClientId(null);
-    setFormData({
-      name: "",
-      type: "فرد",
-      nationalId: "",
-      commercialRegistration: "",
-      vatNumber: "",
-      phone: "",
-    });
+    try {
+      clientSchema.parse(formData);
+      
+      if (editingClientId) {
+        updateClient(editingClientId, formData);
+        toast.success("تم تحديث بيانات العميل بنجاح");
+      } else {
+        const newClient = {
+          id: `C-${Date.now()}`,
+          ...formData,
+        };
+        addClient(newClient as any);
+        toast.success("تم إضافة العميل بنجاح");
+      }
+      
+      setIsOpen(false);
+      setEditingClientId(null);
+      setFormData({
+        name: "",
+        type: "فرد",
+        nationalId: "",
+        commercialRegistration: "",
+        vatNumber: "",
+        phone: "",
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("حدث خطأ غير متوقع");
+      }
+    }
   };
 
   return (

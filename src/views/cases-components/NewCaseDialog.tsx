@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useCasesStore } from '@/store/useCasesStore';
 import { useClientsStore } from '@/store/useClientsStore';
+import { caseSchema } from '@/lib/schemas';
+import { ZodError } from 'zod';
 
 interface NewCaseDialogProps {
   open: boolean;
@@ -58,39 +60,41 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
 
   const handleCreateCase = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCaseData.clientId) {
-      toast.error("يرجى اختيار الموكل لربط القضية به");
-      return;
-    }
-    if (!newCaseData.id || !newCaseData.plaintiff || !newCaseData.defendant) {
-      toast.error("يرجى ملء كافة البيانات الأساسية");
-      return;
-    }
+    
+    try {
+      caseSchema.parse(newCaseData);
+      
+      if (caseToEdit) {
+        updateCase(caseToEdit.id, newCaseData as any);
+        toast.success("تم تحديث القضية بنجاح");
+      } else {
+        addCase({
+          ...newCaseData,
+          memorandums: [],
+          najizReferenceStatus: "غير مربوط",
+          createdAt: new Date().toISOString(),
+        } as any);
+        toast.success("تم إضافة القضية بنجاح");
+      }
 
-    if (caseToEdit) {
-      updateCase(caseToEdit.id, newCaseData as any);
-      toast.success("تم تحديث القضية بنجاح");
-    } else {
-      addCase({
-        ...newCaseData,
-        memorandums: [],
-        najizReferenceStatus: "غير مربوط",
-        createdAt: new Date().toISOString(),
-      } as any);
-      toast.success("تم إضافة القضية بنجاح");
+      onOpenChange(false);
+      setNewCaseData({
+        id: "",
+        clientId: "",
+        court: "المحكمة التجارية",
+        type: "تجاري",
+        plaintiff: "",
+        defendant: "",
+        powerOfAttorneyRef: "",
+        status: "نشطة",
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("حدث خطأ غير متوقع");
+      }
     }
-
-    onOpenChange(false);
-    setNewCaseData({
-      id: "",
-      clientId: "",
-      court: "المحكمة التجارية",
-      type: "تجاري",
-      plaintiff: "",
-      defendant: "",
-      powerOfAttorneyRef: "",
-      status: "نشطة",
-    });
   };
 
   return (
