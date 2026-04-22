@@ -17,8 +17,16 @@ export default function LegalLibrary() {
   const [addOpen, setAddOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedPrecedentId, setSelectedPrecedentId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const selectedPrecedent = precedents.find(p => p.id === selectedPrecedentId);
+  
+  const filteredPrecedents = precedents.filter((p) =>
+    p.title.includes(searchTerm) ||
+    p.category.includes(searchTerm) ||
+    p.summary.includes(searchTerm) ||
+    p.tags.some((t) => t.includes(searchTerm))
+  );
 
   return (
     <motion.div 
@@ -149,14 +157,19 @@ export default function LegalLibrary() {
             <Input 
               placeholder="البحث في السوابق القضائية، المذكرات، أو التصنيفات..." 
               className="ps-10 h-12 bg-slate-50 dark:bg-white/5 border-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {precedents.map((precedent) => (
-          <Card key={precedent.id} className="border-none shadow-sm dark:bg-navy-800 hover:ring-2 hover:ring-primary-500/20 transition-all group">
+        {filteredPrecedents.length === 0 ? (
+          <div className="col-span-2 text-center py-12 text-slate-500">لا توجد نتائج مطابقة للبحث.</div>
+        ) : (
+          filteredPrecedents.map((precedent) => (
+            <Card key={precedent.id} className="border-none shadow-sm dark:bg-navy-800 hover:ring-2 hover:ring-primary-500/20 transition-all group">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <Badge variant="outline" className="text-primary-600 border-primary-100 dark:border-primary-900/30">
