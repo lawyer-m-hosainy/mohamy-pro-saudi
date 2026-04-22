@@ -6,28 +6,12 @@ const saudiMobileRegex = /^\+9665[0-9]{8}$/;
 export const clientSchema = z.object({
   name: z.string().min(2, { message: "الاسم يجب أن يكون حرفين على الأقل" }),
   type: z.enum(['فرد', 'منشأة'], { message: "نوع العميل مطلوب" }),
-  phone: z.string().regex(saudiMobileRegex, { message: "رقم الجوال يجب أن يكون بصيغة +9665xxxxxxxx" }),
-  nationalId: z.string().length(10, { message: "رقم الهوية يجب أن يكون 10 أرقام" }).optional().or(z.literal('')),
-  commercialRegistration: z.string().length(10, { message: "رقم السجل التجاري يجب أن يكون 10 أرقام" }).optional().or(z.literal('')),
-  vatNumber: z.string().length(15, { message: "الرقم الضريبي يجب أن يكون 15 رقماً" }).optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  nationalId: z.string().optional().or(z.literal('')),
+  commercialRegistration: z.string().optional().or(z.literal('')),
+  vatNumber: z.string().optional().or(z.literal('')),
   address: z.string().optional(),
   email: z.string().email({ message: "البريد الإلكتروني غير صحيح" }).optional().or(z.literal('')),
-}).refine((data) => {
-  if (data.type === 'فرد' && (!data.nationalId || data.nationalId.length !== 10)) {
-    return false;
-  }
-  return true;
-}, {
-  message: "رقم الهوية مطلوب للأفراد ويجب أن يتكون من 10 أرقام",
-  path: ["nationalId"],
-}).refine((data) => {
-  if (data.type === 'منشأة' && (!data.commercialRegistration || data.commercialRegistration.length !== 10)) {
-    return false;
-  }
-  return true;
-}, {
-  message: "رقم السجل التجاري مطلوب للمنشآت ويجب أن يتكون من 10 أرقام",
-  path: ["commercialRegistration"],
 });
 
 export const caseSchema = z.object({
