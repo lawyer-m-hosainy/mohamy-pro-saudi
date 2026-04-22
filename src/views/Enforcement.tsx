@@ -82,19 +82,42 @@ export default function Enforcement() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="بحث برقم الملف/القضية/العميل..."
               aria-label="بحث ملفات التنفيذ"
+              className="bg-white dark:bg-slate-800"
             />
-            <div className="space-y-2 max-h-[420px] overflow-auto">
+            <div className="space-y-2 max-h-[420px] overflow-auto pe-1">
+              {filtered.length === 0 && (
+                <div className="text-center py-8 text-slate-400">
+                  <Scale size={32} className="mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">لا توجد ملفات تنفيذ</p>
+                </div>
+              )}
               {filtered.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setSelectedId(item.id)}
-                  className="w-full text-start p-3 rounded-md border hover:bg-slate-50 transition-colors"
+                  className={`w-full text-start p-3.5 rounded-lg border-2 transition-all duration-200 ${
+                    selected?.id === item.id
+                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 shadow-md shadow-primary-500/10"
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 hover:shadow-sm"
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-primary-700">{item.id}</span>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`font-bold text-sm ${selected?.id === item.id ? "text-primary-700 dark:text-primary-300" : "text-navy-900 dark:text-white"}`}>{item.id}</span>
                     <Badge className={statusClass(item.status)}>{item.status}</Badge>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">{item.clientName} ضد {item.debtorName}</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{item.clientName} <span className="text-slate-400 dark:text-slate-500">ضد</span> {item.debtorName}</p>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <HandCoins size={12} />
+                      {item.amountClaimed.toLocaleString()} ر.س
+                    </span>
+                    {item.stageDeadline && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                        <CalendarClock size={12} />
+                        {item.stageDeadline}
+                      </span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -104,7 +127,7 @@ export default function Enforcement() {
         <Card className="lg:col-span-2 border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">تفاصيل ملف التنفيذ</CardTitle>
-            <Button size="sm" variant="outline" onClick={logSensitiveAction}>تسجيل تدقيق العرض</Button>
+            <Button size="sm" variant="outline" onClick={logSensitiveAction} disabled={!selected}>تسجيل تدقيق العرض</Button>
           </CardHeader>
           <CardContent>
             {!selected ? (
