@@ -1,97 +1,116 @@
-# 🏛️ محامي برو — Mohamy Pro
+# محامي برو (Mohamy Pro Saudi) ⚖️
 
-> منصة SaaS متكاملة لإدارة مكاتب المحاماة السعودية
+منصة SaaS قانونية متكاملة مصممة خصيصاً لمكاتب المحاماة في المملكة العربية السعودية. تهدف المنصة إلى أتمتة الإجراءات القانونية، إدارة القضايا والعملاء، وتوفير مساعد ذكي (AI) متخصص في الأنظمة السعودية.
 
-[![CI](https://github.com/YOUR_USERNAME/mohamy-pro-saudi/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/mohamy-pro-saudi/actions/workflows/ci.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19-61dafb)](https://react.dev/)
+![Mohamy Pro](/src/assets/logo.svg)
 
-## المزايا الرئيسية
+---
 
-| المديول | الوصف |
-|---|---|
-| **إدارة القضايا** | تتبع القضايا، المذكرات، الربط بناجز |
-| **إدارة العملاء** | أفراد ومنشآت مع تحقق من الهوية الوطنية والسجل التجاري |
-| **إدارة التنفيذ** | متابعة طلبات التنفيذ وإجراءات 46 |
-| **تحصيل الديون** | خطط سداد وإنذارات قانونية |
-| **فحص التعارض** | كشف التعارض المباشر وغير المباشر |
-| **الذكاء الاصطناعي** | مستشار قانوني + صياغة تلقائية + تحليل وثائق |
-| **إدارة العقود (CLM)** | دورة حياة العقد من المسودة إلى الاعتماد |
-| **الملكية الفكرية** | تسجيل، تجديد، معارضة، إنفاذ |
-| **المالية والضريبة** | فواتير ZATCA، ضريبة القيمة المضافة 15% |
-| **التحليلات** | تقارير أداء شاملة للشركاء والمكتب |
+## 🌟 المميزات الرئيسية
 
-## المكدس التقني
+- **إدارة القضايا والعملاء:** تتبع دورة حياة القضية من الاستلام وحتى الإغلاق، مع تصنيفات تتوافق مع محاكم المملكة (تجارية، عمالية، أحوال شخصية، إلخ).
+- **المستشار الذكي (AI Legal Assistant):** مدعوم بـ `Google Gemini 2.5 Flash`، يُقدم استشارات استرشادية، تحليلات للوقائع، وصياغة أولية للوائح الدعاوى والمذكرات.
+- **تشفير متقدم للبيانات (AES-256):** حماية كاملة للبيانات الحساسة مثل الهوية الوطنية، السجل التجاري، والرقم الضريبي للعملاء لمنع تسرب البيانات.
+- **تعدد المستأجرين (Multi-Tenant Architecture):** هيكلة SaaS تضمن فصل بيانات كل مكتب محاماة (Tenant) عن الآخر تماماً باستخدام Firestore Security Rules.
+- **صلاحيات متعددة (RBAC):** دعم أدوار وظيفية مختلفة (مدير مكتب، محامي شريك، سكرتير، محامي متدرب) مع واجهات وخصائص مخصصة لكل دور.
+- **إدارة المالية والفوترة:** إصدار الفواتير، حساب ضريبة القيمة المضافة (VAT) 15%، تتبع المدفوعات، وإدارة حسابات الأمانات (Trust Accounts).
+- **تصميم متجاوب وحديث:** مبني باستخدام `Tailwind CSS` و `Shadcn UI` مع دعم كامل للوضع الداكن (Dark Mode).
 
-- **Frontend**: React 19 + TypeScript 5.8 + Vite 6
-- **State**: Zustand 5
-- **UI**: Tailwind CSS 4 + shadcn/ui + Radix
-- **Auth**: Firebase Auth
-- **Database**: Firestore  
-- **AI**: Google Gemini 2.5 Flash
-- **Charts**: Recharts 3
+---
 
-## البدء السريع
+## 🛠 المكدس التقني (Tech Stack)
+
+### الواجهة الأمامية (Frontend)
+- **الإطار:** React 19 (Vite)
+- **اللغة:** TypeScript
+- **التصميم:** Tailwind CSS v4 + Shadcn UI + Framer Motion
+- **إدارة الحالة:** Zustand
+
+### الخادم والواجهة الخلفية (Backend)
+- **الخادم:** Node.js + Express (لحماية الـ API وإدارة Rate Limiting)
+- **قاعدة البيانات:** Firebase Firestore
+- **المصادقة:** Firebase Authentication
+- **الذكاء الاصطناعي:** Google GenAI SDK
+
+### الأمان والجودة (Security & DevOps)
+- **التشفير:** Crypto-js (AES-256)
+- **الاختبارات:** Vitest (Unit Tests لطبقة الـ Domain)
+- **البيئة:** Docker / Render
+
+---
+
+## 🏗 البنية الهندسية (Architecture)
+
+يعتمد النظام على بنية **Client-Server-Serverless Hybrid**:
+1. **Frontend (React):** يتعامل مع العرض، التحقق من المدخلات (Zod)، وإدارة الحالة.
+2. **Middleware Server (Express):** يعمل كبوابة أمنية (API Gateway) تحمي الـ AI Endpoints ونقاط النهاية الحساسة، ويتحقق من `Firebase JWT Tokens`.
+3. **Firestore Database:** تعمل كقاعدة بيانات NoSQL سحابية، حيث يتم الوصول إليها إما من الخادم أو مباشرة من العميل بعد اجتياز قواعد الأمان الصارمة (Security Rules).
+
+---
+
+## 🚀 البدء السريع (للمطورين)
+
+### 1. المتطلبات الأساسية
+- Node.js (الإصدار 20 أو أحدث)
+- حساب Firebase
+
+### 2. التثبيت
 
 ```bash
-# تثبيت التبعيات
+# استنساخ المستودع
+git clone https://github.com/lawyer-m-hosainy/mohamy-pro-saudi.git
+cd mohamy-pro-saudi
+
+# تثبيت الحزم
 npm install
-
-# تشغيل التطوير المحلي
-npm run dev
-
-# Type check
-npm run lint
-
-# بناء الإنتاج
-npm run build
 ```
 
-## متغيرات البيئة
+### 3. متغيرات البيئة (Environment Variables)
+قم بإنشاء ملف `.env` في جذر المشروع وأضف المتغيرات التالية:
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key
-VITE_FIREBASE_API_KEY=your_firebase_key
+# مفتاح تشفير البيانات الحساسة (يجب أن يكون معقداً وسرياً)
+VITE_ENCRYPTION_KEY=your-secure-256-bit-secret-key
+
+# مفتاح Google Gemini للذكاء الاصطناعي
+GEMINI_API_KEY=your-gemini-api-key
 ```
+*ملاحظة: يتطلب النظام أيضاً إعداد ملف `firebase-applet-config.json` للاتصال بـ Firebase.*
 
-## البنية المعمارية
-
-```
-src/
-├── application/     # Use Cases (أعمال التطبيق)
-├── domain/          # Business Rules (القواعد القانونية)
-├── repositories/    # Data Access Pattern  
-├── services/        # External Services (Firebase, Gemini)
-├── security/        # RBAC + Auth
-├── observability/   # Logger + Health Check
-├── store/           # Zustand State Management
-├── views/           # 38 Page Components
-├── components/      # Shared UI Components
-├── lib/             # Utilities (Firebase, ZATCA, Tenant)
-├── mocks/           # Demo Data
-└── types/           # TypeScript Definitions
-```
-
-## الأمان
-
-- ✅ Firebase Auth مع RBAC
-- ✅ Firestore Rules مع Tenant Isolation
-- ✅ Storage Rules مع حدود حجم ونوع
-- ✅ AI API Rate Limiting (10 req/min)
-- ✅ File Upload Validation (MIME + Extension)
-- ✅ Structured Logging مع حماية البيانات الحساسة
-
-## النشر
+### 4. التشغيل محلياً
 
 ```bash
-# Docker
-docker build -t mohamy-pro .
-docker run -p 4173:4173 mohamy-pro
+# تشغيل واجهة التطبيق
+npm run dev
 
-# Render
-# يتم النشر تلقائياً عند الدفع إلى main
+# في نافذة طرفية أخرى، قم بتشغيل الخادم المحلي (للذكاء الاصطناعي)
+npm run start
 ```
 
-## الترخيص
+---
 
-حقوق النشر محفوظة © 2026
+## ☁️ النشر (Deployment)
+
+المنصة مهيأة للنشر السحابي المباشر عبر `Render.com` باستخدام `render.yaml` أو باستخدام حاويات `Docker`.
+
+### خطوات النشر على Render:
+1. اربط حساب GitHub الخاص بك.
+2. أنشئ `Web Service` جديدة باستخدام مستودع الكود.
+3. المنصة ستقرأ ملف `render.yaml` تلقائياً.
+4. أضف متغيرات البيئة السرية (`GEMINI_API_KEY` و `VITE_ENCRYPTION_KEY`) في إعدادات الخدمة.
+5. انقر على **Deploy**.
+
+---
+
+## 🧪 الاختبارات (Testing)
+
+يتضمن النظام اختبارات للتحقق من صحة القواعد القانونية والمالية في طبقة الـ Domain.
+
+```bash
+# تشغيل جميع الاختبارات
+npm run test
+```
+
+---
+
+*بُنيت هذه المنصة لدعم التحول الرقمي للقطاع العدلي في المملكة العربية السعودية 🇸🇦*
