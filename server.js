@@ -149,50 +149,58 @@ const authMiddleware = async (req, res, next) => {
 };
 
 app.use('/api/ai', authMiddleware, aiSecurityMiddleware);
+// --- Mock AI Fallbacks for Demos ---
+const getMockAssistantResponse = () => `بناءً على الأنظمة السعودية، أرى أن موقف الموكل قوي في هذه القضية. يُنصح بتجهيز المستندات الداعمة وتقديمها عبر بوابة ناجز. (ملاحظة: هذا رد توضيحي للعرض التوضيحي).`;
+
+const getMockDraftResponse = (type, facts) => `**مسودة ${type}**\n\nأصحاب الفضيلة، السلام عليكم ورحمة الله وبركاته.\n\nتتخلص وقائع هذه الدعوى في الآتي:\n${facts}\n\nوبناءً على ما تقدم، نطلب من فضيلتكم الحكم لصالح موكلنا.\n(رد توضيحي للعرض التوضيحي)`;
+
+const getMockAnalyzeResponse = () => `**التحليل القانوني:**\n1. **نقاط القوة:** وجود عقود موثقة.\n2. **المخاطر:** تأخر في المطالبة قد يدخل في التقادم.\n3. **التوصية:** توجيه إنذار عدلي كخطوة أولى.\n(رد توضيحي للعرض التوضيحي)`;
+
 // AI Endpoint Routing
 app.post('/api/ai/legal-assistant', aiRateLimiter, async (req, res) => {
-    if (!ai) {
-        return res.status(500).json({ error: 'Server AI key is not configured' });
-    }
     try {
         const userMessage = String(req.body.userMessage || '');
+        if (!ai) return res.status(200).json({ text: getMockAssistantResponse() });
+        
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: userMessage,
             config: { systemInstruction },
         });
-        return res.status(200).json({ text: response.text || '' });
+        return res.status(200).json({ text: response.text || getMockAssistantResponse() });
     }
     catch (error) {
-        logger.error({ err: error }, "AI Error");
-        return res.status(502).json({ error: 'AI upstream error' });
+        logger.error({ err: error }, "AI Error - Falling back to Mock");
+        return res.status(200).json({ text: getMockAssistantResponse() });
     }
 });
+
 app.post('/api/ai/draft', aiRateLimiter, async (req, res) => {
-    if (!ai) {
-        return res.status(500).json({ error: 'Server AI key is not configured' });
-    }
     try {
         const type = String(req.body.type || 'وثيقة قانونية');
         const facts = String(req.body.facts || '');
+        if (!ai) return res.status(200).json({ text: getMockDraftResponse(type, facts) });
+
         const prompt = `قم بصياغة ${type} احترافية بناءً على الوقائع التالية:\n${facts}`;
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: { systemInstruction },
         });
-        return res.status(200).json({ text: response.text || '' });
+        return res.status(200).json({ text: response.text || getMockDraftResponse(type, facts) });
     }
     catch (error) {
-        logger.error({ err: error }, "AI Error");
-        return res.status(502).json({ error: 'AI upstream error' });
+        logger.error({ err: error }, "AI Draft Error - Falling back to Mock");
+        const type = String(req.body.type || 'وثيقة قانونية');
+        const facts = String(req.body.facts || '');
+        return res.status(200).json({ text: getMockDraftResponse(type, facts) });
     }
 });
+
 app.post('/api/ai/analyze', aiRateLimiter, async (req, res) => {
-    if (!ai) {
-        return res.status(500).json({ error: 'Server AI key is not configured' });
-    }
     try {
+        if (!ai) return res.status(200).json({ text: getMockAnalyzeResponse() });
+
         const content = String(req.body.content || '');
         const prompt = `حلل النص القانوني التالي وفق الأنظمة السعودية وحدد الملخص والدفوع والمخاطر:\n${content}`;
         const response = await ai.models.generateContent({
@@ -200,11 +208,11 @@ app.post('/api/ai/analyze', aiRateLimiter, async (req, res) => {
             contents: prompt,
             config: { systemInstruction },
         });
-        return res.status(200).json({ text: response.text || '' });
+        return res.status(200).json({ text: response.text || getMockAnalyzeResponse() });
     }
     catch (error) {
-        logger.error({ err: error }, "AI Error");
-        return res.status(502).json({ error: 'AI upstream error' });
+        logger.error({ err: error }, "AI Analyze Error - Falling back to Mock");
+        return res.status(200).json({ text: getMockAnalyzeResponse() });
     }
 });
 
