@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { BellRing, FileDiff, FileSignature, GitCompare, RefreshCw } from "lucide-react";
+import { BellRing, FileDiff, FileSignature, GitCompare, RefreshCw, Plus } from "lucide-react";
 import { useCLMStore } from '@/store/useCLMStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function stageColor(stage: string) {
   if (stage === "طلب") return "bg-slate-100 text-slate-700";
@@ -28,10 +29,18 @@ export default function CLM() {
   const updateContractStage = useCLMStore((state) => state.updateContractStage);
   const decideContractApproval = useCLMStore((state) => state.decideContractApproval);
   const updateContractObligationStatus = useCLMStore((state) => state.updateContractObligationStatus);
+  const addContractRequest = useCLMStore((state) => state.addContractRequest);
   const addAuditLog = useUIStore((state) => state.addAuditLog);
   const [selectedId, setSelectedId] = useState<string | null>(contractRequests[0]?.id || null);
   const [newVersionContent, setNewVersionContent] = useState("");
   const [changeSummary, setChangeSummary] = useState("");
+
+  // Add Form State
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newRequestData, setNewRequestData] = useState({
+    title: "",
+    clientName: "",
+  });
 
   const selected = contractRequests.find((c) => c.id === selectedId) || contractRequests[0];
 
@@ -81,6 +90,31 @@ export default function CLM() {
     toast.success(msg);
   };
 
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRequestData.title || !newRequestData.clientName) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+    
+    addContractRequest({
+      id: `REQ-${Math.floor(Math.random() * 90000) + 10000}`,
+      title: newRequestData.title,
+      clientName: newRequestData.clientName,
+      stage: "طلب",
+      status: "مسودة",
+      createdBy: currentUser?.name || "مستخدم النظام",
+      createdAt: new Date().toISOString(),
+      versions: [],
+      approvals: [],
+      obligations: []
+    });
+    
+    toast.success("تم إنشاء طلب العقد بنجاح");
+    setIsAddOpen(false);
+    setNewRequestData({ title: "", clientName: "" });
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -88,7 +122,41 @@ export default function CLM() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إدارة دورة حياة العقود (CLM)</h1>
           <p className="text-slate-500 mt-1">من الطلب وحتى الاعتماد والتوقيع ومتابعة الالتزامات والتجديد.</p>
         </div>
-        <Badge className="bg-primary-100 text-primary-700">CLM</Badge>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-primary-100 text-primary-700 hidden sm:inline-flex">CLM</Badge>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}>
+              <Plus size={16} />
+              إضافة طلب عقد
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>طلب صياغة عقد جديد</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">عنوان العقد / نوعه</label>
+                  <Input 
+                    placeholder="مثال: عقد تأسيس شركة" 
+                    value={newRequestData.title}
+                    onChange={(e) => setNewRequestData(prev => ({...prev, title: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اسم العميل / الطرف الثاني</label>
+                  <Input 
+                    placeholder="مثال: شركة الأفق المحدودة" 
+                    value={newRequestData.clientName}
+                    onChange={(e) => setNewRequestData(prev => ({...prev, clientName: e.target.value}))}
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white mt-4">
+                  إنشاء الطلب
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card className="border-none shadow-sm dark:bg-navy-800">
