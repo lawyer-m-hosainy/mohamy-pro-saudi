@@ -24,38 +24,25 @@ const MOCK_CLIENTS: Client[] = [
   {
     id: "CL-101",
     name: "شركة الأفق للتطوير العقاري",
-    type: "شركة",
-    email: "legal@alufuq-realestate.sa",
-    phone: "+966501234567",
-    status: "نشط",
-    casesCount: 3,
-    totalBilled: 150000,
-    address: "الرياض، حي الملقا، برج الأفق",
-    createdAt: "2023-05-12"
+    type: "منشأة",
+    commercialRegistration: "1010123456",
+    vatNumber: "300123456700003",
+    phone: "+966501234567"
   },
   {
     id: "CL-102",
     name: "مؤسسة البناء الحديث",
-    type: "مؤسسة",
-    email: "info@modernbuild.sa",
-    phone: "+966551234567",
-    status: "غير نشط",
-    casesCount: 1,
-    totalBilled: 45000,
-    address: "جدة، حي الرويس",
-    createdAt: "2023-08-20"
+    type: "منشأة",
+    commercialRegistration: "4030123456",
+    vatNumber: "300987654300003",
+    phone: "+966551234567"
   },
   {
     id: "CL-103",
     name: "أحمد بن عبدالله المفلح",
     type: "فرد",
-    email: "ahmed.a@example.com",
-    phone: "+966541234567",
-    status: "نشط",
-    casesCount: 2,
-    totalBilled: 25000,
-    address: "الدمام، حي الفيصلية",
-    createdAt: "2024-01-10"
+    nationalId: "1023456789",
+    phone: "+966541234567"
   }
 ];
 
