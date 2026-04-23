@@ -1,13 +1,15 @@
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, BriefcaseBusiness, Scale } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, BriefcaseBusiness, Scale, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useComplianceStore } from '@/store/useComplianceStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function isSlaNear(date?: string) {
   if (!date) return false;
@@ -19,8 +21,16 @@ export default function SpecializedTracks() {
   const specializedTracks = useComplianceStore((state) => state.specializedTracks);
   const toggleSpecializedChecklist = useComplianceStore((state) => state.toggleSpecializedChecklist);
   const updateSpecializedTrackStatus = useComplianceStore((state) => state.updateSpecializedTrackStatus);
+  const addSpecializedTrack = useComplianceStore((state) => state.addSpecializedTrack);
   const addAuditLog = useUIStore((state) => state.addAuditLog);
   const currentUser = useAuthStore((state) => state.currentUser);
+
+  // Form State
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newTrackData, setNewTrackData] = useState({
+    caseId: "",
+    caseType: "عمالي" as "عمالي" | "جزائي",
+  });
 
   const kpi = useMemo(() => {
     const labor = specializedTracks.filter((t) => t.caseType === "عمالي");
@@ -45,6 +55,36 @@ export default function SpecializedTracks() {
     });
   };
 
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTrackData.caseId) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+    
+    addSpecializedTrack({
+      id: `ST-${newTrackData.caseType === 'عمالي' ? 'LAB' : 'CRI'}-${Math.floor(Math.random() * 9000)}`,
+      caseId: newTrackData.caseId,
+      caseType: newTrackData.caseType,
+      stage: newTrackData.caseType === 'عمالي' ? "مكتب العمل" : "الشرطة",
+      slaDueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "نشط",
+      checklist: [
+        { id: "c1", title: "جمع المستندات الأولية", done: false },
+        { id: "c2", title: "صياغة المذكرة", done: false }
+      ],
+      documentTemplates: [],
+      steps: [
+        { id: "s1", name: "الخطوة الأولى", completed: false }
+      ],
+      createdAt: new Date().toISOString()
+    });
+    
+    toast.success("تم إضافة المسار بنجاح");
+    setIsAddOpen(false);
+    setNewTrackData({ ...newTrackData, caseId: "" });
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -52,7 +92,44 @@ export default function SpecializedTracks() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">المسارات المتخصصة</h1>
           <p className="text-slate-500 mt-1">قوالب عمل عمالي/جزائي مع checklists إلزامية وتنبيهات SLA.</p>
         </div>
-        <Badge className="bg-primary-100 text-primary-700">Labor + Criminal</Badge>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-primary-100 text-primary-700 hidden sm:inline-flex">Labor + Criminal</Badge>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}>
+              <Plus size={16} />
+              إضافة مسار
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>إضافة مسار عمل لقضية</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">رقم / ملف القضية</label>
+                  <Input 
+                    placeholder="مثال: C-12345" 
+                    value={newTrackData.caseId}
+                    onChange={(e) => setNewTrackData(prev => ({...prev, caseId: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">نوع المسار</label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                    value={newTrackData.caseType}
+                    onChange={(e) => setNewTrackData(prev => ({...prev, caseType: e.target.value as any}))}
+                  >
+                    <option value="عمالي">عمالي</option>
+                    <option value="جزائي">جزائي</option>
+                  </select>
+                </div>
+                <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white mt-4">
+                  إنشاء المسار
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

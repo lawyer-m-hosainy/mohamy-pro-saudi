@@ -36,6 +36,7 @@ interface ComplianceState {
   setKnowledgeAssets: (assets: KnowledgeAsset[]) => void;
   addKnowledgeAsset: (asset: KnowledgeAsset) => void;
   setSpecializedTracks: (tracks: SpecializedTrack[]) => void;
+  addSpecializedTrack: (track: SpecializedTrack) => void;
   setTrainingPathways: (pathways: TrainingPathway[]) => void;
   setAssessments: (assessments: KSAAssessment[]) => void;
 
@@ -83,7 +84,54 @@ export const useComplianceStore = create<ComplianceState>((set) => ({
       tags: ["نظام الإفلاس", "أبحاث", "تحديثات"],
     }
   ],
-  specializedTracks: [],
+  specializedTracks: [
+    {
+      id: "ST-LAB-1029",
+      caseId: "C-152468",
+      caseType: "عمالي",
+      stage: "محكمة ابتدائية",
+      slaDueAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(), // 12 hours from now (SLA alert)
+      status: "نشط",
+      checklist: [
+        { id: "chk-1", title: "مراجعة عقد العمل والملاحق", done: true },
+        { id: "chk-2", title: "احتساب مكافأة نهاية الخدمة بدقة", done: true },
+        { id: "chk-3", title: "إرفاق كشف الحساب البنكي لتحويل الرواتب", done: false },
+        { id: "chk-4", title: "صياغة لائحة الدعوى العمالية", done: false },
+      ],
+      documentTemplates: [
+        { id: "tpl-1", title: "لائحة دعوى عمالية", type: "لائحة" },
+        { id: "tpl-2", title: "مذكرة رد عمالية", type: "مذكرة" }
+      ],
+      steps: [
+        { id: "s-1", name: "جمع المستندات", completed: true },
+        { id: "s-2", name: "محاولة الصلح عبر منصة ودي", completed: true, notes: "فشلت محاولة الصلح" },
+        { id: "s-3", name: "رفع الدعوى في ناجز", completed: false },
+      ],
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "ST-CRI-9921",
+      caseId: "C-998822",
+      caseType: "جزائي",
+      stage: "النيابة العامة",
+      slaDueAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days late
+      status: "متأخر",
+      checklist: [
+        { id: "chk-1", title: "استلام لائحة الاتهام", done: true },
+        { id: "chk-2", title: "الاطلاع على ملف التحقيق", done: false },
+        { id: "chk-3", title: "إعداد مذكرة الدفوع الشكلية والموضوعية", done: false },
+      ],
+      documentTemplates: [
+        { id: "tpl-1", title: "مذكرة دفوع جزائية", type: "مذكرة" },
+        { id: "tpl-2", title: "طلب إخلاء سبيل", type: "أخرى" }
+      ],
+      steps: [
+        { id: "s-1", name: "حضور جلسة التحقيق", completed: true },
+        { id: "s-2", name: "تقديم الدفوع الأولية", completed: false },
+      ],
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  ],
   trainingPathways: [],
   assessments: [],
 
@@ -110,6 +158,7 @@ export const useComplianceStore = create<ComplianceState>((set) => ({
   addKnowledgeAsset: (asset) =>
     set((state) => ({ knowledgeAssets: [asset, ...state.knowledgeAssets] })),
   setSpecializedTracks: (specializedTracks) => set({ specializedTracks }),
+  addSpecializedTrack: (track) => set((state) => ({ specializedTracks: [track, ...state.specializedTracks] })),
   setTrainingPathways: (trainingPathways) => set({ trainingPathways }),
   setAssessments: (assessments) => set({ assessments }),
 
