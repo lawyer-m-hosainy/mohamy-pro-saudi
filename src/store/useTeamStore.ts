@@ -14,8 +14,38 @@ interface TeamState {
   updateTaskStatus: (id: string, status: 'pending' | 'completed') => void;
 }
 
+const MOCK_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: "U-001",
+    name: "عبدالله العتيبي",
+    email: "a.otaibi@mohamy.pro",
+    role: "شريك مؤسس",
+    specializations: ["تجاري", "شركات"],
+    avatar: "/avatars/a-otaibi.jpg",
+    status: "active"
+  },
+  {
+    id: "U-002",
+    name: "سارة الخالد",
+    email: "s.alkhaled@mohamy.pro",
+    role: "محامي أول",
+    specializations: ["عمالي", "إداري"],
+    avatar: "/avatars/s-alkhaled.jpg",
+    status: "active"
+  },
+  {
+    id: "U-003",
+    name: "محمد الدوسري",
+    email: "m.aldosari@mohamy.pro",
+    role: "مستشار قانوني",
+    specializations: ["ملكية فكرية", "صياغة عقود"],
+    avatar: "/avatars/m-aldosari.jpg",
+    status: "active"
+  }
+];
+
 export const useTeamStore = create<TeamState>((set) => ({
-  teamMembers: [],
+  teamMembers: MOCK_TEAM_MEMBERS,
   tasks: [],
 
   setTeamMembers: (teamMembers) => set({ teamMembers }),
