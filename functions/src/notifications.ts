@@ -83,7 +83,7 @@ export const sendHearingReminders = functions.pubsub
           <p><strong>التاريخ:</strong> ${deadline.date}</p>
           <p><strong>القضية:</strong> ${deadline.caseId || "-"}</p>
           <hr/>
-          <p style="color: #666; font-size: 12px;">هذا تنبيه آلي من منصة محامي برو — Mohamy Pro</p>
+          <p style="color: #666; font-size: 12px;">هذا تنبيه آلي من منصة ليجل ERP — LegalERP</p>
         </div>
         `
       );
@@ -135,7 +135,7 @@ export const sendAppealDeadlineWarnings = functions.pubsub
             <p><strong>الموعد النهائي:</strong> ${appealDeadline}</p>
             <p><strong>المتبقي:</strong> ${diff} أيام فقط</p>
             <hr/>
-            <p style="color: #666; font-size: 12px;">منصة محامي برو — Mohamy Pro</p>
+            <p style="color: #666; font-size: 12px;">منصة ليجل ERP — LegalERP</p>
           </div>
           `
         );
@@ -174,7 +174,7 @@ export const onInvoiceCreated = functions.firestore
           <tr style="background: #f8f9fa;"><td style="padding: 8px; font-weight: bold;">الإجمالي:</td><td style="font-weight: bold; color: #006c35;">${invoice.total} ر.س</td></tr>
         </table>
         <hr/>
-        <p style="color: #666; font-size: 12px;">هذا إشعار آلي من منصة محامي برو — Mohamy Pro</p>
+        <p style="color: #666; font-size: 12px;">هذا إشعار آلي من منصة ليجل ERP — LegalERP</p>
       </div>
       `
     );

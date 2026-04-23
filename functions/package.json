@@ -1,7 +1,7 @@
 {
   "name": "mohamy-pro-functions",
   "version": "1.0.0",
-  "description": "Firebase Cloud Functions for Mohamy Pro platform",
+  "description": "Firebase Cloud Functions for LegalERP platform",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",

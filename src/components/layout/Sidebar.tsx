@@ -66,7 +66,7 @@ export function Sidebar() {
         <div className="w-8 h-8 rounded bg-accent-500 flex items-center justify-center text-navy-900 font-bold">
           <Scale size={20} />
         </div>
-        <h1 className="text-xl font-bold tracking-tight">محامي برو</h1>
+        <h1 className="text-xl font-bold tracking-tight">ليجل ERP</h1>
       </div>
       
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">

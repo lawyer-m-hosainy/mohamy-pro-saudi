@@ -68,7 +68,7 @@ export default function ConflictCheck() {
       `عدد الارتباطات المكتشفة: ${currentResult.matches.length}`,
       `المُصدر: ${currentUser?.name || "مستخدم النظام"}`,
       "----------------------------------------",
-      "تم إصدار هذه الشهادة آلياً من نظام محامي برو.",
+      "تم إصدار هذه الشهادة آلياً من نظام ليجل ERP.",
     ].join("\n");
 
     const blob = new Blob([certificateText], { type: "text/plain;charset=utf-8" });

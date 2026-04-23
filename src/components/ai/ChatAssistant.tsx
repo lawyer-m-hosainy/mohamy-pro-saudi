@@ -17,7 +17,7 @@ export function ChatAssistant() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "model", text: "مرحباً بك في محامي برو الذكي. أنا مستشارك القانوني الآلي المتخصص في الأنظمة السعودية. كيف يمكنني مساعدتك اليوم؟" }
+    { role: "model", text: "مرحباً بك في ليجل ERP الذكي. أنا مستشارك القانوني الآلي المتخصص في الأنظمة السعودية. كيف يمكنني مساعدتك اليوم؟" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

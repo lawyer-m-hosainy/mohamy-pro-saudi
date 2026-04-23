@@ -69,7 +69,7 @@ export default function OnboardingFlow() {
   };
 
   const handleComplete = () => {
-    toast.success("تم إنشاء مكتبك بنجاح! مرحباً بك في محامي برو.");
+    toast.success("تم إنشاء مكتبك بنجاح! مرحباً بك في ليجل ERP.");
     // In production: call Firebase to create tenant document, send invite emails, etc.
     console.log("[Onboarding] Tenant created:", data);
   };
@@ -207,7 +207,7 @@ export default function OnboardingFlow() {
                   </div>
                   <Button onClick={handleComplete} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 px-8">
                     <Sparkles size={16} />
-                    ابدأ استخدام محامي برو
+                    ابدأ استخدام ليجل ERP
                   </Button>
                 </motion.div>
               )}
