@@ -68,6 +68,34 @@ const MOCK_PRECEDENTS: LegalPrecedent[] = [
   }
 ];
 
+const MOCK_QA_REVIEWS: QAReview[] = [
+  {
+    id: "QA-99120",
+    caseId: "C-1001",
+    reviewerId: "U-001",
+    status: "Pending",
+    checklist: [
+      { id: "QA-CH-1", requirement: "التحقق من صحة بيانات الوكالة في ناجز", isMet: true },
+      { id: "QA-CH-2", requirement: "مراجعة المذكرة لغوياً وقانونياً", isMet: false, comment: "يوجد خطأ إملائي في الصفحة الثانية" },
+      { id: "QA-CH-3", requirement: "التأكد من إرفاق كافة المستندات الثبوتية", isMet: false },
+    ],
+    overallComment: "بانتظار استكمال النواقص قبل الاعتماد النهائي للإيداع"
+  },
+  {
+    id: "QA-88221",
+    caseId: "C-1002",
+    reviewerId: "U-001",
+    status: "Approved",
+    checklist: [
+      { id: "QA-CH-1", requirement: "التحقق من صحة بيانات الوكالة في ناجز", isMet: true },
+      { id: "QA-CH-2", requirement: "مراجعة المذكرة لغوياً وقانونياً", isMet: true },
+      { id: "QA-CH-3", requirement: "التأكد من إرفاق كافة المستندات الثبوتية", isMet: true },
+    ],
+    overallComment: "المذكرة جاهزة ومكتملة من الناحية المهنية",
+    completedAt: new Date().toISOString()
+  }
+];
+
 export const useComplianceStore = create<ComplianceState>((set) => ({
   riskRegisters: [],
   controls: [],
@@ -75,7 +103,7 @@ export const useComplianceStore = create<ComplianceState>((set) => ({
   regulatoryObligations: [],
   compliance: [],
   precedents: MOCK_PRECEDENTS,
-  qaReviews: [],
+  qaReviews: MOCK_QA_REVIEWS,
   conflictHistory: [],
   knowledgeAssets: [
     {
