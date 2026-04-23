@@ -1,13 +1,15 @@
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, FileBadge2, Gavel, ShieldCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, FileBadge2, Gavel, ShieldCheck, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useIPStore } from '@/store/useIPStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 function isNear(date: string, days = 15) {
   const d = new Date(date).getTime();
@@ -20,11 +22,20 @@ export default function IPOperations() {
   const ipRenewals = useIPStore((state) => state.ipRenewals);
   const ipOppositions = useIPStore((state) => state.ipOppositions);
   const ipEnforcementActions = useIPStore((state) => state.ipEnforcementActions);
+  const addIPFiling = useIPStore((state) => state.addIPFiling);
   const updateIPRenewalStatus = useIPStore((state) => state.updateIPRenewalStatus);
   const updateIPOppositionStatus = useIPStore((state) => state.updateIPOppositionStatus);
   const updateIPEnforcementStatus = useIPStore((state) => state.updateIPEnforcementStatus);
   const addAuditLog = useUIStore((state) => state.addAuditLog);
   const currentUser = useAuthStore((state) => state.currentUser);
+
+  // Form State
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newFilingData, setNewFilingData] = useState({
+    clientName: "",
+    type: "علامة تجارية" as "علامة تجارية" | "براءة اختراع" | "حق مؤلف",
+    authority: "الهيئة السعودية للملكية الفكرية",
+  });
 
   const nearRenewals = useMemo(() => ipRenewals.filter((r) => isNear(r.dueDate)), [ipRenewals]);
 
@@ -40,6 +51,29 @@ export default function IPOperations() {
     });
   };
 
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFilingData.clientName) {
+      toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+    
+    addIPFiling({
+      id: `FIL-${Math.floor(Math.random() * 90000)}`,
+      ipRecordId: `IP-${Math.floor(Math.random() * 9000)}`,
+      clientName: newFilingData.clientName,
+      type: newFilingData.type,
+      filingDate: new Date().toISOString(),
+      authority: newFilingData.authority,
+      status: "قيد التقديم",
+      feeAmount: 0
+    });
+    
+    toast.success("تم إضافة ملف تقديم جديد");
+    setIsAddOpen(false);
+    setNewFilingData({ ...newFilingData, clientName: "" });
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -47,7 +81,45 @@ export default function IPOperations() {
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">عمليات الملكية الفكرية</h1>
           <p className="text-slate-500 mt-1">إدارة التسجيل والتجديد والاعتراض والإنفاذ مع تنبيهات المهل.</p>
         </div>
-        <Badge className="bg-primary-100 text-primary-700">IP Ops</Badge>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-primary-100 text-primary-700 hidden sm:inline-flex">IP Ops</Badge>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger render={<Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" />}>
+              <Plus size={16} />
+              تقديم جديد
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>إنشاء ملف تقديم ملكية فكرية</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">اسم العميل (المالك)</label>
+                  <Input 
+                    placeholder="مثال: مؤسسة الرواد" 
+                    value={newFilingData.clientName}
+                    onChange={(e) => setNewFilingData(prev => ({...prev, clientName: e.target.value}))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">النوع</label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                    value={newFilingData.type}
+                    onChange={(e) => setNewFilingData(prev => ({...prev, type: e.target.value as any}))}
+                  >
+                    <option value="علامة تجارية">علامة تجارية</option>
+                    <option value="براءة اختراع">براءة اختراع</option>
+                    <option value="حق مؤلف">حق مؤلف</option>
+                  </select>
+                </div>
+                <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white mt-4">
+                  إضافة وإرسال
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card className="border-none shadow-sm dark:bg-navy-800">
