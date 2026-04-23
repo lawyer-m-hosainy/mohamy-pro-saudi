@@ -19,28 +19,37 @@ const MOCK_TEAM_MEMBERS: TeamMember[] = [
     id: "U-001",
     name: "عبدالله العتيبي",
     email: "a.otaibi@mohamy.pro",
-    role: "شريك مؤسس",
-    specializations: ["تجاري", "شركات"],
+    role: "محامي شريك",
     avatar: "/avatars/a-otaibi.jpg",
-    status: "active"
+    status: "نشط",
+    activeCases: 5,
+    pendingTasks: 3,
+    completedTasks: 10,
+    joinDate: "2020-01-15"
   },
   {
     id: "U-002",
     name: "سارة الخالد",
     email: "s.alkhaled@mohamy.pro",
-    role: "محامي أول",
-    specializations: ["عمالي", "إداري"],
+    role: "محامي",
     avatar: "/avatars/s-alkhaled.jpg",
-    status: "active"
+    status: "نشط",
+    activeCases: 8,
+    pendingTasks: 5,
+    completedTasks: 22,
+    joinDate: "2021-06-01"
   },
   {
     id: "U-003",
     name: "محمد الدوسري",
     email: "m.aldosari@mohamy.pro",
-    role: "مستشار قانوني",
-    specializations: ["ملكية فكرية", "صياغة عقود"],
+    role: "محامي مستشار",
     avatar: "/avatars/m-aldosari.jpg",
-    status: "active"
+    status: "نشط",
+    activeCases: 3,
+    pendingTasks: 1,
+    completedTasks: 45,
+    joinDate: "2019-11-20"
   }
 ];
 
