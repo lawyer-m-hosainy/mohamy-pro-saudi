@@ -49,13 +49,32 @@ interface ComplianceState {
   updateTrainingModuleStatus: (pathwayId: string, moduleId: string, status: TrainingPathway['modules'][number]['status']) => void;
 }
 
+const MOCK_PRECEDENTS: LegalPrecedent[] = [
+  {
+    id: "LP-101",
+    title: "حكم نقض في دعوى عمالية (مكافأة نهاية الخدمة)",
+    category: "عمالي",
+    summary: "مبدأ قضائي يقرر أن مكافأة نهاية الخدمة تُحسب بناءً على آخر أجر فعلي استلمه العامل شاملاً البدلات الثابتة.",
+    tags: ["عمالي", "مكافأة", "مبادئ قضائية"],
+    date: "2023-11-05"
+  },
+  {
+    id: "LP-102",
+    title: "مذكرة دفاع في دعوى مطالبة مالية (عقد مقاولة)",
+    category: "تجاري",
+    summary: "مذكرة نموذجية للرد على مطالبة المقاول وتوضيح الدفوع المتعلقة بالتأخير في التسليم والعيوب الهندسية.",
+    tags: ["تجاري", "مقاولات", "مذكرة دفاع"],
+    date: "2024-01-20"
+  }
+];
+
 export const useComplianceStore = create<ComplianceState>((set) => ({
   riskRegisters: [],
   controls: [],
   complianceIssues: [],
   regulatoryObligations: [],
   compliance: [],
-  precedents: [],
+  precedents: MOCK_PRECEDENTS,
   qaReviews: [],
   conflictHistory: [],
   knowledgeAssets: [
