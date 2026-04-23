@@ -188,6 +188,42 @@ function ClientLoginForm({ onLogin }: { onLogin: (data: ClientData) => void }) {
             <br />
             إذا لم يكن لديك حساب، تواصل مع المكتب.
           </p>
+
+          <div className="mt-6 border-t border-slate-100 dark:border-white/5 pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-slate-600 dark:text-slate-300 border-dashed border-2 hover:bg-slate-50 dark:hover:bg-white/5"
+              onClick={() => {
+                toast.success("تم تسجيل الدخول (وضع العرض للمستثمرين)");
+                onLogin({
+                  name: "شركة الأفق للتطوير العقاري",
+                  phone: "+966501234567",
+                  type: "منشأة",
+                  cases: [
+                    {
+                      id: "C-1001",
+                      court: "المحكمة التجارية",
+                      plaintiff: "شركة الأفق",
+                      defendant: "مؤسسة البناء",
+                      status: "نشطة",
+                      createdAt: "2024-01-15",
+                    },
+                    {
+                      id: "C-1004",
+                      court: "الاستئناف",
+                      plaintiff: "شركة الأفق",
+                      defendant: "شركة التقنية المحدودة",
+                      status: "تحت الدراسة",
+                      createdAt: "2024-03-22",
+                    }
+                  ],
+                });
+              }}
+            >
+              تسجيل دخول تجريبي (للمستثمرين)
+            </Button>
+          </div>
         </motion.div>
       </div>
     </div>
