@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, MoreHorizontal, Link2, Link2Off, ChevronDown, ChevronUp, Plus, Edit, Trash2 } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Link2, Link2Off, ChevronDown, ChevronUp, Plus, Edit, Trash2, Scale } from "lucide-react";
 import { useCasesStore } from "@/store/useCasesStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useTeamStore } from "@/store/useTeamStore";
@@ -33,6 +33,7 @@ import {
   NewCaseDialog,
   CaseDetailsPanel,
   MemorandumsDialog,
+  ReferToEnforcementDialog,
   useCaseActions
 } from "./cases-components";
 
@@ -43,6 +44,7 @@ const CaseRow = React.memo(({
   handleLinkToNajiz, 
   onEdit, 
   onDelete,
+  onRefer,
   sessions,
   expenses,
   tasks,
@@ -111,15 +113,17 @@ const CaseRow = React.memo(({
               </Button>
             )}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white">
-                  <MoreHorizontal size={18} />
-                </Button>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white" />}>
+                <MoreHorizontal size={18} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
                 <DropdownMenuItem onClick={() => onEdit(c)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
                   <Edit size={16} className="text-slate-500" />
                   <span>تعديل</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRefer(c)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
+                  <Scale size={16} className="text-primary-500" />
+                  <span>إحالة للتنفيذ</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onDelete(c.id)} className="cursor-pointer text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 gap-2 flex items-center">
                   <Trash2 size={16} />
@@ -171,6 +175,8 @@ export default function Cases() {
   const [caseToEdit, setCaseToEdit] = useState<any>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [caseToDelete, setCaseToDelete] = useState<string | null>(null);
+  const [referOpen, setReferOpen] = useState(false);
+  const [caseToRefer, setCaseToRefer] = useState<any>(null);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("الكل");
@@ -189,6 +195,11 @@ export default function Cases() {
   const handleDeleteClick = React.useCallback((id: string) => {
     setCaseToDelete(id);
     setDeleteOpen(true);
+  }, []);
+
+  const handleReferClick = React.useCallback((c: any) => {
+    setCaseToRefer(c);
+    setReferOpen(true);
   }, []);
 
   const filteredCases = (cases || []).filter(c => {
@@ -248,11 +259,9 @@ export default function Cases() {
               />
             </div>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 text-slate-600 dark:text-slate-400 dark:border-white/10">
-                  <Filter size={18} />
-                  تصفية {filterStatus !== "الكل" && `(${filterStatus})`}
-                </Button>
+              <DropdownMenuTrigger render={<Button variant="outline" className="gap-2 text-slate-600 dark:text-slate-400 dark:border-white/10" />}>
+                <Filter size={18} />
+                تصفية {filterStatus !== "الكل" && `(${filterStatus})`}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-36">
                 <DropdownMenuItem onClick={() => { setFilterStatus("الكل"); setCurrentPage(1); }} className="cursor-pointer dark:focus:bg-white/5">
@@ -295,6 +304,7 @@ export default function Cases() {
                   handleLinkToNajiz={handleLinkToNajiz} 
                   onEdit={handleEditClick} 
                   onDelete={handleDeleteClick}
+                  onRefer={handleReferClick}
                   sessions={sessions}
                   expenses={expenses}
                   tasks={tasks}
@@ -357,6 +367,15 @@ export default function Cases() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReferToEnforcementDialog 
+        open={referOpen} 
+        onOpenChange={(open) => {
+          setReferOpen(open);
+          if (!open) setCaseToRefer(null);
+        }} 
+        caseData={caseToRefer} 
+      />
     </motion.div>
   );
 }
