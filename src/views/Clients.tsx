@@ -134,7 +134,7 @@ export default function Clients() {
                     value={formData.type} 
                     onValueChange={(v: any) => setFormData(prev => ({ ...prev, type: v }))}
                   >
-                    <SelectTrigger className="dark:bg-white/5 dark:border-white/10">
+                    <SelectTrigger className="w-full dark:bg-white/5 dark:border-white/10">
                       <SelectValue placeholder="اختر النوع" />
                     </SelectTrigger>
                     <SelectContent className="dark:bg-navy-800 dark:border-white/10">
@@ -313,7 +313,7 @@ export default function Clients() {
               value={selectedClientForProfile?.id || ""} 
               onValueChange={(v: any) => setSelectedClientForProfile(clients.find(c => c.id === v) || null)}
             >
-              <SelectTrigger className="dark:bg-white/5 dark:border-white/10">
+              <SelectTrigger className="w-full dark:bg-white/5 dark:border-white/10">
                 <SelectValue placeholder="اختر موكلاً...">
                   {selectedClientForProfile ? selectedClientForProfile.name : ""}
                 </SelectValue>
