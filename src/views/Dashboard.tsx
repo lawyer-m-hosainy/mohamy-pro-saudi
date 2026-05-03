@@ -65,38 +65,16 @@ const MemoizedPieChart = React.memo(({ data }: { data: any[] }) => (
 export default function Dashboard() {
   const navigate = useNavigate();
   const cases = useCasesStore(state => state.cases);
+  const sessions = useCasesStore(state => state.sessions);
+  const deadlines = useCasesStore(state => state.deadlines);
   const clients = useClientsStore(state => state.clients);
   const tasks = useTeamStore(state => state.tasks);
   const updateTaskStatus = useTeamStore(state => state.updateTaskStatus);
-  const invoices = useInvoicesStore(state => state.invoices);
-  const loadInvoices = useInvoicesStore(state => state.loadInvoices);
-  const getFinancialSummary = useAnalyticsStore(state => state.getFinancialSummary);
   
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftResult, setDraftResult] = useState("");
   const [draftType, setDraftType] = useState("لائحة دعوى");
   const [facts, setFacts] = useState("");
-
-  useEffect(() => {
-    loadInvoices();
-  }, [loadInvoices]);
-
-  const summary = useMemo(() => getFinancialSummary(), [getFinancialSummary]);
-
-  const dynamicRevenueData = useMemo(() => {
-    if (invoices.length === 0) return [
-      { name: 'التراكمي', value: summary.totalRevenue || 0 }
-    ];
-    
-    // Group invoices by month
-    const grouped: Record<string, number> = {};
-    invoices.forEach(inv => {
-       const date = new Date(inv.date);
-       const month = date.toLocaleString('ar-SA', { month: 'long' });
-       grouped[month] = (grouped[month] || 0) + inv.total;
-    });
-    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
-  }, [invoices, summary]);
 
   const handleDraft = async () => {
     if (!facts.trim()) return;
@@ -112,11 +90,26 @@ export default function Dashboard() {
   };
 
   const stats = useMemo(() => [
-    { title: "إجمالي القضايا", value: cases.length, icon: Scale, color: "text-primary-500", bg: "bg-primary-50 dark:bg-primary-900/20" },
+    { title: "القضايا المتداولة", value: cases.filter(c => c.status === 'متداولة').length, icon: Scale, color: "text-primary-500", bg: "bg-primary-50 dark:bg-primary-900/20" },
+    { title: "القضايا المحفوظة", value: cases.filter(c => c.status === 'محفوظة').length, icon: CheckCircle2, color: "text-slate-500", bg: "bg-slate-50 dark:bg-slate-800" },
     { title: "العملاء النشطون", value: clients.length, icon: Users, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20" },
-    { title: "قضايا قيد الدراسة", value: cases.filter(c => c.status === 'تحت الدراسة').length, icon: Clock, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20" },
-    { title: "قضايا منتهية", value: cases.filter(c => c.status === 'مغلقة').length, icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+    { title: "قضايا تحت الدراسة", value: cases.filter(c => c.status === 'تحت الدراسة').length, icon: Clock, color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20" },
   ], [cases, clients]);
+
+  const today = new Date().toISOString().split('T')[0];
+  const todaySessions = sessions.filter(s => s.date === today);
+
+  const upcomingDeadlines = deadlines.filter(d => {
+    if (!d.type?.includes('استئناف') && !d.title.includes('استئناف') && !d.title.includes('تمييز')) return false;
+    const diffTime = new Date(d.date).getTime() - new Date(today).getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 30;
+  }).map(d => {
+    const diffTime = new Date(d.date).getTime() - new Date(today).getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const relatedCase = cases.find(c => c.id === d.caseId);
+    return { ...d, diffDays, caseTitle: relatedCase?.title || relatedCase?.plaintiff || d.caseId };
+  }).sort((a, b) => a.diffDays - b.diffDays);
 
   const dynamicCategoryData = useMemo(() => {
     if (cases.length === 0) {
@@ -239,36 +232,57 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-none shadow-sm dark:bg-navy-800">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-50 dark:border-white/5 pb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
+          <CardHeader className="border-b border-slate-50 dark:border-white/5 pb-4">
             <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary-500" />
-              تحليل الإيرادات (ر.س)
+              <CalendarIcon className="w-5 h-5 text-primary-500" />
+              جلسات اليوم
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 h-[300px]">
-            <MemoizedBarChart data={dynamicRevenueData} />
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-50 dark:divide-white/5">
+              {todaySessions.length > 0 ? todaySessions.map((session, idx) => {
+                const c = cases.find(c => c.id === session.caseId);
+                return (
+                  <div key={idx} className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    <p className="font-bold text-navy-900 dark:text-white">{c?.title || session.caseName}</p>
+                    <p className="text-sm text-slate-500 mt-1 font-mono">{c?.circulationCode || c?.archiveCode || session.caseId}</p>
+                    <p className="text-xs text-slate-400 mt-1">{session.notes || session.time}</p>
+                  </div>
+                );
+              }) : (
+                <div className="p-8 text-center text-slate-500">لا توجد جلسات مجدولة اليوم</div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-sm dark:bg-navy-800">
           <CardHeader className="border-b border-slate-50 dark:border-white/5 pb-4">
             <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <Scale className="w-5 h-5 text-primary-500" />
-              توزيع القضايا
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              تنبيهات الاستئناف والتمييز (خلال 30 يوم)
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 h-[300px] flex flex-col items-center">
-            <MemoizedPieChart data={dynamicCategoryData} />
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 w-full">
-              {dynamicCategoryData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2">
-                  <div className={cn("w-2 h-2 rounded-full", item.bgClass)} />
-                  <span className="text-xs text-slate-500 dark:text-slate-400">{item.name}</span>
-                  <span className="text-xs font-bold mr-auto">{item.value}%</span>
+          <CardContent className="p-0">
+            <div className="divide-y divide-slate-50 dark:divide-white/5">
+              {upcomingDeadlines.length > 0 ? upcomingDeadlines.map((d, idx) => (
+                <div key={idx} className={cn("p-4 transition-colors", d.diffDays <= 7 ? "bg-red-50/50 dark:bg-red-900/10" : "hover:bg-slate-50 dark:hover:bg-white/5")}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className={cn("font-bold", d.diffDays <= 7 ? "text-red-700 dark:text-red-400" : "text-navy-900 dark:text-white")}>{d.caseTitle}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{d.title}</p>
+                      <p className="text-xs text-slate-500 mt-1">{d.date}</p>
+                    </div>
+                    <div className={cn("px-2 py-1 rounded text-xs font-bold", d.diffDays <= 7 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>
+                      المتبقي: {d.diffDays} يوم
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )) : (
+                <div className="p-8 text-center text-slate-500">لا توجد مواعيد استئناف قريبة</div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -340,28 +354,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm dark:bg-navy-800">
-          <CardHeader className="border-b border-slate-50 dark:border-white/5 pb-4">
-            <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-accent-500" />
-              تنبيهات النظام
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-4">
-            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-              <p className="text-xs font-bold text-amber-800 dark:text-amber-400">موعد جلسة قادم</p>
-              <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">قضية شركة الراجحي - غداً الساعة 10:00 صباحاً</p>
-            </div>
-            <div className="p-3 rounded-lg bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-900/20">
-              <p className="text-xs font-bold text-primary-800 dark:text-primary-400">تحديث من ناجز</p>
-              <p className="text-xs text-primary-700 dark:text-primary-500 mt-1">تم تحديث حالة 3 قضايا مرتبطة بنجاح.</p>
-            </div>
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
-              <p className="text-xs font-bold text-blue-800 dark:text-blue-400">عميل جديد</p>
-              <p className="text-xs text-blue-700 dark:text-blue-500 mt-1">تمت إضافة "خالد بن وليد الشمري" إلى قائمة العملاء.</p>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </motion.div>
   );

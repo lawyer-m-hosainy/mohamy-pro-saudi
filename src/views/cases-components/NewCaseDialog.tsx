@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useCasesStore } from '@/store/useCasesStore';
 import { useClientsStore } from '@/store/useClientsStore';
 import { caseSchema } from '@/lib/schemas';
+import { getNextCounter, saveCases } from '@/services/legalDataService';
 import { ZodError } from 'zod';
 
 interface NewCaseDialogProps {
@@ -23,11 +24,15 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
     id: "",
     clientId: "",
     court: "المحكمة التجارية" as any,
+    circuit: "",
+    title: "",
+    automatedNumber: "",
+    clientRole: "مدعي" as any,
     type: "تجاري" as any,
     plaintiff: "",
     defendant: "",
     powerOfAttorneyRef: "",
-    status: "نشطة" as any,
+    status: "متداولة" as any,
   });
 
   useEffect(() => {
@@ -37,43 +42,62 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
           id: caseToEdit.id || "",
           clientId: caseToEdit.clientId || "",
           court: caseToEdit.court || "المحكمة التجارية",
+          circuit: caseToEdit.circuit || "",
+          title: caseToEdit.title || "",
+          automatedNumber: caseToEdit.automatedNumber || "",
+          clientRole: caseToEdit.clientRole || "مدعي",
           type: caseToEdit.type || "تجاري",
           plaintiff: caseToEdit.plaintiff || "",
           defendant: caseToEdit.defendant || "",
           powerOfAttorneyRef: caseToEdit.powerOfAttorneyRef || "",
-          status: caseToEdit.status || "نشطة",
+          status: caseToEdit.status || "متداولة",
         });
       } else {
         setNewCaseData({
           id: "",
           clientId: "",
           court: "المحكمة التجارية",
+          circuit: "",
+          title: "",
+          automatedNumber: "",
+          clientRole: "مدعي",
           type: "تجاري",
           plaintiff: "",
           defendant: "",
           powerOfAttorneyRef: "",
-          status: "نشطة",
+          status: "متداولة",
         });
       }
     }
   }, [open, caseToEdit]);
 
-  const handleCreateCase = (e: React.FormEvent) => {
+  const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       caseSchema.parse(newCaseData);
       
+      let finalCaseData = { ...newCaseData } as any;
+
       if (caseToEdit) {
-        updateCase(caseToEdit.id, newCaseData as any);
+        if (finalCaseData.status === "محفوظة" && !caseToEdit.archiveCode) {
+           finalCaseData.archiveCode = await getNextCounter('archive');
+        }
+        updateCase(caseToEdit.id, finalCaseData);
+        // Sync to backend if needed
+        await saveCases([finalCaseData]);
         toast.success("تم تحديث القضية بنجاح");
       } else {
-        addCase({
-          ...newCaseData,
+        const generatedCirculationCode = await getNextCounter('circulation');
+        const newCaseObj = {
+          ...finalCaseData,
+          circulationCode: generatedCirculationCode,
           memorandums: [],
           najizReferenceStatus: "غير مربوط",
           createdAt: new Date().toISOString(),
-        } as any);
+        };
+        addCase(newCaseObj);
+        await saveCases([newCaseObj]);
         toast.success("تم إضافة القضية بنجاح");
       }
 
@@ -82,15 +106,19 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
         id: "",
         clientId: "",
         court: "المحكمة التجارية",
+        circuit: "",
+        title: "",
+        automatedNumber: "",
+        clientRole: "مدعي",
         type: "تجاري",
         plaintiff: "",
         defendant: "",
         powerOfAttorneyRef: "",
-        status: "نشطة",
+        status: "متداولة",
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        toast.error(error.errors[0].message);
+        toast.error(error.issues[0]?.message || "خطأ في المدخلات");
       } else {
         toast.error("حدث خطأ غير متوقع");
       }
@@ -127,9 +155,9 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
             <div className="space-y-2">
               <Label>رقم القضية / المرجع</Label>
               <Input 
-                placeholder="مثلاً: 45/123-ت" 
+                placeholder="مثلاً: 45-123-ت" 
                 value={newCaseData.id}
-                onChange={e => setNewCaseData(p => ({ ...p, id: e.target.value }))}
+                onChange={e => setNewCaseData(p => ({ ...p, id: e.target.value.replace(/\//g, '-') }))}
               />
             </div>
             <div className="space-y-2">
@@ -139,6 +167,48 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
                 value={newCaseData.powerOfAttorneyRef}
                 onChange={e => setNewCaseData(p => ({ ...p, powerOfAttorneyRef: e.target.value }))}
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>الدائرة</Label>
+              <Input 
+                placeholder="رقم أو اسم الدائرة" 
+                value={newCaseData.circuit}
+                onChange={e => setNewCaseData(p => ({ ...p, circuit: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>مسمى القضية</Label>
+              <Input 
+                placeholder="مثل: مطالبة مالية" 
+                value={newCaseData.title}
+                onChange={e => setNewCaseData(p => ({ ...p, title: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>الرقم الآلي</Label>
+              <Input 
+                placeholder="الرقم الآلي للقضية" 
+                value={newCaseData.automatedNumber}
+                onChange={e => setNewCaseData(p => ({ ...p, automatedNumber: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>صفة الموكل</Label>
+              <select 
+                title="صفة الموكل"
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+                value={newCaseData.clientRole}
+                onChange={e => setNewCaseData(p => ({ ...p, clientRole: e.target.value as any }))}
+              >
+                <option value="مدعي">مدعي</option>
+                <option value="مدعى عليه">مدعى عليه</option>
+              </select>
             </div>
           </div>
 
@@ -201,8 +271,10 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
               value={newCaseData.status}
               onChange={e => setNewCaseData(p => ({ ...p, status: e.target.value as any }))}
             >
-              <option value="نشطة">نشطة</option>
+              <option value="متداولة">متداولة</option>
               <option value="تحت الدراسة">تحت الدراسة</option>
+              {caseToEdit && <option value="محفوظة">محفوظة</option>}
+              {caseToEdit && <option value="مغلقة">مغلقة</option>}
             </select>
           </div>
 

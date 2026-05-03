@@ -22,6 +22,9 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useClientsLogic } from "@/hooks/useClientsLogic";
+import { useCasesStore } from "@/store/useCasesStore";
+import { useClientsStore } from "@/store/useClientsStore";
+import { useState } from "react";
 
 const ClientRow = React.memo(({ client, onEdit, onDelete }: { client: any, onEdit: (c: any) => void, onDelete: (id: string) => void }) => {
   return (
@@ -51,6 +54,7 @@ const ClientRow = React.memo(({ client, onEdit, onDelete }: { client: any, onEdi
       </TableCell>
       <TableCell className="text-end">
         <DropdownMenu>
+          {/* @ts-ignore */}
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="text-slate-400 hover:text-navy-900 dark:hover:text-white">
               <MoreHorizontal size={18} />
@@ -92,6 +96,10 @@ export default function Clients() {
     handleSubmit,
     openNewClientDialog,
   } = useClientsLogic();
+
+  const cases = useCasesStore(state => state.cases);
+  const clients = useClientsStore(state => state.clients);
+  const [selectedClientForProfile, setSelectedClientForProfile] = useState<any>(null);
 
   return (
     <motion.div 
@@ -220,6 +228,7 @@ export default function Clients() {
               />
             </div>
             <DropdownMenu>
+              {/* @ts-ignore */}
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2 text-slate-600 dark:text-slate-400 dark:border-white/10">
                   <Filter size={18} />
@@ -291,6 +300,77 @@ export default function Clients() {
             </div>
           </div>
         )}
+      </Card>
+
+      <Card className="border-none shadow-sm dark:bg-navy-800 mt-6">
+        <CardHeader className="p-4 border-b border-slate-50 dark:border-white/5">
+          <CardTitle className="text-lg font-bold">ملف الموكل وقضاياه</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div className="space-y-2 max-w-sm">
+            <Label>اختر الموكل لعرض ملفه</Label>
+            <Select 
+              value={selectedClientForProfile?.id || ""} 
+              onValueChange={(v: any) => setSelectedClientForProfile(clients.find(c => c.id === v) || null)}
+            >
+              <SelectTrigger className="dark:bg-white/5 dark:border-white/10">
+                <SelectValue placeholder="اختر موكلاً...">
+                  {selectedClientForProfile ? selectedClientForProfile.name : ""}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="dark:bg-navy-800 dark:border-white/10">
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedClientForProfile && (() => {
+            const clientCases = cases.filter(c => c.clientId === selectedClientForProfile.id);
+            const activeCases = clientCases.filter(c => c.status === 'متداولة').length;
+            const archivedCases = clientCases.filter(c => c.status === 'محفوظة').length;
+
+            return (
+              <div className="space-y-4 pt-4 border-t border-slate-50 dark:border-white/5">
+                <div className="flex gap-4">
+                  <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">إجمالي القضايا: {clientCases.length}</Badge>
+                  <Badge variant="secondary" className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">متداولة: {activeCases}</Badge>
+                  <Badge variant="secondary" className="bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">محفوظة: {archivedCases}</Badge>
+                </div>
+                
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="font-bold">اسم القضية / المسمى</TableHead>
+                      <TableHead className="font-bold">الحالة</TableHead>
+                      <TableHead className="font-bold">الكود</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clientCases.length > 0 ? clientCases.map(c => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-bold">{c.title || c.id}</TableCell>
+                        <TableCell>
+                          <Badge className={c.status === 'متداولة' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100' : 'bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-400 hover:bg-slate-100'}>
+                            {c.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {c.status === 'متداولة' ? c.circulationCode || '-' : c.archiveCode || '-'}
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-4 text-slate-500">لا توجد قضايا لهذا الموكل</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            );
+          })()}
+        </CardContent>
       </Card>
     </motion.div>
   );

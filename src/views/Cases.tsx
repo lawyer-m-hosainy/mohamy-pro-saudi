@@ -117,10 +117,12 @@ const CaseRow = React.memo(({
                 <MoreHorizontal size={18} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
-                <DropdownMenuItem onClick={() => onEdit(c)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
-                  <Edit size={16} className="text-slate-500" />
-                  <span>تعديل</span>
-                </DropdownMenuItem>
+                {c.status !== 'محفوظة' && c.status !== 'مغلقة' && (
+                  <DropdownMenuItem onClick={() => onEdit(c)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
+                    <Edit size={16} className="text-slate-500" />
+                    <span>تعديل</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => onRefer(c)} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">
                   <Scale size={16} className="text-primary-500" />
                   <span>إحالة للتنفيذ</span>
@@ -204,9 +206,12 @@ export default function Cases() {
 
   const filteredCases = (cases || []).filter(c => {
     const matchesSearch = c.id?.includes(searchQuery) || 
-                          c.court?.includes(searchQuery) || 
+                          c.automatedNumber?.includes(searchQuery) ||
+                          c.circulationCode?.includes(searchQuery) ||
+                          c.archiveCode?.includes(searchQuery) ||
                           c.plaintiff?.includes(searchQuery) || 
-                          c.defendant?.includes(searchQuery);
+                          c.defendant?.includes(searchQuery) ||
+                          c.court?.includes(searchQuery);
     const matchesStatus = filterStatus === "الكل" || c.status === filterStatus;
     return matchesSearch && matchesStatus;
   });

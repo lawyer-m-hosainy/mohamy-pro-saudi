@@ -1,7 +1,7 @@
 import { db, handleFirestoreError, OperationType } from "@/lib/firebase";
 import { Case, Client, Invoice } from "@/types";
 import { decryptField, encryptField } from "@/lib/encryption";
-import { collection, doc, getDocs, query, setDoc, where, deleteDoc, limit, orderBy, startAfter, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+import { collection, doc, getDocs, query, setDoc, where, deleteDoc, limit, orderBy, startAfter, QueryDocumentSnapshot, DocumentData, runTransaction } from "firebase/firestore";
 import { DEMO_TENANT_ID, getCurrentTenantId } from "@/lib/tenant";
 import { mapCaseStatusToStage } from "@/domain/legalWorkflow";
 
@@ -136,6 +136,29 @@ export async function fetchCases(): Promise<Case[]> {
     return snapshot.docs.map((d) => d.data() as Case);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, CASES_COLLECTION);
+  }
+}
+
+export async function getNextCounter(type: 'circulation' | 'archive'): Promise<string> {
+  const counterRef = doc(db, "counters", type);
+  try {
+    const newCount = await runTransaction(db, async (transaction) => {
+      const sfDoc = await transaction.get(counterRef);
+      if (!sfDoc.exists()) {
+        transaction.set(counterRef, { last_value: 1 });
+        return 1;
+      }
+      const newCount = (sfDoc.data().last_value || 0) + 1;
+      transaction.update(counterRef, { last_value: newCount });
+      return newCount;
+    });
+    
+    const prefix = type === 'circulation' ? 'T-' : 'H-';
+    return `${prefix}${newCount.toString().padStart(4, '0')}`;
+  } catch (error) {
+    console.error("Counter transaction failed: ", error);
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return type === 'circulation' ? `T-${random}` : `H-${random}`;
   }
 }
 

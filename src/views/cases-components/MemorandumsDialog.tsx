@@ -60,15 +60,17 @@ export default function MemorandumsDialog({ caseData }: MemorandumsDialogProps) 
                 ref={fileInputRef}
                 onChange={onFileChange}
               />
-              <Button 
-                size="sm" 
-                className="bg-primary-500 text-white gap-2"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
-                رفع وثيقة
-              </Button>
+              {!['محفوظة', 'مغلقة'].includes(caseData.status) && (
+                <Button 
+                  size="sm" 
+                  className="bg-primary-500 text-white gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
+                  رفع وثيقة
+                </Button>
+              )}
             </div>
           </div>
           <div className="border dark:border-white/10 rounded-lg divide-y divide-slate-100 dark:divide-white/10">
@@ -87,9 +89,11 @@ export default function MemorandumsDialog({ caseData }: MemorandumsDialogProps) 
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400">
                     <ExternalLink size={14} />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-destructive">
-                    <Trash2 size={14} />
-                  </Button>
+                  {!['محفوظة', 'مغلقة'].includes(caseData.status) && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-destructive">
+                      <Trash2 size={14} />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

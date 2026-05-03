@@ -15,15 +15,21 @@ export interface Case {
   id: string;
   tenantId?: string;
   clientId: string; // رابط مع الموكل (Mandatory)
+  clientRole?: 'مدعي' | 'مدعى عليه'; // صفة الموكل
   workflowStage?: 'intake' | 'pleadings' | 'hearing' | 'judgment' | 'closed';
   court: KSACourtType;
+  circuit?: string; // الدائرة
+  title?: string; // مسمى القضية
+  automatedNumber?: string; // الرقم الآلي
+  circulationCode?: string; // كود التداول
+  archiveCode?: string; // كود الحفظ
   type: 'تجاري' | 'عمالي' | 'عام' | 'جزائي' | 'أحوال شخصية' | 'إداري';
   plaintiff: string; // المدعي
   defendant: string; // المدعى عليه
   memorandums: string[]; // مذكرات ولوائح (NEVER USE صحائف)
   documents?: Document[];
   powerOfAttorneyRef: string; // رقم الوكالة (NEVER USE توكيل)
-  status: 'نشطة' | 'مغلقة' | 'تحت الدراسة';
+  status: 'متداولة' | 'مغلقة' | 'تحت الدراسة' | 'محفوظة';
   najizReferenceStatus?: 'مربوط بناجز' | 'غير مربوط'; // Najiz Platform Tracker
   createdAt: string;
 }

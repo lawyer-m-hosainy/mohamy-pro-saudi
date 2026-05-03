@@ -23,7 +23,7 @@ export const useCasesStore = create<CasesState>((set) => ({
       id: "C-1001",
       clientId: "CL-001",
       type: "تجاري",
-      status: "نشطة",
+      status: "متداولة",
       court: "المحكمة التجارية",
       plaintiff: "شركة الأفق",
       defendant: "مؤسسة البناء",

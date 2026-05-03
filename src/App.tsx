@@ -29,6 +29,7 @@ const Calendar = lazy(() => import("./views/Calendar"));
 const Expenses = lazy(() => import("./views/Expenses"));
 const Team = lazy(() => import("./views/Team"));
 const Tasks = lazy(() => import("./views/Tasks"));
+const SessionsRoll = lazy(() => import("./views/SessionsRoll"));
 const Analytics = lazy(() => import("./views/Analytics"));
 const Settings = lazy(() => import("./views/Settings"));
 const Compliance = lazy(() => import("./views/Compliance"));
@@ -152,6 +153,7 @@ export default function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="clients" element={<Clients />} />
               <Route path="cases" element={<Cases />} />
+              <Route path="roll" element={<SessionsRoll />} />
               <Route path="calendar" element={<Calendar />} />
               <Route path="finance" element={<Finance />} />
               <Route path="expenses" element={<Expenses />} />
