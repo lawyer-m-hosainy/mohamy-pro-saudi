@@ -17,11 +17,23 @@ as $$
 $$;
 
 -- =============================================
--- 1. حذف السياسات القديمة (إن وُجدت)
+-- 1. حذف جميع السياسات القديمة والجديدة (إن وُجدت)
 -- =============================================
 drop policy if exists "Enable read access for authenticated users" on public.users;
 drop policy if exists "Enable read access for authenticated users" on public.clients;
 drop policy if exists "Enable read access for authenticated users" on public.cases;
+drop policy if exists "users_select_same_tenant" on public.users;
+drop policy if exists "users_update_own_profile" on public.users;
+drop policy if exists "users_insert_same_tenant" on public.users;
+drop policy if exists "users_insert_own_profile" on public.users;
+drop policy if exists "clients_select_same_tenant" on public.clients;
+drop policy if exists "clients_insert_same_tenant" on public.clients;
+drop policy if exists "clients_update_same_tenant" on public.clients;
+drop policy if exists "clients_delete_same_tenant" on public.clients;
+drop policy if exists "cases_select_same_tenant" on public.cases;
+drop policy if exists "cases_insert_same_tenant" on public.cases;
+drop policy if exists "cases_update_same_tenant" on public.cases;
+drop policy if exists "cases_delete_same_tenant" on public.cases;
 
 -- =============================================
 -- 2. تفعيل RLS على جميع الجداول
