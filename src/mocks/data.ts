@@ -1,20 +1,21 @@
 import { 
-  Client, Case, KSACourtType, Session, UserProfile, Notification, Task, OfficeSettings, Expense, TeamMember,
+  Client, Case, CourtType, Session, UserProfile, Notification, Task, OfficeSettings, Expense, TeamMember,
   ComplianceRecord, LegalPrecedent, ContractTemplate, IPRecord, TimeEntry, Deadline, EnforcementCase, AdvisoryRequest,
   RiskRegister, Control, ComplianceIssue, RegulatoryObligation, ReceivableAccount, ContractRequest, IPFiling, IPRenewal, IPOpposition, IPEnforcementAction,
   SpecializedTrack, KeyAccount, Proposal, PricingModel, QAReview, KnowledgeAsset, TrainingPathway, KSAAssessment, ConflictCheckRecord
 } from "../types";
 
-const courtTypes: KSACourtType[] = [
-  'المحكمة العليا',
+const courtTypes: CourtType[] = [
+  'محكمة النقض',
   'محكمة الاستئناف',
-  'المحكمة العامة',
-  'المحكمة الجزائية',
-  'المحكمة التجارية',
-  'المحكمة العمالية',
-  'محكمة الأحوال الشخصية',
-  'ديوان المظالم',
-  'لجان شبه قضائية'
+  'المحكمة الابتدائية',
+  'محكمة الجنح',
+  'محكمة الجنايات',
+  'المحكمة الإدارية',
+  'محكمة الأسرة',
+  'المحكمة الاقتصادية',
+  'محكمة العمال',
+  'هيئة التحكيم'
 ];
 
 export const mockUser: UserProfile = {
@@ -70,7 +71,7 @@ export const mockCases: Case[] = [
     memorandums: ['مذكرة جوابية أولى', 'لائحة اعتراضية'], 
     powerOfAttorneyRef: '441234567', 
     status: 'نشطة', 
-    najizReferenceStatus: 'مربوط بناجز',
+    externalPlatformRef: 'مربوط بناجز',
     createdAt: '2024-01-15'
   },
   { 
@@ -83,7 +84,7 @@ export const mockCases: Case[] = [
     memorandums: ['لائحة دعوى'], 
     powerOfAttorneyRef: '449876543', 
     status: 'تحت الدراسة', 
-    najizReferenceStatus: 'غير مربوط',
+    externalPlatformRef: 'غير مربوط',
     createdAt: '2024-02-10'
   },
   { 
@@ -96,7 +97,7 @@ export const mockCases: Case[] = [
     memorandums: ['مذكرة دفاع'], 
     powerOfAttorneyRef: '445556667', 
     status: 'نشطة', 
-    najizReferenceStatus: 'مربوط بناجز',
+    externalPlatformRef: 'مربوط بناجز',
     createdAt: '2024-03-05'
   },
   { 
@@ -109,7 +110,7 @@ export const mockCases: Case[] = [
     memorandums: ['تظلم إداري'], 
     powerOfAttorneyRef: '441112223', 
     status: 'مغلقة', 
-    najizReferenceStatus: 'مربوط بناجز',
+    externalPlatformRef: 'مربوط بناجز',
     createdAt: '2023-12-20'
   },
   { 
@@ -122,7 +123,7 @@ export const mockCases: Case[] = [
     memorandums: ['مذكرة رد'], 
     powerOfAttorneyRef: '442223334', 
     status: 'نشطة', 
-    najizReferenceStatus: 'غير مربوط',
+    externalPlatformRef: 'غير مربوط',
     createdAt: '2024-03-25'
   },
 ];

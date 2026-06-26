@@ -1,15 +1,16 @@
 import { Document } from './common';
 
-export type KSACourtType = 
-  | 'المحكمة العليا'
+export type CourtType = 
+  | 'محكمة النقض'
   | 'محكمة الاستئناف'
-  | 'المحكمة العامة'
-  | 'المحكمة الجزائية'
-  | 'المحكمة التجارية'
-  | 'المحكمة العمالية'
-  | 'محكمة الأحوال الشخصية'
-  | 'ديوان المظالم' // Administrative Court
-  | 'لجان شبه قضائية';
+  | 'المحكمة الابتدائية'
+  | 'محكمة الجنح'
+  | 'محكمة الجنايات'
+  | 'المحكمة الإدارية'
+  | 'محكمة الأسرة'
+  | 'المحكمة الاقتصادية'
+  | 'محكمة العمال'
+  | 'هيئة التحكيم';
 
 export interface Case {
   id: string;
@@ -17,7 +18,7 @@ export interface Case {
   clientId: string; // رابط مع الموكل (Mandatory)
   clientRole?: 'مدعي' | 'مدعى عليه'; // صفة الموكل
   workflowStage?: 'intake' | 'pleadings' | 'hearing' | 'judgment' | 'closed';
-  court: KSACourtType;
+  court: CourtType;
   circuit?: string; // الدائرة
   title?: string; // مسمى القضية
   automatedNumber?: string; // الرقم الآلي
@@ -30,7 +31,7 @@ export interface Case {
   documents?: Document[];
   powerOfAttorneyRef: string; // رقم الوكالة (NEVER USE توكيل)
   status: 'متداولة' | 'مغلقة' | 'تحت الدراسة' | 'محفوظة';
-  najizReferenceStatus?: 'مربوط بناجز' | 'غير مربوط'; // Najiz Platform Tracker
+  externalPlatformRef?: string; // ربط بمنظومة التقاضي الإلكتروني
   createdAt: string;
 }
 

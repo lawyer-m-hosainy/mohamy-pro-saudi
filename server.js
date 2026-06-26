@@ -67,7 +67,7 @@ app.use(helmet({
         preload: true
     }
 }));
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:5173', 'http://localhost:3000', 'https://mohamy-pro.onrender.com'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:5173', 'http://localhost:3000', 'https://malaf.site', 'https://www.malaf.site'];
 app.use(cors({
     origin: allowedOrigins
 }));

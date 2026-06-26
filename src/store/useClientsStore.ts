@@ -26,23 +26,23 @@ const MOCK_CLIENTS: Client[] = [
     name: "شركة الأفق للتطوير العقاري",
     type: "منشأة",
     commercialRegistration: "1010123456",
-    vatNumber: "300123456700003",
-    phone: "+966501234567"
+    vatNumber: "123456789", // رقم تسجيل ضريبي مصري
+    phone: "+201001234567"
   },
   {
     id: "CL-102",
     name: "مؤسسة البناء الحديث",
     type: "منشأة",
     commercialRegistration: "4030123456",
-    vatNumber: "300987654300003",
-    phone: "+966551234567"
+    vatNumber: "987654321", // رقم تسجيل ضريبي مصري
+    phone: "+201101234567"
   },
   {
     id: "CL-103",
     name: "أحمد بن عبدالله المفلح",
     type: "فرد",
     nationalId: "1023456789",
-    phone: "+966541234567"
+    phone: "+201201234567"
   }
 ];
 

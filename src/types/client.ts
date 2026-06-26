@@ -17,7 +17,7 @@ export interface Client {
   relatedEntities?: string[]; // كيانات ذات علاقة
   
   // Phone must default to KSA Mask
-  phone: string; // Format: +9665XXXXXXXX
+  phone: string; // Format: +20XXXXXXXXXX (مصر) أو +966XXXXXXXXX (السعودية)
 }
 
 export interface ConflictCheckRecord {

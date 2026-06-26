@@ -38,9 +38,9 @@ const featureFlags: Record<string, FeatureFlag> = {
   },
   MOYASAR_PAYMENTS: {
     key: 'MOYASAR_PAYMENTS',
-    label: 'بوابة الدفع Moyasar',
+    label: 'بوابة الدفع الإلكتروني',
     enabled: false,
-    description: 'تفعيل الدفع الإلكتروني عبر بوابة Moyasar السعودية (يتطلب مفاتيح API)'
+    description: 'تفعيل الدفع الإلكتروني (Paymob / Fawry)'
   }
 };
 

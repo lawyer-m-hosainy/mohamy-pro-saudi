@@ -156,9 +156,9 @@ export default function Landing() {
               <ul className="space-y-4">
                 {[
                   "تحديثات فورية لحالة القضية",
-                  "مزامنة مع نظام ناجز",
+                  "إدارة القضايا والجلسات إلكترونياً",
                   "أرشفة إلكترونية آمنة للمستندات",
-                  "فواتير إلكترونية متوافقة مع هيئة الزكاة"
+                  "فواتير إلكترونية متوافقة مع الأنظمة الضريبية"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-slate-700 dark:text-slate-300 font-medium">
                     <div className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">

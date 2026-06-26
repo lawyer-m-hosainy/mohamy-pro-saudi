@@ -1,5 +1,6 @@
 /**
- * ZATCA QR Code TLV Generator (Saudi Arabia)
+ * Tax Invoice QR Code TLV Generator
+ * Compatible with Saudi ZATCA and Egyptian Tax Authority formats
  * Tags:
  * 1. Seller Name
  * 2. VAT Registration Number

@@ -18,17 +18,18 @@ export type ClientValidationData = z.infer<typeof ClientSchema>;
 export const CaseSchema = z.object({
   id: z.string(),
   clientId: z.string().min(1, "يجب اختيار الموكل وربطه بالقضية"),
-  // KSA Court Enum — Must match KSACourtType exactly
+  // KSA Court Enum — Must match CourtType exactly
   court: z.enum([
-    'المحكمة العليا',
+    'محكمة النقض',
     'محكمة الاستئناف',
-    'المحكمة العامة',
-    'المحكمة الجزائية',
-    'المحكمة التجارية',
-    'المحكمة العمالية',
-    'محكمة الأحوال الشخصية',
-    'ديوان المظالم',
-    'لجان شبه قضائية'
+    'المحكمة الابتدائية',
+    'محكمة الجنح',
+    'محكمة الجنايات',
+    'المحكمة الإدارية',
+    'محكمة الأسرة',
+    'المحكمة الاقتصادية',
+    'محكمة العمال',
+    'هيئة التحكيم'
   ]),
   plaintiff: z.string().min(1),
   defendant: z.string().min(1),
