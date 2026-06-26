@@ -51,15 +51,11 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "blob:", "https://firebasestorage.googleapis.com", "https://picsum.photos"],
+            imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co", "https://picsum.photos"],
             connectSrc: [
                 "'self'", 
-                "https://firebasestorage.googleapis.com", 
-                "https://identitytoolkit.googleapis.com", 
-                "https://securetoken.googleapis.com", 
-                "https://*.firebaseio.com", 
-                "wss://*.firebaseio.com",
-                "https://firestore.googleapis.com"
+                "https://*.supabase.co", 
+                "wss://*.supabase.co"
             ]
         }
     },

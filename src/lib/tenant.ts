@@ -3,7 +3,7 @@ export const DEMO_TENANT_ID = "demo-tenant";
 
 /**
  * In-memory cache for the resolved tenantId.
- * Set by AuthProvider after reading the user profile from Firestore.
+ * Set by AuthProvider after reading the user profile from Supabase.
  */
 let cachedTenantId: string | null = null;
 
@@ -13,7 +13,7 @@ export function setTenantIdCache(tenantId: string | null) {
 
 /**
  * Returns the current tenant ID.
- * Priority: cached value from Firestore > Firebase Auth tenantId > demo fallback.
+ * Priority: cached value from Supabase profile > demo fallback.
  */
 export function getCurrentTenantId(): string {
   if (cachedTenantId) return cachedTenantId;

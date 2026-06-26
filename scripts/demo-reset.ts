@@ -1,53 +1,49 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { initializeApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { collection, deleteDoc, doc, getDocs, getFirestore, query, where } from "firebase/firestore";
+import { createClient } from "@supabase/supabase-js";
+import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY!;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error("❌ Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in .env");
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DEMO_TENANT_ID = "demo-tenant";
 
-async function loadFirebaseConfig() {
-  const configPath = path.resolve(process.cwd(), "firebase-applet-config.json");
-  const raw = await readFile(configPath, "utf8");
-  return JSON.parse(raw);
-}
+async function reset() {
+  console.log("🧹 Resetting demo data from Supabase...\n");
 
-async function removeCollectionDocsByTenant(db: any, collectionName: string, tenantId: string) {
-  const snapshot = await getDocs(query(collection(db, collectionName), where("tenantId", "==", tenantId)));
-  for (const d of snapshot.docs) {
-    await deleteDoc(doc(db, collectionName, d.id));
-  }
-  return snapshot.docs.length;
-}
-
-async function resetDemo() {
-  const email = process.env.DEMO_ADMIN_EMAIL;
-  const password = process.env.DEMO_ADMIN_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error("Missing DEMO_ADMIN_EMAIL or DEMO_ADMIN_PASSWORD environment variables.");
+  // Delete demo cases
+  console.log("📂 Deleting demo cases...");
+  const { error: casesError } = await supabase
+    .from("cases")
+    .delete()
+    .eq("tenant_id", DEMO_TENANT_ID);
+  if (casesError) {
+    console.error("  ❌ Cases error:", casesError.message);
+  } else {
+    console.log("  ✅ Demo cases deleted.");
   }
 
-  const cfg = await loadFirebaseConfig();
-  const app = initializeApp(cfg);
-  const auth = getAuth(app);
-  const db = getFirestore(app, cfg.firestoreDatabaseId);
-
-  console.log("Authenticating demo admin...");
-  await signInWithEmailAndPassword(auth, email, password);
-
-  const collections = ["clients", "cases", "invoices", "trustAccounts", "enforcement", "tasks", "team"];
-  
-  console.log("Cleaning up collections...");
-  for (const col of collections) {
-      const count = await removeCollectionDocsByTenant(db, col, DEMO_TENANT_ID);
-      console.log(`- Deleted ${count} items from ${col}`);
+  // Delete demo clients
+  console.log("📋 Deleting demo clients...");
+  const { error: clientsError } = await supabase
+    .from("clients")
+    .delete()
+    .eq("tenant_id", DEMO_TENANT_ID);
+  if (clientsError) {
+    console.error("  ❌ Clients error:", clientsError.message);
+  } else {
+    console.log("  ✅ Demo clients deleted.");
   }
 
-  console.log(`Reset complete for tenant ${DEMO_TENANT_ID}.`);
+  console.log("\n🎉 Demo reset complete!");
 }
 
-resetDemo().catch((err) => {
-  console.error("Demo reset failed:", err instanceof Error ? err.message : String(err));
-  process.exit(1);
-});
+reset().catch(console.error);

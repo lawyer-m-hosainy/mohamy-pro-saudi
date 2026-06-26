@@ -57,7 +57,7 @@ export default function PortalManagement() {
         }));
         setPortalUsers(users);
       } catch {
-        // Firestore may not have rules deployed — use empty list for demo
+        // Supabase may not have RLS configured — use empty list for demo
       } finally {
         setIsLoadingUsers(false);
       }

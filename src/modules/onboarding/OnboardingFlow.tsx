@@ -70,7 +70,7 @@ export default function OnboardingFlow() {
 
   const handleComplete = () => {
     toast.success("تم إنشاء مكتبك بنجاح! مرحباً بك في ليجل ERP.");
-    // In production: call Firebase to create tenant document, send invite emails, etc.
+    // In production: call Supabase to create tenant document, send invite emails, etc.
     console.log("[Onboarding] Tenant created:", data);
   };
 

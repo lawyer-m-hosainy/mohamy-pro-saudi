@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 import { StoreCasesRepository } from '@/repositories/casesRepository';
-import { saveCases as saveCasesToFirestore } from '@/services/legalDataService';
+import { saveCases as saveCasesToDB } from '@/services/legalDataService';
 import { addCaseMemorandum, linkCaseToNajiz } from '@/application/cases/useCases';
 import { uploadCaseDocument } from '@/services/fileService';
 import { useCasesStore } from '@/store/useCasesStore';
@@ -15,7 +15,7 @@ export function useCaseActions() {
     () =>
       new StoreCasesRepository(() => Object.values(useCasesStore.getState().cases || cases), setCases, addDeadline, async (updatedCases) => {
         try {
-          await saveCasesToFirestore(updatedCases);
+          await saveCasesToDB(updatedCases);
         } catch {
           toast.error("تعذر مزامنة التعديلات مع قاعدة البيانات");
         }
@@ -40,7 +40,7 @@ export function useCaseActions() {
           ? "نوع الملف غير مسموح. المسموح: PDF, DOC, DOCX, TXT"
           : error instanceof Error && error.message.includes("مهلة")
           ? error.message
-          : "فشل رفع الملف. تأكد من الاتصال بالإنترنت وإعدادات Firebase.";
+          : "فشل رفع الملف. تأكد من الاتصال بالإنترنت.";
       onError(message);
     }
   };
