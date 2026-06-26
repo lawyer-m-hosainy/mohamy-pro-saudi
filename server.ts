@@ -219,9 +219,13 @@ if (fs.existsSync(distPath)) {
 }
 
 // Start Server
-app.listen(PORT, () => {
-  logger.info(`🚀 Server is running on port ${PORT}`);
-  if (!GEMINI_API_KEY) {
-    logger.warn('⚠️ Warning: GEMINI_API_KEY is not set. AI features will not work.');
-  }
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    logger.info(`🚀 Server is running on port ${PORT}`);
+    if (!GEMINI_API_KEY) {
+      logger.warn('⚠️ Warning: GEMINI_API_KEY is not set. AI features will not work.');
+    }
+  });
+}
+
+export default app;
