@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Calculator, Receipt, TrendingUp, DollarSign, Printer, Download, QrCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QRCodeSVG } from "qrcode.react";
-import { generateZatcaTLV } from "@/lib/zatca";
+import { generateZatcaTLV } from "@/lib/taxQR";
 import { toast } from "sonner";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useInvoicesStore } from "@/store/useInvoicesStore";
