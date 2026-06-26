@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import admin from 'firebase-admin';
+import { createClient } from '@supabase/supabase-js';
 import compression from 'compression';
 import { pinoHttp } from 'pino-http';
 import pino from 'pino';
@@ -26,14 +26,10 @@ const logger = pino({
   timestamp: pino.stdTimeFunctions.isoTime,
 });
 
-// Initialize Firebase Admin for token verification
-try {
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-  }
-} catch (e) {
-  logger.warn('Firebase Admin init warning:', e);
-}
+// Initialize Supabase for token verification
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -142,7 +138,7 @@ const aiSecurityMiddleware = (req: any, res: any, next: any) => {
 };
 
 app.use('/api/ai', async (req: any, res: any, next: any) => {
-    // Auth Middleware to verify Firebase JWT
+    // Auth Middleware to verify Supabase JWT
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'مطلوب مصادقة صالحة' });
@@ -150,8 +146,10 @@ app.use('/api/ai', async (req: any, res: any, next: any) => {
 
     const idToken = authHeader.split('Bearer ')[1];
     try {
-        const decodedToken = await admin.auth().verifyIdToken(idToken);
-        req.user = decodedToken; 
+        const { data: { user }, error } = await supabase.auth.getUser(idToken);
+        if (error || !user) throw new Error("Invalid token");
+        
+        req.user = user; 
         req.tenantId = req.headers['x-tenant-id'] || 'default';
         next();
     } catch (error: any) {

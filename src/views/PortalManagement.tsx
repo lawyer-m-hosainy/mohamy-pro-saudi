@@ -9,9 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Globe, LogIn, Plus, Users, Mail, Lock, Copy, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useClientsStore } from "@/store/useClientsStore";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc, collection, getDocs, query, where, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase/client";
 import { getCurrentTenantId } from "@/lib/tenant";
 
 interface PortalUser {
@@ -91,14 +91,23 @@ export default function PortalManagement() {
 
     setIsCreating(true);
     try {
-      // Create Firebase Auth account
-      const cred = await createUserWithEmailAndPassword(auth, clientEmail.trim(), clientPassword);
-      await updateProfile(cred.user, { displayName: selectedClient?.name || "موكل" });
+      // Create Supabase Auth account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: clientEmail.trim(),
+        password: clientPassword,
+        options: {
+          data: { full_name: selectedClient?.name || "موكل" }
+        }
+      });
+      if (authError) throw authError;
+      
+      const uid = authData.user?.id;
+      if (!uid) throw new Error("User creation failed");
 
       // Create user document in Firestore with role: 'client'
       const tenantId = getCurrentTenantId();
-      await setDoc(doc(db, "users", cred.user.uid), {
-        id: cred.user.uid,
+      await setDoc(doc(db, "users", uid), {
+        id: uid,
         name: selectedClient?.name || "موكل",
         email: clientEmail.trim(),
         role: "client",
@@ -108,7 +117,7 @@ export default function PortalManagement() {
       });
 
       const newUser: PortalUser = {
-        id: cred.user.uid,
+        id: uid,
         name: selectedClient?.name || "موكل",
         email: clientEmail.trim(),
         linkedClientId: selectedClientId,
@@ -120,7 +129,7 @@ export default function PortalManagement() {
       setIsDialogOpen(false);
       resetForm();
     } catch (error: any) {
-      if (error?.code === "auth/email-already-in-use") {
+      if (error?.message?.includes("User already registered") || error?.code === "user_already_exists") {
         toast.error("هذا البريد مسجل مسبقاً. استخدم بريداً مختلفاً.");
       } else {
         toast.error("حدث خطأ أثناء إنشاء الحساب. حاول لاحقاً.");

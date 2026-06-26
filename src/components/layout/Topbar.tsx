@@ -21,8 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase/client";
 
 export function Topbar() {
   const currentUser = useAuthStore(state => state.currentUser);
@@ -60,7 +59,7 @@ export function Topbar() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       toast.success("تم تسجيل الخروج بنجاح");
       navigate("/login");
     } catch {

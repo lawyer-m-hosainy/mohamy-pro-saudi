@@ -6,9 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Scale, Loader2, Mail, Lock, Eye, EyeOff, FileText, Calendar, MessageSquare, LogOut, Clock, CheckCircle2 } from "lucide-react";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/components/AuthProvider";
@@ -44,12 +44,14 @@ function ClientLoginForm({ onLogin }: { onLogin: (data: ClientData) => void }) {
     }
     setIsLoading(true);
     try {
-      const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (authError) throw authError;
       
+      const uid = authData.user.id;
       // Read user document from Firestore
-      const userDoc = await getDoc(doc(db, "users", cred.user.uid));
+      const userDoc = await getDoc(doc(db, "users", uid));
       if (!userDoc.exists()) {
-        await signOut(auth);
+        await supabase.auth.signOut();
         toast.error("هذا الحساب غير مسجل في بوابة الموكلين. تواصل مع مكتبك القانوني.");
         return;
       }
@@ -101,8 +103,8 @@ function ClientLoginForm({ onLogin }: { onLogin: (data: ClientData) => void }) {
       toast.success(`مرحباً ${clientName}`);
       onLogin({ name: clientName, phone: clientPhone, type: clientType, cases });
     } catch (error: any) {
-      const code = error?.code || "";
-      if (code === "auth/user-not-found" || code === "auth/invalid-credential") {
+      const code = error?.status || error?.code || "";
+      if (error?.message?.includes("Invalid login credentials")) {
         toast.error("البريد أو كلمة المرور غير صحيحة");
       } else if (code === "auth/too-many-requests") {
         toast.error("تم تجاوز عدد المحاولات. انتظر قليلاً ثم حاول مجدداً.");
@@ -253,7 +255,7 @@ function ClientDashboard({ data, onLogout }: { data: ClientData; onLogout: () =>
               size="sm"
               className="text-slate-500 gap-1"
               onClick={async () => {
-                await signOut(auth);
+                await supabase.auth.signOut();
                 onLogout();
                 toast.success("تم تسجيل الخروج");
               }}

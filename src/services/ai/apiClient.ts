@@ -3,19 +3,18 @@
  * يُستخدم فقط عندما يكون الخادم متاحاً ومفتاح Gemini API مُعدّ.
  */
 
-import { auth } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase/client";
 
 export async function callAiApi<T extends Record<string, unknown>>(
   path: string,
   payload: T
 ): Promise<string> {
-  const currentUser = auth.currentUser;
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
-  if (!currentUser) {
+  if (!token) {
     throw new Error("UNAUTHORIZED");
   }
-
-  const token = await currentUser.getIdToken();
 
   const response = await fetch(path, {
     method: "POST",

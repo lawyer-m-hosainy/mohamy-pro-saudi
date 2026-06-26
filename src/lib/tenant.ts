@@ -1,4 +1,3 @@
-import { auth } from "@/lib/firebase";
 
 export const DEMO_TENANT_ID = "demo-tenant";
 
@@ -18,5 +17,5 @@ export function setTenantIdCache(tenantId: string | null) {
  */
 export function getCurrentTenantId(): string {
   if (cachedTenantId) return cachedTenantId;
-  return auth.currentUser?.tenantId || DEMO_TENANT_ID;
+  return DEMO_TENANT_ID;
 }

@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { UserRole } from "@/types";
@@ -19,37 +18,51 @@ const DEFAULT_ROLE: UserRole = "محامي";
 const DEFAULT_TENANT_PREFIX = "tenant-";
 
 /**
- * Reads or creates the user profile document in Firestore.
- * - If the user document exists, reads role and tenantId from it.
- * - If the user document does NOT exist, creates it with a default role and tenant.
+ * Reads or creates the user profile document in Supabase.
  */
-async function resolveUserProfile(user: User): Promise<{ role: UserRole; tenantId: string } | null> {
-  const userRef = doc(db, "users", user.uid);
+async function resolveUserProfile(user: User): Promise<{ role: UserRole; tenantId: string; name: string } | null> {
   try {
-    const snapshot = await getDoc(userRef);
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('role, tenant_id, name')
+      .eq('auth_id', user.id)
+      .single();
 
-    if (snapshot.exists()) {
-      const data = snapshot.data();
+    if (error && error.code !== 'PGRST116') { // PGRST116 is not found
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+
+    if (profile) {
       return {
-        role: (data.role as UserRole) || DEFAULT_ROLE,
-        tenantId: (data.tenantId as string) || `${DEFAULT_TENANT_PREFIX}${user.uid.slice(0, 8)}`,
+        role: (profile.role as UserRole) || DEFAULT_ROLE,
+        tenantId: (profile.tenant_id as string) || `${DEFAULT_TENANT_PREFIX}${user.id.slice(0, 8)}`,
+        name: profile.name || "المستخدم"
       };
     }
 
-    // User document does not exist — create it
-    const newTenantId = `${DEFAULT_TENANT_PREFIX}${user.uid.slice(0, 8)}`;
-    const newDoc = {
-      id: user.uid,
-      name: user.displayName || "المستخدم",
-      email: user.email || "",
-      role: DEFAULT_ROLE,
-      tenantId: newTenantId,
-      createdAt: new Date().toISOString(),
-    };
-    await setDoc(userRef, newDoc);
-    return { role: DEFAULT_ROLE, tenantId: newTenantId };
+    // Create user profile
+    const newTenantId = `${DEFAULT_TENANT_PREFIX}${user.id.slice(0, 8)}`;
+    const newName = user.user_metadata?.full_name || user.email?.split('@')[0] || "المستخدم";
+    
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert({
+        auth_id: user.id,
+        email: user.email,
+        name: newName,
+        role: DEFAULT_ROLE,
+        tenant_id: newTenantId
+      });
+
+    if (insertError) {
+      console.error("Error creating user profile:", insertError);
+      return null;
+    }
+
+    return { role: DEFAULT_ROLE, tenantId: newTenantId, name: newName };
   } catch (error) {
-    console.error("Could not resolve user profile from Firestore:", error);
+    console.error("Could not resolve user profile from Supabase:", error);
     return null;
   }
 }
@@ -59,39 +72,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const profile = await resolveUserProfile(firebaseUser);
+    let mounted = true;
+
+    async function initializeAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      await handleSession(session?.user || null);
+      if (mounted) setLoading(false);
+    }
+
+    async function handleSession(supabaseUser: User | null) {
+      if (supabaseUser) {
+        const profile = await resolveUserProfile(supabaseUser);
         if (!profile) {
           toast.error("تعذر تحميل ملف المستخدم. يرجى إعادة تسجيل الدخول.");
-          auth.signOut();
+          await supabase.auth.signOut();
           setTenantIdCache(null);
           useAuthStore.getState().setCurrentUser(null);
-          setUser(null);
-          setLoading(false);
+          if (mounted) setUser(null);
           return;
         }
 
-        const { role, tenantId } = profile;
-        // Cache tenantId for use by getCurrentTenantId()
+        const { role, tenantId, name } = profile;
         setTenantIdCache(tenantId);
         useAuthStore.getState().setCurrentUser({
-          id: firebaseUser.uid,
-          name: firebaseUser.displayName || "المستخدم",
-          email: firebaseUser.email || "",
+          id: supabaseUser.id,
+          name: name,
+          email: supabaseUser.email || "",
           role,
-          avatar: firebaseUser.photoURL || undefined,
+          avatar: supabaseUser.user_metadata?.avatar_url || undefined,
         });
-        setUser(firebaseUser);
+        if (mounted) setUser(supabaseUser);
       } else {
-        setUser(null);
+        if (mounted) setUser(null);
         setTenantIdCache(null);
         useAuthStore.getState().setCurrentUser(null);
       }
-      setLoading(false);
+    }
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      await handleSession(session?.user || null);
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {

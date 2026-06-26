@@ -5,55 +5,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Scale, Loader2, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  fetchSignInMethodsForEmail,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-function getFirebaseAuthErrorMessage(error: any, context: "login" | "register" = "login") {
-  const code = error?.code || "";
-  switch (code) {
-    case "auth/unauthorized-domain":
-      return "الدومين الحالي غير مصرح به في Firebase Auth. أضف localhost من إعدادات Authorized domains.";
-    case "auth/operation-not-allowed":
-      return context === "register"
-        ? "إنشاء الحساب بالبريد غير مفعّل. من Firebase Console: Authentication → Sign-in method → فعّل Email/Password."
-        : "طريقة تسجيل الدخول هذه غير مفعّلة في Firebase. افتح Authentication → Sign-in method وفعّل المزوّد المطلوب.";
-    case "auth/popup-blocked":
-      return "تم حظر نافذة تسجيل الدخول. سنحوّل العملية إلى تسجيل دخول عبر إعادة التوجيه.";
-    case "auth/popup-closed-by-user":
-      return "تم إغلاق نافذة تسجيل الدخول قبل إكمال العملية.";
-    case "auth/network-request-failed":
-      return "فشل الاتصال بالشبكة أثناء تسجيل الدخول. تحقق من الإنترنت ثم أعد المحاولة.";
-    case "auth/invalid-email":
-      return "البريد الإلكتروني غير صالح. يرجى التحقق من الصيغة.";
-    case "auth/user-disabled":
-      return "هذا الحساب معطّل. تواصل مع إدارة المكتب.";
-    case "auth/user-not-found":
-      return "لا يوجد حساب بهذا البريد الإلكتروني. تحقق من البريد أو أنشئ حساباً جديداً.";
-    case "auth/wrong-password":
-    case "auth/invalid-credential":
-      return "كلمة المرور غير صحيحة. حاول مرة أخرى.";
-    case "auth/email-already-in-use":
-      return "هذا البريد الإلكتروني مسجل مسبقاً. استخدم تسجيل الدخول بدلاً من إنشاء حساب.";
-    case "auth/weak-password":
-      return "كلمة المرور ضعيفة. يجب أن تكون 8 أحرف على الأقل.";
-    case "auth/too-many-requests":
-      return "تم تجاوز عدد المحاولات المسموح بها. يرجى الانتظار ثم المحاولة لاحقاً.";
-    default:
-      return context === "register"
-        ? "فشل إنشاء الحساب. تحقق من إعدادات Firebase Auth أو جرّب بريداً آخر."
-        : "فشل تسجيل الدخول. تحقق من إعدادات Firebase Auth وحاول مرة أخرى.";
+function getSupabaseAuthErrorMessage(error: any, context: "login" | "register" = "login") {
+  const code = error?.status || error?.code || "";
+  const msg = error?.message || "";
+  
+  if (msg.includes('Invalid login credentials')) {
+    return "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
   }
+  if (msg.includes('User already registered')) {
+    return "هذا البريد مسجل مسبقاً. استخدم تسجيل الدخول.";
+  }
+  if (msg.includes('Password should be at least')) {
+    return "كلمة المرور ضعيفة. يجب أن تكون 6 أحرف على الأقل.";
+  }
+  
+  return context === "register"
+    ? "فشل إنشاء الحساب. تأكد من صحة البيانات."
+    : "فشل تسجيل الدخول. تحقق من إعدادات الحساب وحاول مرة أخرى.";
 }
 
 export default function Login() {
@@ -77,26 +50,17 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-      await signInWithPopup(auth, provider);
-      toast.success("تم تسجيل الدخول بنجاح");
-      navigate("/dashboard");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw error;
+      // It will redirect, so no toast here
     } catch (error: any) {
-      const message = getFirebaseAuthErrorMessage(error);
-
-      // Fallback: if popup fails, try redirect-based login.
-      if (error?.code === "auth/popup-blocked") {
-        toast.error(message);
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
-        await signInWithRedirect(auth, provider);
-        return;
-      }
-
-      console.error("Google login failed:", error?.code);
-      toast.error(message);
-    } finally {
+      console.error("Google login failed:", error);
+      toast.error(getSupabaseAuthErrorMessage(error));
       setIsLoading(false);
     }
   };
@@ -109,13 +73,17 @@ export default function Login() {
     }
     setIsEmailLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) throw error;
+      
       toast.success("تم تسجيل الدخول بنجاح");
       navigate("/dashboard");
     } catch (error: any) {
-      const message = getFirebaseAuthErrorMessage(error);
-      console.error("Email login failed:", error?.code);
-      toast.error(message);
+      console.error("Email login failed:", error);
+      toast.error(getSupabaseAuthErrorMessage(error));
     } finally {
       setIsEmailLoading(false);
     }
@@ -132,38 +100,35 @@ export default function Login() {
       toast.error("يرجى تعبئة جميع الحقول المطلوبة");
       return;
     }
-    if (pwd.length < 8) {
-      toast.error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+    if (pwd.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
     if (pwd !== confirm) {
-      toast.error("كلمة المرور وتأكيدها غير متطابقتين — تأكد من نفس الكتابة في الحقلين");
+      toast.error("كلمة المرور وتأكيدها غير متطابقتين");
       return;
     }
 
     setIsRegisterLoading(true);
     try {
-      const methods = await fetchSignInMethodsForEmail(auth, regEmail);
-      if (methods.includes("google.com") && !methods.includes("password")) {
-        toast.error(
-          "هذا البريد مرتبط بحساب Google فقط. سجّل الدخول بزر Google، أو استخدم بريداً إلكترونياً آخر لإنشاء حساب بكلمة مرور."
-        );
-        return;
-      }
-      if (methods.includes("password")) {
-        toast.error("هذا البريد مسجّل مسبقاً. استخدم «تسجيل الدخول» بنفس البريد وكلمة المرور.");
-        return;
-      }
+      const { error } = await supabase.auth.signUp({
+        email: regEmail,
+        password: pwd,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
+      });
+      
+      if (error) throw error;
 
-      const credential = await createUserWithEmailAndPassword(auth, regEmail, pwd);
-      await updateProfile(credential.user, { displayName: name });
-      toast.success("تم إنشاء الحساب وتسجيل الدخول بنجاح");
+      toast.success("تم إنشاء الحساب بنجاح! قد تحتاج إلى تأكيد بريدك الإلكتروني.");
       setShowRegisterDialog(false);
       navigate("/dashboard");
     } catch (error: any) {
-      const message = getFirebaseAuthErrorMessage(error, "register");
-      console.error("Register failed:", error?.code);
-      toast.error(message);
+      console.error("Register failed:", error);
+      toast.error(getSupabaseAuthErrorMessage(error, "register"));
     } finally {
       setIsRegisterLoading(false);
     }
@@ -327,7 +292,7 @@ export default function Login() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="register-password">كلمة المرور (8 أحرف على الأقل)</Label>
+                      <Label htmlFor="register-password">كلمة المرور (6 أحرف على الأقل)</Label>
                       <Input 
                         id="register-password"
                         type="password"
