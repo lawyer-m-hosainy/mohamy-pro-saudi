@@ -9,8 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Globe, LogIn, Plus, Users, Mail, Lock, Copy, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useClientsStore } from "@/store/useClientsStore";
-import { doc, setDoc, collection, getDocs, query, where, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+
 import { supabase } from "@/lib/supabase/client";
 import { getCurrentTenantId } from "@/lib/tenant";
 
@@ -41,18 +40,20 @@ export default function PortalManagement() {
       setIsLoadingUsers(true);
       try {
         const tenantId = getCurrentTenantId();
-        const q = query(
-          collection(db, "users"),
-          where("tenantId", "==", tenantId),
-          where("role", "==", "client")
-        );
-        const snapshot = await getDocs(q);
-        const users: PortalUser[] = snapshot.docs.map((d) => ({
+        const { data, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("tenant_id", tenantId)
+          .eq("role", "client");
+
+        if (error) throw error;
+        
+        const users: PortalUser[] = data.map((d: any) => ({
           id: d.id,
-          name: d.data().name || "موكل",
-          email: d.data().email || "",
-          linkedClientId: d.data().linkedClientId || "",
-          createdAt: d.data().createdAt || "",
+          name: d.name || "موكل",
+          email: d.email || "",
+          linkedClientId: d.linked_client_id || "",
+          createdAt: d.created_at || "",
         }));
         setPortalUsers(users);
       } catch {
@@ -104,17 +105,17 @@ export default function PortalManagement() {
       const uid = authData.user?.id;
       if (!uid) throw new Error("User creation failed");
 
-      // Create user document in Firestore with role: 'client'
+      // Create user document in Supabase
       const tenantId = getCurrentTenantId();
-      await setDoc(doc(db, "users", uid), {
+      const { error: dbError } = await supabase.from("users").insert({
         id: uid,
         name: selectedClient?.name || "موكل",
         email: clientEmail.trim(),
         role: "client",
-        tenantId,
-        linkedClientId: selectedClientId,
-        createdAt: new Date().toISOString(),
+        tenant_id: tenantId,
+        linked_client_id: selectedClientId,
       });
+      if (dbError) throw dbError;
 
       const newUser: PortalUser = {
         id: uid,
@@ -149,7 +150,8 @@ export default function PortalManagement() {
 
   const handleRemoveUser = async (userId: string) => {
     try {
-      await deleteDoc(doc(db, "users", userId));
+      const { error } = await supabase.from("users").delete().eq("id", userId);
+      if (error) throw error;
       setPortalUsers((prev) => prev.filter((u) => u.id !== userId));
       toast.success("تم حذف حساب الموكل من البوابة");
     } catch {

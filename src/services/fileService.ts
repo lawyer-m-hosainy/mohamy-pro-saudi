@@ -1,10 +1,9 @@
-import { auth, db, storage } from "@/lib/firebase";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { supabase } from "@/lib/supabase/client";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { logEvent } from "@/observability/logger";
+import { handleDatabaseError, OperationType } from "@/lib/error";
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB demo-safe limit
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
   "application/msword",
@@ -13,6 +12,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const ALLOWED_EXTENSIONS = new Set(["pdf", "doc", "docx", "txt"]);
+const STORAGE_BUCKET = "documents";
 
 function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -35,66 +35,59 @@ function validateUpload(file: File) {
 
 async function writeUploadAudit(caseId: string, path: string, file: File) {
   try {
-    await addDoc(collection(db, "audit_logs"), {
-      tenantId: getCurrentTenantId(),
-      userId: auth.currentUser?.uid || "unknown",
+    const tenantId = getCurrentTenantId();
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id || "unknown";
+
+    await supabase.from("audit_logs").insert({
+      tenant_id: tenantId,
+      user_id: userId,
       action: "document_upload",
       module: "cases",
       details: `Uploaded file for case ${caseId}`,
-      fileName: sanitizeFileName(file.name),
-      fileSize: file.size,
-      fileType: file.type,
-      storagePath: path,
-      timestamp: serverTimestamp(),
+      file_name: sanitizeFileName(file.name),
+      file_size: file.size,
+      file_type: file.type,
+      storage_path: path,
     });
-  } catch {
+  } catch (err) {
     // Non-blocking for UX; upload should not fail because audit write fails.
   }
 }
 
 export async function uploadFile(file: File, path: string): Promise<string> {
   validateUpload(file);
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, file, {
-    contentType: file.type,
-    customMetadata: {
-      tenantId: getCurrentTenantId(),
-      uploadedBy: auth.currentUser?.uid || "unknown",
-      originalName: sanitizeFileName(file.name),
-      uploadedAt: new Date().toISOString(),
-    },
-  });
+  
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
 
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        logEvent("info", { event: "file_upload_progress", context: { progress: Math.round(progress), path } });
-      },
-      (error) => {
-        logEvent("error", { event: "file_upload_failed", context: { path, error: error.message } });
-        reject(error);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(downloadURL);
-      }
-    );
-  });
+  if (error) {
+    logEvent("error", { event: "file_upload_failed", context: { path, error: error.message } });
+    throw new Error(error.message);
+  }
+
+  const { data: urlData } = supabase.storage
+    .from(STORAGE_BUCKET)
+    .getPublicUrl(path);
+
+  logEvent("info", { event: "file_upload_success", context: { path } });
+  return urlData.publicUrl;
 }
 
 export function buildCaseUploadPath(caseId: string, fileName: string) {
   const tenantId = getCurrentTenantId();
   const safeName = sanitizeFileName(fileName);
-  return `tenants/${tenantId}/cases/${caseId}/${Date.now()}_${safeName}`;
+  return `${tenantId}/cases/${caseId}/${Date.now()}_${safeName}`;
 }
 
 export async function uploadCaseDocument(file: File, caseId: string) {
   const path = buildCaseUploadPath(caseId, file.name);
 
-  // Wrap upload in a timeout to prevent indefinite spinning
-  const UPLOAD_TIMEOUT_MS = 15_000; // 15 seconds
+  const UPLOAD_TIMEOUT_MS = 15_000;
   const uploadPromise = uploadFile(file, path);
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error("UPLOAD_TIMEOUT")), UPLOAD_TIMEOUT_MS)
@@ -106,7 +99,7 @@ export async function uploadCaseDocument(file: File, caseId: string) {
     return { url, path };
   } catch (error) {
     if (error instanceof Error && error.message === "UPLOAD_TIMEOUT") {
-      throw new Error("انتهت مهلة رفع الملف. يرجى التحقق من الاتصال أو إعدادات Firebase Storage.");
+      throw new Error("انتهت مهلة رفع الملف. يرجى التحقق من الاتصال.");
     }
     throw error;
   }

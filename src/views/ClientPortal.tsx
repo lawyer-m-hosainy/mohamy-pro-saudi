@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Scale, Loader2, Mail, Lock, Eye, EyeOff, FileText, Calendar, MessageSquare, LogOut, Clock, CheckCircle2 } from "lucide-react";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -48,33 +47,41 @@ function ClientLoginForm({ onLogin }: { onLogin: (data: ClientData) => void }) {
       if (authError) throw authError;
       
       const uid = authData.user.id;
-      // Read user document from Firestore
-      const userDoc = await getDoc(doc(db, "users", uid));
-      if (!userDoc.exists()) {
+      // Read user document from Supabase
+      const { data: userDoc, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", uid)
+        .single();
+        
+      if (userError || !userDoc) {
         await supabase.auth.signOut();
         toast.error("هذا الحساب غير مسجل في بوابة الموكلين. تواصل مع مكتبك القانوني.");
         return;
       }
 
-      const userData = userDoc.data();
-      if (userData.role !== "client") {
+      if (userDoc.role !== "client") {
         // Not a client — redirect them to main login
         toast.info("هذا حساب موظف وليس موكل. سيتم تحويلك لصفحة الدخول الرئيسية.");
         return;
       }
 
-      const linkedClientId = userData.linkedClientId;
-      const tenantId = userData.tenantId;
+      const linkedClientId = userDoc.linked_client_id;
+      const tenantId = userDoc.tenant_id;
 
       // Fetch client data
-      let clientName = userData.name || "الموكل";
+      let clientName = userDoc.name || "الموكل";
       let clientPhone = "";
       let clientType = "فرد";
       
       if (linkedClientId && tenantId) {
-        const clientDoc = await getDoc(doc(db, "clients", linkedClientId));
-        if (clientDoc.exists()) {
-          const clientData = clientDoc.data();
+        const { data: clientData } = await supabase
+          .from("clients")
+          .select("*")
+          .eq("id", linkedClientId)
+          .single();
+          
+        if (clientData) {
           clientName = clientData.name || clientName;
           clientPhone = clientData.phone || "";
           clientType = clientData.type || "فرد";
@@ -85,16 +92,22 @@ function ClientLoginForm({ onLogin }: { onLogin: (data: ClientData) => void }) {
       let cases: ClientCase[] = [];
       if (linkedClientId && tenantId) {
         try {
-          const casesQuery = query(
-            collection(db, "cases"),
-            where("tenantId", "==", tenantId),
-            where("clientId", "==", linkedClientId)
-          );
-          const casesSnapshot = await getDocs(casesQuery);
-          cases = casesSnapshot.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<ClientCase, "id">),
-          }));
+          const { data: casesData } = await supabase
+            .from("cases")
+            .select("*")
+            .eq("tenant_id", tenantId)
+            .eq("client_id", linkedClientId);
+            
+          if (casesData) {
+            cases = casesData.map((d: any) => ({
+              id: d.id,
+              court: d.court,
+              plaintiff: d.plaintiff,
+              defendant: d.defendant,
+              status: d.status,
+              createdAt: d.created_at || d.createdAt,
+            }));
+          }
         } catch {
           // If query fails, still show portal with empty cases
         }
