@@ -151,13 +151,13 @@ export default function App() {
               
               <Route path="/dashboard" element={<ProtectedRoute><RouteLayoutWrapper /></ProtectedRoute>}>
                 <Route index element={<Dashboard />} />
-                <Route path="clients" element={<Clients />} />
-              <Route path="cases" element={<Cases />} />
-              <Route path="roll" element={<SessionsRoll />} />
+                <Route path="clients" element={<PermissionGate permission="view_clients"><Clients /></PermissionGate>} />
+              <Route path="cases" element={<PermissionGate permission="view_cases"><Cases /></PermissionGate>} />
+              <Route path="roll" element={<PermissionGate permission="view_cases"><SessionsRoll /></PermissionGate>} />
               <Route path="calendar" element={<Calendar />} />
-              <Route path="finance" element={<Finance />} />
-              <Route path="expenses" element={<Expenses />} />
-              <Route path="team" element={<Team />} />
+              <Route path="finance" element={<PermissionGate permission="finance_basic"><Finance /></PermissionGate>} />
+              <Route path="expenses" element={<PermissionGate permission="finance_basic"><Expenses /></PermissionGate>} />
+              <Route path="team" element={<PermissionGate permission="manage_team"><Team /></PermissionGate>} />
               <Route path="tasks" element={<Tasks />} />
               <Route path="analytics" element={<PermissionGate permission="view_reports"><Analytics /></PermissionGate>} />
               <Route path="compliance" element={<PermissionGate permission="compliance_view"><Compliance /></PermissionGate>} />

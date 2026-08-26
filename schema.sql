@@ -4,7 +4,7 @@ create extension if not exists "uuid-ossp";
 -- USERS TABLE
 create table public.users (
   id uuid default uuid_generate_v4() primary key,
-  auth_id uuid references auth.users(id), -- Links to Supabase Auth
+  auth_id uuid references auth.users(id) unique, -- Links to Supabase Auth; UNIQUE so one auth user can't hold multiple profile rows
   email text not null unique,
   name text not null,
   role text check (role in ('مدير مكتب', 'محامي شريك', 'محامي مستشار', 'محامي متدرب', 'مساعد إداري')),
@@ -48,13 +48,15 @@ create table public.cases (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Row Level Security (RLS) Setup (Basic)
+-- Row Level Security (RLS) Setup
+-- Enabled here, but the actual policies are defined in rls-policies.sql —
+-- always run that file right after this one. (This file used to also create
+-- "Enable read access for authenticated users" policies scoped to nothing but
+-- auth.role() = 'authenticated', i.e. any signed-in user could read every
+-- tenant's users/clients/cases. Removed: real tenant-scoped policies belong
+-- in rls-policies.sql only, so there's no window where the permissive
+-- policies are active without the strict ones.)
 alter table public.users enable row level security;
 alter table public.clients enable row level security;
 alter table public.cases enable row level security;
-
--- Policies for Authenticated Users (can be restricted later by tenant_id)
-create policy "Enable read access for authenticated users" on public.users for select using ( auth.role() = 'authenticated' );
-create policy "Enable read access for authenticated users" on public.clients for select using ( auth.role() = 'authenticated' );
-create policy "Enable read access for authenticated users" on public.cases for select using ( auth.role() = 'authenticated' );
 

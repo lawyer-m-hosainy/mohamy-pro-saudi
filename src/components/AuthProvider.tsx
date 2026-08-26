@@ -14,8 +14,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
-const DEFAULT_ROLE: UserRole = "محامي";
-const DEFAULT_TENANT_PREFIX = "tenant-";
+// "محامي" is a valid UserRole in TypeScript but is NOT in schema.sql's
+// `role` check constraint (only مدير مكتب / محامي شريك / محامي مستشار /
+// محامي متدرب / مساعد إداري are allowed there) — using it as the default
+// made every brand-new signup's profile insert fail the DB constraint,
+// which meant no one could actually create an account. Each self-signup
+// creates its own brand-new, isolated tenant (see resolveUserProfile
+// below), so making that first user "مدير مكتب" (office manager/owner) of
+// their own tenant is both valid against the DB and the right default —
+// they administer their own new firm and can't touch anyone else's data.
+const DEFAULT_ROLE: UserRole = "مدير مكتب";
 
 /**
  * Reads or creates the user profile document in Supabase.
@@ -36,13 +44,15 @@ async function resolveUserProfile(user: User): Promise<{ role: UserRole; tenantI
     if (profile) {
       return {
         role: (profile.role as UserRole) || DEFAULT_ROLE,
-        tenantId: (profile.tenant_id as string) || `${DEFAULT_TENANT_PREFIX}${user.id.slice(0, 8)}`,
+        tenantId: (profile.tenant_id as string) || crypto.randomUUID(),
         name: profile.name || "المستخدم"
       };
     }
 
-    // Create user profile
-    const newTenantId = `${DEFAULT_TENANT_PREFIX}${user.id.slice(0, 8)}`;
+    // Create user profile. tenant_id is a real uuid (the `users.tenant_id` column is
+    // typed uuid) — a string like "tenant-abc123" would fail the insert with a
+    // Postgres type error and silently block every new signup.
+    const newTenantId = crypto.randomUUID();
     const newName = user.user_metadata?.full_name || user.email?.split('@')[0] || "المستخدم";
     
     const { error: insertError } = await supabase

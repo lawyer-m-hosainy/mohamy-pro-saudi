@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import admin from 'firebase-admin';
+import { createClient } from '@supabase/supabase-js';
 import compression from 'compression';
 import { pinoHttp } from 'pino-http';
 import pino from 'pino';
@@ -23,15 +23,10 @@ const logger = pino({
     },
     timestamp: pino.stdTimeFunctions.isoTime,
 });
-// Initialize Firebase Admin for token verification
-try {
-    if (admin.apps.length === 0) {
-        admin.initializeApp();
-    }
-}
-catch (e) {
-    logger.warn('Firebase Admin init warning:', e);
-}
+// Initialize Supabase for token verification
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
+const supabase = createClient(supabaseUrl, supabaseKey);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -48,15 +43,11 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "blob:", "https://firebasestorage.googleapis.com", "https://picsum.photos"],
+            imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co", "https://picsum.photos"],
             connectSrc: [
                 "'self'",
-                "https://firebasestorage.googleapis.com",
-                "https://identitytoolkit.googleapis.com",
-                "https://securetoken.googleapis.com",
-                "https://*.firebaseio.com",
-                "wss://*.firebaseio.com",
-                "https://firestore.googleapis.com"
+                "https://*.supabase.co",
+                "wss://*.supabase.co"
             ]
         }
     },
@@ -128,79 +119,70 @@ const aiSecurityMiddleware = (req, res, next) => {
     });
     next();
 };
-// Auth Middleware to verify Firebase JWT
-const authMiddleware = async (req, res, next) => {
+app.use('/api/ai', async (req, res, next) => {
+    // Auth Middleware to verify Supabase JWT
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'مطلوب مصادقة صالحة' });
     }
     const idToken = authHeader.split('Bearer ')[1];
     try {
-        const decodedToken = await admin.auth().verifyIdToken(idToken);
-        req.user = decodedToken;
-        req.tenantId = decodedToken.tenantId || req.headers['x-tenant-id'] || 'default';
-        req.userRole = decodedToken.role || req.headers['x-user-role'];
+        const { data: { user }, error } = await supabase.auth.getUser(idToken);
+        if (error || !user)
+            throw new Error("Invalid token");
+        req.user = user;
+        req.tenantId = req.headers['x-tenant-id'] || 'default';
         next();
     }
     catch (error) {
         logger.error({ err: error }, 'Auth Token Error');
         return res.status(403).json({ error: 'التوكن غير صالح أو منتهي الصلاحية' });
     }
-};
-
-app.use('/api/ai', authMiddleware, aiSecurityMiddleware);
-// --- Mock AI Fallbacks for Demos ---
-const getMockAssistantResponse = () => `بناءً على الأنظمة السعودية، أرى أن موقف الموكل قوي في هذه القضية. يُنصح بتجهيز المستندات الداعمة وتقديمها عبر بوابة ناجز. (ملاحظة: هذا رد توضيحي للعرض التوضيحي).`;
-
-const getMockDraftResponse = (type, facts) => `**مسودة ${type}**\n\nأصحاب الفضيلة، السلام عليكم ورحمة الله وبركاته.\n\nتتخلص وقائع هذه الدعوى في الآتي:\n${facts}\n\nوبناءً على ما تقدم، نطلب من فضيلتكم الحكم لصالح موكلنا.\n(رد توضيحي للعرض التوضيحي)`;
-
-const getMockAnalyzeResponse = () => `**التحليل القانوني:**\n1. **نقاط القوة:** وجود عقود موثقة.\n2. **المخاطر:** تأخر في المطالبة قد يدخل في التقادم.\n3. **التوصية:** توجيه إنذار عدلي كخطوة أولى.\n(رد توضيحي للعرض التوضيحي)`;
-
+}, aiSecurityMiddleware);
 // AI Endpoint Routing
 app.post('/api/ai/legal-assistant', aiRateLimiter, async (req, res) => {
+    if (!ai) {
+        return res.status(500).json({ error: 'Server AI key is not configured' });
+    }
     try {
         const userMessage = String(req.body.userMessage || '');
-        if (!ai) return res.status(200).json({ text: getMockAssistantResponse() });
-        
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: userMessage,
             config: { systemInstruction },
         });
-        return res.status(200).json({ text: response.text || getMockAssistantResponse() });
+        return res.status(200).json({ text: response.text || '' });
     }
     catch (error) {
-        logger.error({ err: error }, "AI Error - Falling back to Mock");
-        return res.status(200).json({ text: getMockAssistantResponse() });
+        logger.error({ err: error }, "AI Error");
+        return res.status(502).json({ error: 'AI upstream error' });
     }
 });
-
 app.post('/api/ai/draft', aiRateLimiter, async (req, res) => {
+    if (!ai) {
+        return res.status(500).json({ error: 'Server AI key is not configured' });
+    }
     try {
         const type = String(req.body.type || 'وثيقة قانونية');
         const facts = String(req.body.facts || '');
-        if (!ai) return res.status(200).json({ text: getMockDraftResponse(type, facts) });
-
         const prompt = `قم بصياغة ${type} احترافية بناءً على الوقائع التالية:\n${facts}`;
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
             config: { systemInstruction },
         });
-        return res.status(200).json({ text: response.text || getMockDraftResponse(type, facts) });
+        return res.status(200).json({ text: response.text || '' });
     }
     catch (error) {
-        logger.error({ err: error }, "AI Draft Error - Falling back to Mock");
-        const type = String(req.body.type || 'وثيقة قانونية');
-        const facts = String(req.body.facts || '');
-        return res.status(200).json({ text: getMockDraftResponse(type, facts) });
+        logger.error({ err: error }, "AI Error");
+        return res.status(502).json({ error: 'AI upstream error' });
     }
 });
-
 app.post('/api/ai/analyze', aiRateLimiter, async (req, res) => {
+    if (!ai) {
+        return res.status(500).json({ error: 'Server AI key is not configured' });
+    }
     try {
-        if (!ai) return res.status(200).json({ text: getMockAnalyzeResponse() });
-
         const content = String(req.body.content || '');
         const prompt = `حلل النص القانوني التالي وفق الأنظمة السعودية وحدد الملخص والدفوع والمخاطر:\n${content}`;
         const response = await ai.models.generateContent({
@@ -208,95 +190,11 @@ app.post('/api/ai/analyze', aiRateLimiter, async (req, res) => {
             contents: prompt,
             config: { systemInstruction },
         });
-        return res.status(200).json({ text: response.text || getMockAnalyzeResponse() });
+        return res.status(200).json({ text: response.text || '' });
     }
     catch (error) {
-        logger.error({ err: error }, "AI Analyze Error - Falling back to Mock");
-        return res.status(200).json({ text: getMockAnalyzeResponse() });
-    }
-});
-
-// --- Server-side API Endpoints for Cases ---
-const db = admin.firestore();
-
-// 1. POST /api/cases
-app.post('/api/cases', authMiddleware, async (req, res) => {
-    try {
-        if (req.userRole === 'client') {
-            return res.status(403).json({ error: 'غير مصرح للعملاء بإنشاء قضايا' });
-        }
-        
-        const caseData = req.body;
-        if (caseData.tenantId && caseData.tenantId !== req.tenantId) {
-            return res.status(403).json({ error: 'لا يمكن إنشاء قضية في مساحة عمل مختلفة' });
-        }
-        
-        caseData.tenantId = req.tenantId;
-        caseData.createdAt = new Date().toISOString();
-        
-        const docRef = await db.collection('cases').add(caseData);
-        return res.status(201).json({ id: docRef.id, ...caseData });
-    } catch (error) {
-        logger.error({ err: error }, "Create Case Error");
-        return res.status(500).json({ error: 'حدث خطأ أثناء إنشاء القضية' });
-    }
-});
-
-// 2. PUT /api/cases/:id
-app.put('/api/cases/:id', authMiddleware, async (req, res) => {
-    try {
-        if (req.userRole === 'client') {
-            return res.status(403).json({ error: 'غير مصرح للعملاء بتعديل القضايا' });
-        }
-        
-        const caseId = req.params.id;
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        
-        if (!caseDoc.exists) {
-            return res.status(404).json({ error: 'القضية غير موجودة' });
-        }
-        
-        const existingCase = caseDoc.data();
-        if (existingCase.tenantId !== req.tenantId) {
-            return res.status(403).json({ error: 'غير مصرح لك بتعديل هذه القضية' });
-        }
-        
-        const updateData = req.body;
-        delete updateData.tenantId; // Prevent changing tenantId
-        
-        await caseRef.update(updateData);
-        return res.status(200).json({ id: caseId, ...existingCase, ...updateData });
-    } catch (error) {
-        logger.error({ err: error }, "Update Case Error");
-        return res.status(500).json({ error: 'حدث خطأ أثناء تعديل القضية' });
-    }
-});
-
-// 3. DELETE /api/cases/:id
-app.delete('/api/cases/:id', authMiddleware, async (req, res) => {
-    try {
-        if (req.userRole === 'client') {
-            return res.status(403).json({ error: 'غير مصرح للعملاء بحذف القضايا' });
-        }
-        
-        const caseId = req.params.id;
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        
-        if (!caseDoc.exists) {
-            return res.status(404).json({ error: 'القضية غير موجودة' });
-        }
-        
-        if (caseDoc.data().tenantId !== req.tenantId) {
-            return res.status(403).json({ error: 'غير مصرح لك بحذف هذه القضية' });
-        }
-        
-        await caseRef.delete();
-        return res.status(200).json({ success: true, message: 'تم حذف القضية بنجاح' });
-    } catch (error) {
-        logger.error({ err: error }, "Delete Case Error");
-        return res.status(500).json({ error: 'حدث خطأ أثناء حذف القضية' });
+        logger.error({ err: error }, "AI Error");
+        return res.status(502).json({ error: 'AI upstream error' });
     }
 });
 // Serve frontend static files
@@ -312,9 +210,12 @@ else {
     app.get('/', (req, res) => res.send('API is running. Frontend build (dist) not found.'));
 }
 // Start Server
-app.listen(PORT, () => {
-    logger.info(`🚀 Server is running on port ${PORT}`);
-    if (!GEMINI_API_KEY) {
-        logger.warn('⚠️ Warning: GEMINI_API_KEY is not set. AI features will not work.');
-    }
-});
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        logger.info(`🚀 Server is running on port ${PORT}`);
+        if (!GEMINI_API_KEY) {
+            logger.warn('⚠️ Warning: GEMINI_API_KEY is not set. AI features will not work.');
+        }
+    });
+}
+export default app;
