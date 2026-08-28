@@ -33,14 +33,20 @@ const featureFlags: Record<string, FeatureFlag> = {
   EMAIL_NOTIFICATIONS: {
     key: 'EMAIL_NOTIFICATIONS',
     label: 'الإشعارات البريدية',
-    enabled: true,
-    description: 'تفعيل إرسال إشعارات الجلسات والفواتير عبر البريد'
+    // Was `true` with zero email provider wired anywhere in the codebase
+    // (no SendGrid/Resend/nodemailer dependency, no send call) — a flag
+    // that claims a feature works when it silently does nothing is worse
+    // than one that's honestly off. POST /api/notifications/email now
+    // exists (server.ts, via Resend) but nothing calls it yet; flip this
+    // once session/invoice reminders are wired to call it.
+    enabled: false,
+    description: 'تفعيل إرسال إشعارات الجلسات والفواتير عبر البريد (Resend) — يتطلب RESEND_API_KEY وربط نقاط الإرسال'
   },
   MOYASAR_PAYMENTS: {
     key: 'MOYASAR_PAYMENTS',
     label: 'بوابة الدفع الإلكتروني',
     enabled: false,
-    description: 'تفعيل الدفع الإلكتروني (Paymob / Fawry)'
+    description: 'تفعيل الدفع الإلكتروني عبر Moyasar — يتطلب MOYASAR_SECRET_KEY وواجهة تحصيل بطاقة (Moyasar.js)'
   }
 };
 

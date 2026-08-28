@@ -2,10 +2,18 @@ import { Case, Deadline } from "@/types";
 
 export type CaseWorkflowStage = "intake" | "pleadings" | "hearing" | "judgment" | "closed";
 
+// Was keyed on "نشطة", which is not a value Case["status"] (src/types/case.ts)
+// or schema.sql's check constraint ever allow — only متداولة/تحت الدراسة/
+// مغلقة/محفوظة are valid. Every lookup here silently fell through to
+// `undefined` and `.includes()` on it would have thrown; the only reason
+// this shipped was that these functions are only reachable via test-only
+// helpers today. "متداولة" ("in progress/circulating") is the real
+// equivalent of the intended "active" status.
 const allowedStatusTransitions: Record<Case["status"], Case["status"][]> = {
-  "تحت الدراسة": ["نشطة", "مغلقة"],
-  "نشطة": ["مغلقة"],
-  "مغلقة": [],
+  "تحت الدراسة": ["متداولة", "مغلقة"],
+  "متداولة": ["مغلقة", "محفوظة"],
+  "مغلقة": ["محفوظة"],
+  "محفوظة": [],
 };
 
 export function canTransitionCaseStatus(from: Case["status"], to: Case["status"]) {
@@ -14,7 +22,7 @@ export function canTransitionCaseStatus(from: Case["status"], to: Case["status"]
 
 export function mapCaseStatusToStage(status: Case["status"]): CaseWorkflowStage {
   if (status === "تحت الدراسة") return "intake";
-  if (status === "نشطة") return "hearing";
+  if (status === "متداولة") return "hearing";
   return "closed";
 }
 

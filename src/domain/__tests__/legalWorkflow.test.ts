@@ -3,22 +3,22 @@ import { canTransitionCaseStatus, mapCaseStatusToStage, assertDeadlineDate } fro
 
 describe('Legal Workflow Domain', () => {
   describe('canTransitionCaseStatus', () => {
-    it('should allow transition from "تحت الدراسة" to "نشطة"', () => {
-      expect(canTransitionCaseStatus('تحت الدراسة', 'نشطة')).toBe(true);
+    it('should allow transition from "تحت الدراسة" to "متداولة"', () => {
+      expect(canTransitionCaseStatus('تحت الدراسة', 'متداولة')).toBe(true);
     });
 
-    it('should not allow transition from "مغلقة" to "نشطة"', () => {
-      expect(canTransitionCaseStatus('مغلقة', 'نشطة')).toBe(false);
+    it('should not allow transition from "مغلقة" to "متداولة"', () => {
+      expect(canTransitionCaseStatus('مغلقة', 'متداولة')).toBe(false);
     });
 
     it('should allow staying in the same status', () => {
-      expect(canTransitionCaseStatus('نشطة', 'نشطة')).toBe(true);
+      expect(canTransitionCaseStatus('متداولة', 'متداولة')).toBe(true);
     });
   });
 
   describe('mapCaseStatusToStage', () => {
-    it('should map "نشطة" to "hearing"', () => {
-      expect(mapCaseStatusToStage('نشطة')).toBe('hearing');
+    it('should map "متداولة" to "hearing"', () => {
+      expect(mapCaseStatusToStage('متداولة')).toBe('hearing');
     });
 
     it('should map "تحت الدراسة" to "intake"', () => {

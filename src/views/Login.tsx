@@ -9,6 +9,14 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DEMO_TENANT_ID, setTenantIdCache } from "@/lib/tenant";
+
+// Must match ProtectedRoute.tsx's check exactly — that component is what
+// actually decides whether a demo session is let in, so showing this
+// button under a looser condition (previously `MODE !== "production"`)
+// sent users into a login → dashboard → kicked-back-to-login loop with no
+// explanation whenever VITE_ENABLE_DEMO wasn't set (P17-core-ui.md, Medium).
+const DEMO_MODE_AVAILABLE = (import.meta as any).env?.VITE_ENABLE_DEMO === "true";
 
 function getSupabaseAuthErrorMessage(error: any, context: "login" | "register" = "login") {
   const code = error?.status || error?.code || "";
@@ -334,15 +342,28 @@ export default function Login() {
               </Dialog>
             </div>
 
-            {(import.meta as any).env?.MODE !== "production" && (
+            {DEMO_MODE_AVAILABLE && (
               <>
                 <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 p-3 rounded-lg text-sm border border-amber-200 dark:border-amber-900/50 text-center font-bold">
                   هذا الوضع للعرض التجريبي فقط — لا تدخل بيانات حقيقية
                 </div>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
-                    const { setDemoMode } = useAuthStore.getState();
+                    const { setDemoMode, setCurrentUser } = useAuthStore.getState();
+                    // Demo mode must set both the tenant cache and a
+                    // current user itself: getCurrentTenantId() now fails
+                    // closed instead of guessing demo-tenant
+                    // (src/lib/tenant.ts), and hasPermission() returns
+                    // false with no currentUser — without these two lines
+                    // a "logged in" demo user could see nothing at all.
+                    setTenantIdCache(DEMO_TENANT_ID);
+                    setCurrentUser({
+                      id: "demo-user",
+                      name: "مستخدم تجريبي",
+                      email: "demo@malaf.site",
+                      role: "مدير مكتب",
+                    });
                     setDemoMode(true);
                     localStorage.setItem("demoStartedAt", Date.now().toString());
                     toast.success("تم الدخول بوضع المعاينة التجريبية (صالح لمدة 30 دقيقة)");

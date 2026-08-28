@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 export default function Compliance() {
   const compliance = useComplianceStore((state) => state.compliance);
   const updateComplianceRecord = useComplianceStore((state) => state.updateComplianceRecord);
+  const addComplianceRecord = useComplianceStore((state) => state.addComplianceRecord);
   const removeComplianceRecord = useComplianceStore((state) => state.removeComplianceRecord);
 
   const [addOpen, setAddOpen] = useState(false);

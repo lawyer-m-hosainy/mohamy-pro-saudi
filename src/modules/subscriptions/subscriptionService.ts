@@ -106,30 +106,36 @@ export function checkQuota(
   };
 }
 
-// ── Moyasar Payment Facade (Mocked) ────────────────────────────────
-// In production, replace with real Moyasar SDK calls.
+// ── Moyasar Payment Facade ──────────────────────────────────────────
+// The card itself is tokenized client-side with Moyasar.js (never sent to
+// our backend) into a `source` object; this just hands that token to our
+// server, which holds the actual secret key (see POST /api/payments/initiate
+// in server.ts). There is deliberately no client-side "verifyPayment" —
+// the previous version of this file had one that unconditionally returned
+// `success: true` with no server round-trip at all, meaning any signed-in
+// user could grant themselves an Enterprise plan for free. Subscription
+// status is only ever written by the Moyasar webhook (server.ts), after
+// Moyasar itself confirms the charge.
 export async function initializePayment(
   tenantId: string,
   plan: PlanTier,
-  billing: 'monthly' | 'yearly'
-): Promise<{ paymentUrl: string; sessionId: string }> {
-  const selectedPlan = PLANS[plan];
-  const amount = billing === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly;
+  billing: 'monthly' | 'yearly',
+  source: { type: string; [key: string]: unknown },
+  accessToken: string
+): Promise<{ id: string; status: string; transactionUrl: string | null }> {
+  const res = await fetch('/api/payments/initiate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'x-tenant-id': tenantId,
+    },
+    body: JSON.stringify({ plan, billing, source }),
+  });
 
-  // Mock: In production, call Moyasar API here
-  console.log(`[Moyasar Mock] Initiating payment for tenant ${tenantId}, plan ${plan}, amount ${amount} SAR`);
-
-  return {
-    paymentUrl: `https://api.moyasar.com/v1/payments?amount=${amount * 100}&currency=SAR&description=Mohamy+Pro+${plan}`,
-    sessionId: `MOCK-SESSION-${Date.now()}`
-  };
-}
-
-export async function verifyPayment(sessionId: string): Promise<{ success: boolean; transactionId: string }> {
-  // Mock: In production, verify with Moyasar API
-  console.log(`[Moyasar Mock] Verifying payment session ${sessionId}`);
-  return {
-    success: true,
-    transactionId: `TXN-${Date.now()}`
-  };
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body?.error || 'تعذر بدء عملية الدفع');
+  }
+  return body;
 }

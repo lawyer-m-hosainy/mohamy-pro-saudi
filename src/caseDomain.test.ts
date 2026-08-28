@@ -41,11 +41,11 @@ describe('caseDomain', () => {
       expect(getCaseRiskLevel(c)).toBe('low');
     });
     it('should return high for old active cases', () => {
-      const c = { status: 'نشطة', createdAt: new Date(Date.now() - 200 * 86400000).toISOString() } as Case;
+      const c = { status: 'متداولة', createdAt: new Date(Date.now() - 200 * 86400000).toISOString() } as Case;
       expect(getCaseRiskLevel(c)).toBe('high');
     });
     it('should return medium for moderately old cases', () => {
-      const c = { status: 'نشطة', createdAt: new Date(Date.now() - 100 * 86400000).toISOString() } as Case;
+      const c = { status: 'متداولة', createdAt: new Date(Date.now() - 100 * 86400000).toISOString() } as Case;
       expect(getCaseRiskLevel(c)).toBe('medium');
     });
   });
@@ -64,9 +64,9 @@ describe('caseDomain', () => {
   describe('getAtRiskCases', () => {
     it('should return only active old cases', () => {
       const cases = [
-        { status: 'نشطة', createdAt: new Date(Date.now() - 150 * 86400000).toISOString() },
+        { status: 'متداولة', createdAt: new Date(Date.now() - 150 * 86400000).toISOString() },
         { status: 'مغلقة', createdAt: new Date(Date.now() - 150 * 86400000).toISOString() },
-        { status: 'نشطة', createdAt: new Date().toISOString() },
+        { status: 'متداولة', createdAt: new Date().toISOString() },
       ] as Case[];
       expect(getAtRiskCases(cases, 120).length).toBe(1);
     });

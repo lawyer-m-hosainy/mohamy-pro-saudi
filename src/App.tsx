@@ -4,7 +4,7 @@ import { RootLayout } from "./components/layout/RootLayout";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { fetchCases, fetchClients, fetchEnforcement, fetchInvoices, fetchTasks, fetchTeam, fetchTrustAccounts } from "@/services/legalDataService";
+import { fetchCases, fetchClients, fetchEnforcement, fetchTasks, fetchTeam, fetchTrustAccounts } from "@/services/legalDataService";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useClientsStore } from "@/store/useClientsStore";
 import { useCasesStore } from "@/store/useCasesStore";
@@ -12,8 +12,6 @@ import { useTeamStore } from "@/store/useTeamStore";
 import { useInvoicesStore } from "@/store/useInvoicesStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useEnforcementStore } from "@/store/useEnforcementStore";
-import { mockTasks, mockTeamMembers } from "@/mocks/data";
-import { getCurrentTenantId } from "@/lib/tenant";
 import { checkAppHealth } from "@/observability/health";
 import { logEvent } from "@/observability/logger";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -56,6 +54,7 @@ const BDDashboard = lazy(() => import("./views/BDDashboard"));
 const LegalQA = lazy(() => import("./views/LegalQA"));
 const TrainingPortal = lazy(() => import("./views/TrainingPortal"));
 const PartnerReporting = lazy(() => import("./views/PartnerReporting"));
+const CRM = lazy(() => import("./views/CRM"));
 
 // Enterprise Modules
 const OnboardingFlow = lazy(() => import("./modules/onboarding/OnboardingFlow"));
@@ -180,6 +179,7 @@ export default function App() {
               <Route path="ai-analyzer" element={<AIDocumentAnalyzer />} />
               <Route path="wiki" element={<InternalWiki />} />
               <Route path="bd" element={<PermissionGate permission="view_reports"><BDDashboard /></PermissionGate>} />
+              <Route path="crm" element={<PermissionGate permission="view_clients"><CRM /></PermissionGate>} />
               <Route path="qa" element={<PermissionGate permission="legal_qa"><LegalQA /></PermissionGate>} />
               <Route path="training" element={<PermissionGate permission="training_portal"><TrainingPortal /></PermissionGate>} />
               <Route path="partner-reports" element={<PermissionGate permission="view_reports"><PartnerReporting /></PermissionGate>} />

@@ -1,6 +1,6 @@
 import { Document } from './common';
 
-export type CourtType = 
+export type CourtType =
   | 'محكمة النقض'
   | 'محكمة الاستئناف'
   | 'المحكمة الابتدائية'
@@ -10,7 +10,19 @@ export type CourtType =
   | 'محكمة الأسرة'
   | 'المحكمة الاقتصادية'
   | 'محكمة العمال'
-  | 'هيئة التحكيم';
+  | 'هيئة التحكيم'
+  // These four were already used throughout mock data and stores
+  // (useCasesStore.ts, useEnforcementStore.ts, mocks/data.ts) without ever
+  // being in this list — `tsc --noEmit` was catching real type errors
+  // that nobody had been looking at (npm run lint / CI's "Type check"
+  // step). Added rather than rewriting every existing usage, since these
+  // are all real, distinct Saudi court/authority names in everyday use
+  // alongside the ones above.
+  | 'المحكمة التجارية'
+  | 'المحكمة العامة'
+  | 'المحكمة العمالية'
+  | 'المحكمة الجزائية'
+  | 'ديوان المظالم';
 
 export interface Case {
   id: string;
@@ -30,6 +42,10 @@ export interface Case {
   memorandums: string[]; // مذكرات ولوائح (NEVER USE صحائف)
   documents?: Document[];
   powerOfAttorneyRef: string; // رقم الوكالة (NEVER USE توكيل)
+  // Used by src/views/Cases.tsx, NewCaseDialog.tsx, useCasesStore.ts and
+  // useCases.ts (linkCaseToNajiz) but was missing from this type entirely —
+  // every read/write of it was silently untyped.
+  najizReferenceStatus?: 'مربوط بناجز' | 'غير مربوط';
   status: 'متداولة' | 'مغلقة' | 'تحت الدراسة' | 'محفوظة';
   externalPlatformRef?: string; // ربط بمنظومة التقاضي الإلكتروني
   createdAt: string;

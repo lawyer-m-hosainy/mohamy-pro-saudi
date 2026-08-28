@@ -78,7 +78,7 @@ export default function TrustAccounting() {
                 setDepositOpen(false);
               } catch (error) {
                 if (error instanceof ZodError) {
-                  toast.error(error.errors[0].message);
+                  toast.error(error.issues[0].message);
                 } else {
                   toast.error("حدث خطأ أثناء حفظ الإيداع");
                 }

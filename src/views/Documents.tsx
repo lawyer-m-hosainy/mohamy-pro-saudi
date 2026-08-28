@@ -230,11 +230,9 @@ export default function Documents() {
                 />
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 dark:border-white/10">
-                    <Filter size={16} />
-                    تصفية وترتيب
-                  </Button>
+                <DropdownMenuTrigger render={<Button variant="outline" className="gap-2 dark:border-white/10" />}>
+                  <Filter size={16} />
+                  تصفية وترتيب
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10">
                   <DropdownMenuItem onClick={() => setSortBy("date_desc")} className="cursor-pointer dark:focus:bg-white/5">الأحدث أولاً</DropdownMenuItem>

@@ -13,6 +13,7 @@ import { useUIStore } from "@/store/useUIStore";
 const navItems = [
   { name: "لوحة القيادة", href: "/dashboard", icon: LayoutDashboard },
   { name: "العملاء", href: "/dashboard/clients", icon: Users, permission: "view_clients" },
+  { name: "العملاء المحتملون (CRM)", href: "/dashboard/crm", icon: Users, permission: "view_clients" },
   { name: "القضايا", href: "/dashboard/cases", icon: Scale, permission: "view_cases" },
   { name: "رول الجلسات", href: "/dashboard/roll", icon: Calendar, permission: "view_cases" },
   { name: "إدارة التنفيذ", href: "/dashboard/enforcement", icon: Gavel },

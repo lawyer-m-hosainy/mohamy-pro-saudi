@@ -173,10 +173,8 @@ export default function Team() {
                     {member.status}
                   </Badge>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white">
-                        <MoreVertical size={16} />
-                      </Button>
+                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-navy-900 dark:hover:text-white" />}>
+                      <MoreVertical size={16} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
                       <DropdownMenuItem onClick={() => { setMemberToEdit(member); setEditOpen(true); }} className="cursor-pointer dark:focus:bg-white/5 gap-2 flex items-center">

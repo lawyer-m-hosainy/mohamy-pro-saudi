@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import path from "path";
-import fs from "fs";
 import dotenv from "dotenv";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
@@ -15,54 +14,71 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const DEMO_TENANT_ID = "demo-tenant";
+// Must match DEMO_TENANT_ID in src/lib/tenant.ts exactly — the `tenant_id`
+// columns in schema.sql are `uuid`, so the old value here ("demo-tenant")
+// would fail every insert with a Postgres type error.
+const DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000000";
+
+// clients.id/cases.id are uuid columns too (previously "client-1" etc,
+// which fails the same way) — using fixed, readable UUIDs so re-running
+// this script upserts the same rows instead of duplicating them.
+const CLIENT_1 = "10000000-0000-0000-0000-000000000001";
+const CLIENT_2 = "10000000-0000-0000-0000-000000000002";
+const CLIENT_3 = "10000000-0000-0000-0000-000000000003";
 
 const demoClients = [
-  { id: "client-1", name: "أحمد محمد العمري", type: "فرد", phone: "+966501234567", tenant_id: DEMO_TENANT_ID },
-  { id: "client-2", name: "شركة الأفق للتطوير العقاري", type: "منشأة", phone: "+966559876543", tenant_id: DEMO_TENANT_ID },
-  { id: "client-3", name: "فاطمة خالد السعيد", type: "فرد", phone: "+966532468101", tenant_id: DEMO_TENANT_ID },
+  { id: CLIENT_1, name: "أحمد محمد العمري", type: "فرد", phone: "+966501234567", tenant_id: DEMO_TENANT_ID },
+  { id: CLIENT_2, name: "شركة الأفق للتطوير العقاري", type: "منشأة", phone: "+966559876543", tenant_id: DEMO_TENANT_ID },
+  { id: CLIENT_3, name: "فاطمة خالد السعيد", type: "فرد", phone: "+966532468101", tenant_id: DEMO_TENANT_ID },
 ];
 
+// client_role/status/type must match schema.sql's check constraints
+// exactly (previously used values like "نشطة" and "عقاري" that aren't in
+// the allowed list, and "مدّعي" with a diacritic that doesn't match
+// "مدعي" — every insert here would have been rejected by the DB).
 const demoCases = [
   {
-    id: "case-1",
-    client_id: "client-1",
-    client_role: "مدّعي",
+    id: "20000000-0000-0000-0000-000000000001",
+    client_id: CLIENT_1,
+    client_role: "مدعي",
     title: "مطالبة مالية",
     court: "المحكمة التجارية",
     circuit: "الدائرة الثالثة",
     plaintiff: "أحمد محمد العمري",
     defendant: "مؤسسة البناء المتحد",
-    status: "نشطة",
+    status: "متداولة",
     type: "تجاري",
+    power_of_attorney_ref: "POA-DEMO-001",
     workflow_stage: "circulation",
     tenant_id: DEMO_TENANT_ID,
   },
   {
-    id: "case-2",
-    client_id: "client-2",
-    client_role: "مدّعى عليه",
+    id: "20000000-0000-0000-0000-000000000002",
+    client_id: CLIENT_2,
+    client_role: "مدعى عليه",
     title: "نزاع عقاري",
     court: "المحكمة العامة",
     circuit: "الدائرة الأولى",
     plaintiff: "مؤسسة الإعمار",
     defendant: "شركة الأفق للتطوير العقاري",
     status: "تحت الدراسة",
-    type: "عقاري",
+    type: "عام",
+    power_of_attorney_ref: "POA-DEMO-002",
     workflow_stage: "study",
     tenant_id: DEMO_TENANT_ID,
   },
   {
-    id: "case-3",
-    client_id: "client-3",
-    client_role: "مدّعي",
+    id: "20000000-0000-0000-0000-000000000003",
+    client_id: CLIENT_3,
+    client_role: "مدعي",
     title: "قضية أحوال شخصية",
     court: "محكمة الأحوال الشخصية",
     circuit: "الدائرة الثانية",
     plaintiff: "فاطمة خالد السعيد",
     defendant: "طرف آخر",
-    status: "نشطة",
+    status: "متداولة",
     type: "أحوال شخصية",
+    power_of_attorney_ref: "POA-DEMO-003",
     workflow_stage: "hearing",
     tenant_id: DEMO_TENANT_ID,
   },

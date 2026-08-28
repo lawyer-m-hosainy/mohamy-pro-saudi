@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { useAuthStore } from "@/store/useAuthStore";
 import { hasRequiredRole, SystemRole } from "@/security/rbac";
+import { setTenantIdCache } from "@/lib/tenant";
 
 export function ProtectedRoute({
   children,
@@ -30,9 +31,13 @@ export function ProtectedRoute({
     const DEMO_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
     if (Date.now() - demoStartedAt > DEMO_TIMEOUT_MS) {
-      // Demo session expired
-      const setDemoMode = useAuthStore.getState().setDemoMode;
+      // Demo session expired — tear down everything the demo login set up
+      // (src/views/Login.tsx), otherwise the tenant cache and currentUser
+      // stay populated with demo values after the "session" has ended.
+      const { setDemoMode, setCurrentUser } = useAuthStore.getState();
       setDemoMode(false);
+      setCurrentUser(null);
+      setTenantIdCache(null);
       localStorage.removeItem("demoStartedAt");
       return <Navigate to="/login" state={{ from: location }} replace />;
     }

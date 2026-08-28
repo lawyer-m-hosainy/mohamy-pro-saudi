@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
+import { setTenantIdCache } from "@/lib/tenant";
 
 export function Topbar() {
   const currentUser = useAuthStore(state => state.currentUser);
@@ -59,7 +60,16 @@ export function Topbar() {
 
   const handleLogout = async () => {
     try {
+      // signOut() is a no-op for a demo session (there's no Supabase auth
+      // session to begin with), so demo state has to be cleared explicitly
+      // or a "logged out" demo user stays authenticated until the 30-minute
+      // timeout in ProtectedRoute.tsx.
+      const { setDemoMode, setCurrentUser } = useAuthStore.getState();
       await supabase.auth.signOut();
+      setDemoMode(false);
+      setCurrentUser(null);
+      setTenantIdCache(null);
+      localStorage.removeItem("demoStartedAt");
       toast.success("تم تسجيل الخروج بنجاح");
       navigate("/login");
     } catch {
