@@ -26,6 +26,7 @@ import { setTenantIdCache } from "@/lib/tenant";
 
 export function Topbar() {
   const currentUser = useAuthStore(state => state.currentUser);
+  const hasPermission = useAuthStore(state => state.hasPermission);
   const notifications = useUIStore(state => state.notifications);
   const markNotificationAsRead = useUIStore(state => state.markNotificationAsRead);
   const toggleSidebar = useUIStore(state => state.toggleSidebar);
@@ -253,10 +254,12 @@ export function Topbar() {
               <DropdownMenuLabel>حسابي</DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/dashboard/settings')}>
-              <User size={16} />
-              الملف الشخصي
-            </DropdownMenuItem>
+            {hasPermission('manage_office') && (
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/dashboard/settings')}>
+                <User size={16} />
+                الملف الشخصي
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
               <LogOut size={16} />
               تسجيل الخروج

@@ -178,19 +178,19 @@ export default function App() {
               <Route path="compliance" element={<PermissionGate permission="compliance_view"><Compliance /></PermissionGate>} />
               <Route path="library" element={<LegalLibrary />} />
               <Route path="contracts" element={<Contracts />} />
-              <Route path="documents" element={<Documents />} />
-              <Route path="ip-management" element={<IPManagement />} />
+              <Route path="documents" element={<PermissionGate permission="documents"><Documents /></PermissionGate>} />
+              <Route path="ip-management" element={<PermissionGate permission="manage_operations"><IPManagement /></PermissionGate>} />
               <Route path="time-tracking" element={<TimeTracking />} />
-              <Route path="client-portal" element={<PortalManagement />} />
-              <Route path="conflict-check" element={<ConflictCheck />} />
-              <Route path="trust-accounting" element={<TrustAccounting />} />
-              <Route path="enforcement" element={<Enforcement />} />
-              <Route path="advisory-desk" element={<AdvisoryDesk />} />
-              <Route path="grc" element={<GRC />} />
-              <Route path="collections" element={<Collections />} />
-              <Route path="clm" element={<CLM />} />
-              <Route path="ip-operations" element={<IPOperations />} />
-              <Route path="specialized-tracks" element={<SpecializedTracks />} />
+              <Route path="client-portal" element={<PermissionGate permission="manage_office"><PortalManagement /></PermissionGate>} />
+              <Route path="conflict-check" element={<PermissionGate permission="conflict_check"><ConflictCheck /></PermissionGate>} />
+              <Route path="trust-accounting" element={<PermissionGate permission="finance_basic"><TrustAccounting /></PermissionGate>} />
+              <Route path="enforcement" element={<PermissionGate permission="manage_operations"><Enforcement /></PermissionGate>} />
+              <Route path="advisory-desk" element={<PermissionGate permission="manage_operations"><AdvisoryDesk /></PermissionGate>} />
+              <Route path="grc" element={<PermissionGate permission="compliance_view"><GRC /></PermissionGate>} />
+              <Route path="collections" element={<PermissionGate permission="finance_basic"><Collections /></PermissionGate>} />
+              <Route path="clm" element={<PermissionGate permission="manage_operations"><CLM /></PermissionGate>} />
+              <Route path="ip-operations" element={<PermissionGate permission="manage_operations"><IPOperations /></PermissionGate>} />
+              <Route path="specialized-tracks" element={<PermissionGate permission="manage_operations"><SpecializedTracks /></PermissionGate>} />
               <Route path="audit-logs" element={<PermissionGate permission="view_reports"><AuditLogs /></PermissionGate>} />
               <Route path="ai-analyzer" element={<AIDocumentAnalyzer />} />
               <Route path="wiki" element={<InternalWiki />} />
@@ -200,7 +200,7 @@ export default function App() {
               <Route path="training" element={<PermissionGate permission="training_portal"><TrainingPortal /></PermissionGate>} />
               <Route path="partner-reports" element={<PermissionGate permission="view_reports"><PartnerReporting /></PermissionGate>} />
               <Route path="platform-admin" element={<PermissionGate permission="platform_admin"><GlobalAdmin /></PermissionGate>} />
-              <Route path="settings" element={<Settings />} />
+              <Route path="settings" element={<PermissionGate permission="manage_office"><Settings /></PermissionGate>} />
             </Route>
             
             {/* Redirect old routes if needed */}

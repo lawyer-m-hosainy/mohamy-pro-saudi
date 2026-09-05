@@ -31,10 +31,10 @@ describe('useAuthStore.hasPermission', () => {
   it('grants محامي only its documented permissions and denies the rest', () => {
     useAuthStore.setState({ currentUser: { id: 'u2', name: 'ن', email: 'e@e.com', role: 'محامي' } });
     const { hasPermission } = useAuthStore.getState();
-    for (const allowed of ['view_cases', 'edit_cases', 'view_clients', 'legal_qa', 'conflict_check']) {
+    for (const allowed of ['view_cases', 'edit_cases', 'view_clients', 'legal_qa', 'conflict_check', 'documents', 'manage_operations']) {
       expect(hasPermission(allowed)).toBe(true);
     }
-    for (const denied of ['finance_basic', 'manage_team', 'platform_admin', 'compliance_view']) {
+    for (const denied of ['finance_basic', 'manage_team', 'platform_admin', 'compliance_view', 'manage_office']) {
       expect(hasPermission(denied)).toBe(false);
     }
   });
@@ -42,10 +42,10 @@ describe('useAuthStore.hasPermission', () => {
   it('grants محامي مستشار only its documented permissions and denies the rest', () => {
     useAuthStore.setState({ currentUser: { id: 'u3', name: 'ن', email: 'e@e.com', role: 'محامي مستشار' } });
     const { hasPermission } = useAuthStore.getState();
-    for (const allowed of ['view_cases', 'view_clients', 'legal_qa', 'conflict_check', 'view_reports']) {
+    for (const allowed of ['view_cases', 'view_clients', 'legal_qa', 'conflict_check', 'view_reports', 'documents', 'manage_operations']) {
       expect(hasPermission(allowed)).toBe(true);
     }
-    for (const denied of ['edit_cases', 'finance_basic', 'manage_team']) {
+    for (const denied of ['edit_cases', 'finance_basic', 'manage_team', 'manage_office']) {
       expect(hasPermission(denied)).toBe(false);
     }
   });
@@ -56,7 +56,7 @@ describe('useAuthStore.hasPermission', () => {
     for (const allowed of ['view_clients', 'edit_clients', 'view_cases', 'documents', 'finance_basic']) {
       expect(hasPermission(allowed)).toBe(true);
     }
-    for (const denied of ['edit_cases', 'manage_team', 'view_reports', 'platform_admin']) {
+    for (const denied of ['edit_cases', 'manage_team', 'view_reports', 'platform_admin', 'manage_operations', 'manage_office']) {
       expect(hasPermission(denied)).toBe(false);
     }
   });
@@ -64,10 +64,10 @@ describe('useAuthStore.hasPermission', () => {
   it('grants محامي متدرب only its documented permissions and denies the rest', () => {
     useAuthStore.setState({ currentUser: { id: 'u5', name: 'ن', email: 'e@e.com', role: 'محامي متدرب' } });
     const { hasPermission } = useAuthStore.getState();
-    for (const allowed of ['view_cases', 'training_portal', 'view_wiki']) {
+    for (const allowed of ['view_cases', 'training_portal', 'view_wiki', 'documents']) {
       expect(hasPermission(allowed)).toBe(true);
     }
-    for (const denied of ['edit_cases', 'finance_basic', 'view_reports']) {
+    for (const denied of ['edit_cases', 'finance_basic', 'view_reports', 'manage_operations', 'manage_office']) {
       expect(hasPermission(denied)).toBe(false);
     }
   });
