@@ -3,6 +3,7 @@ import { useClientsStore } from "@/store/useClientsStore";
 import { clientSchema } from "@/lib/schemas";
 import { ZodError } from "zod";
 import { toast } from "sonner";
+import { saveClient as saveClientToDb, deleteClient as deleteClientFromDb } from "@/services/legalDataService";
 
 export function useClientsLogic() {
   const clients = useClientsStore(state => state.clients);
@@ -66,38 +67,45 @@ export function useClientsLogic() {
     setIsOpen(true);
   }, []);
 
-  const handleDeleteClick = useCallback((id: string) => {
-    if (confirm("هل أنت متأكد من حذف هذا العميل؟")) {
+  const handleDeleteClick = useCallback(async (id: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا العميل؟")) return;
+    try {
+      await deleteClientFromDb(id);
       deleteClient(id);
       toast.success("تم حذف العميل بنجاح");
+    } catch {
+      toast.error("تعذر حذف العميل. حاول مرة أخرى.");
     }
   }, [deleteClient]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       clientSchema.parse(formData);
-      
+
       if (editingClientId) {
+        const updatedClient = { ...formData, id: editingClientId };
+        await saveClientToDb(updatedClient as any, true);
         updateClient(editingClientId, formData);
         toast.success("تم تحديث بيانات العميل بنجاح");
       } else {
         const newClient = {
-          id: `C-${Date.now()}`,
+          id: crypto.randomUUID(),
           ...formData,
         };
+        await saveClientToDb(newClient as any, false);
         addClient(newClient as any);
         toast.success("تم إضافة العميل بنجاح");
       }
-      
+
       setIsOpen(false);
       resetForm();
     } catch (error) {
       if (error instanceof ZodError) {
-        toast.error((error as any).errors?.[0]?.message || "خطأ في التحقق");
+        toast.error(error.issues?.[0]?.message || "خطأ في التحقق");
       } else {
-        toast.error("حدث خطأ غير متوقع");
+        toast.error("تعذر حفظ بيانات العميل. حاول مرة أخرى.");
       }
     }
   }, [formData, editingClientId, updateClient, addClient, resetForm]);

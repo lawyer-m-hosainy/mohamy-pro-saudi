@@ -32,7 +32,7 @@ export default function AddSessionDialog({ caseData, triggerContext = 'case_deta
 
     const formData = new FormData(e.currentTarget);
     addSession({
-      id: `S-${Date.now()}`,
+      id: crypto.randomUUID(),
       caseId: currentCase.id,
       caseName: `${currentCase.plaintiff} ضد ${currentCase.defendant}`,
       date: String(formData.get('date')),

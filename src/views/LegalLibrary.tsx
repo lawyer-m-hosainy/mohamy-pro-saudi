@@ -65,7 +65,7 @@ export default function LegalLibrary() {
               }
               const tags = tagsRaw ? tagsRaw.split(/[,،]/).map((t) => t.trim()).filter(Boolean) : ["مكتبة"];
               addPrecedent({
-                id: `LP-${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 category,
                 summary: summary || "—",

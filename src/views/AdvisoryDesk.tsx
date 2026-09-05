@@ -56,7 +56,7 @@ export default function AdvisoryDesk() {
   const submitOpinion = () => {
     if (!selected || !opinionDraft.trim()) return;
     addAdvisoryOpinion(selected.id, {
-      id: `OP-${Date.now()}`,
+      id: crypto.randomUUID(),
       requestId: selected.id,
       content: opinionDraft.trim(),
       authorId: currentUser?.id || "unknown",

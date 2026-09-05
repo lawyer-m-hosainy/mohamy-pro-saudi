@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { Case, Session, Deadline } from '../types';
+import { createTenantCrud } from '../services/genericCrud';
 
+const sessionsCrud = createTenantCrud<Session>('sessions');
+const deadlinesCrud = createTenantCrud<Deadline>('deadlines');
 
 interface CasesState {
   cases: Case[];
   sessions: Session[];
   deadlines: Deadline[];
+  loadCaseExtras: () => Promise<void>;
   setCases: (cases: Case[]) => void;
   addCase: (caseData: Case) => void;
   updateCase: (id: string, updatedData: Partial<Case>) => void;
@@ -17,37 +21,18 @@ interface CasesState {
   updateDeadlineStatus: (id: string, status: 'pending' | 'completed' | 'overdue') => void;
 }
 
-export const useCasesStore = create<CasesState>((set) => ({
-  cases: [
-    {
-      id: "C-1001",
-      clientId: "CL-001",
-      type: "تجاري",
-      status: "متداولة",
-      court: "المحكمة التجارية",
-      plaintiff: "شركة الأفق",
-      defendant: "مؤسسة البناء",
-      memorandums: ["لائحة الادعاء", "مذكرة الرد"],
-      powerOfAttorneyRef: "POA-2024-001",
-      najizReferenceStatus: "مربوط بناجز",
-      createdAt: "2024-01-15"
-    },
-    {
-      id: "C-1002",
-      clientId: "CL-002",
-      type: "عمالي",
-      status: "تحت الدراسة",
-      court: "المحكمة العمالية",
-      plaintiff: "أحمد محمد",
-      defendant: "شركة التقنية",
-      memorandums: [],
-      powerOfAttorneyRef: "POA-2024-002",
-      najizReferenceStatus: "غير مربوط",
-      createdAt: "2024-03-10"
-    }
-  ],
+export const useCasesStore = create<CasesState>((set, get) => ({
+  cases: [],
   sessions: [],
   deadlines: [],
+
+  loadCaseExtras: async () => {
+    const [sessions, deadlines] = await Promise.all([
+      sessionsCrud.fetchAll(),
+      deadlinesCrud.fetchAll(),
+    ]);
+    set({ sessions, deadlines });
+  },
 
   setCases: (cases) => set({ cases }),
   addCase: (caseData) => set((state) => ({ cases: [caseData, ...state.cases] })),
@@ -58,10 +43,20 @@ export const useCasesStore = create<CasesState>((set) => ({
     cases: state.cases.filter(c => c.id !== id)
   })),
   setSessions: (sessions) => set({ sessions }),
-  addSession: (session) => set((state) => ({ sessions: [session, ...state.sessions] })),
+  addSession: (session) => {
+    set((state) => ({ sessions: [session, ...state.sessions] }));
+    void sessionsCrud.save(session, false);
+  },
   setDeadlines: (deadlines) => set({ deadlines }),
-  addDeadline: (deadline) => set((state) => ({ deadlines: [...state.deadlines, deadline] })),
-  updateDeadlineStatus: (id, status) => set((state) => ({
-    deadlines: state.deadlines.map(d => d.id === id ? { ...d, status } : d)
-  })),
+  addDeadline: (deadline) => {
+    set((state) => ({ deadlines: [...state.deadlines, deadline] }));
+    void deadlinesCrud.save(deadline, false);
+  },
+  updateDeadlineStatus: (id, status) => {
+    set((state) => ({
+      deadlines: state.deadlines.map(d => d.id === id ? { ...d, status } : d)
+    }));
+    const updated = get().deadlines.find(d => d.id === id);
+    if (updated) void deadlinesCrud.save(updated, true);
+  },
 }));

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import { Case, Client, Invoice, EnforcementCase, Task, TeamMember, TrustAccount } from "@/types";
+import { Case, Client, Invoice, TeamMember, OfficeSettings } from "@/types";
 import { decryptField, encryptField, hashForSearch } from "@/lib/encryption";
 import { getCurrentTenantId } from "@/lib/tenant";
 import { mapCaseStatusToStage } from "@/domain/legalWorkflow";
@@ -9,9 +9,6 @@ const CLIENTS_TABLE = "clients";
 const CASES_TABLE = "cases";
 const INVOICES_TABLE = "invoices";
 const AUDIT_LOGS_TABLE = "audit_logs";
-const TRUST_ACCOUNTS_TABLE = "trust_accounts";
-const ENFORCEMENT_CASES_TABLE = "enforcement_cases";
-const TASKS_TABLE = "tasks";
 const USERS_TABLE = "users";
 
 export async function fetchClients(): Promise<Client[]> {
@@ -81,11 +78,17 @@ export async function findClientByIdentifier(identifier: string): Promise<Client
   }
 }
 
-export async function saveClient(client: Client): Promise<void> {
+// isUpdate must be passed explicitly (matching saveInvoice's signature) —
+// branching on `client.id` being truthy used to decide insert vs. update,
+// but callers now always generate a real uuid client-side before calling
+// this (crypto.randomUUID()), so a brand-new client would always have a
+// truthy id and silently hit the UPDATE branch, matching zero rows and
+// never actually creating the client.
+export async function saveClient(client: Client, isUpdate: boolean = false): Promise<void> {
   try {
     const tenantId = getCurrentTenantId();
 
-    const dbPayload = {
+    const dbPayload: Record<string, unknown> = {
       tenant_id: tenantId,
       name: client.name,
       type: client.type,
@@ -99,21 +102,22 @@ export async function saveClient(client: Client): Promise<void> {
     };
 
     let error;
-    if (client.id) {
+    if (isUpdate) {
       const { error: updateError } = await supabase
         .from(CLIENTS_TABLE)
         .update(dbPayload)
-        .eq('id', client.id);
+        .eq('id', client.id)
+        .eq('tenant_id', tenantId);
       error = updateError;
     } else {
       const { error: insertError } = await supabase
         .from(CLIENTS_TABLE)
-        .insert(dbPayload);
+        .insert({ ...dbPayload, id: client.id });
       error = insertError;
     }
 
     if (error) throw error;
-    await logAuditAction('CREATE/UPDATE', CLIENTS_TABLE, client.id || 'new', `Saved client ${client.name}`);
+    await logAuditAction(isUpdate ? 'UPDATE' : 'CREATE', CLIENTS_TABLE, client.id || 'new', `Saved client ${client.name}`);
   } catch (error) {
     handleDatabaseError(error, OperationType.WRITE, CLIENTS_TABLE);
   }
@@ -207,6 +211,7 @@ export async function fetchCasesPaginated(
 function mapCaseRow(d: any): Case {
   return {
     id: d.id,
+    caseReference: d.case_reference ?? undefined,
     clientId: d.client_id,
     clientRole: d.client_role,
     workflowStage: d.workflow_stage,
@@ -274,6 +279,7 @@ export async function saveCases(cases: Case[]): Promise<void> {
     const payload = cases.map(c => ({
       id: c.id,
       tenant_id: tenantId,
+      case_reference: c.caseReference ?? null,
       client_id: c.clientId,
       client_role: c.clientRole,
       workflow_stage: c.workflowStage || mapCaseStatusToStage(c.status),
@@ -332,6 +338,7 @@ export async function fetchInvoices(): Promise<Invoice[]> {
     return data.map((d: any) => ({
       id: d.id,
       tenantId: d.tenant_id,
+      invoiceNumber: d.invoice_number,
       clientId: d.client_id,
       clientName: d.client_name,
       base: d.base,
@@ -341,95 +348,6 @@ export async function fetchInvoices(): Promise<Invoice[]> {
       date: d.date,
     } as Invoice));
   } catch (error) {
-    return [];
-  }
-}
-
-export async function fetchTrustAccounts(): Promise<TrustAccount[]> {
-  try {
-    const tenantId = getCurrentTenantId();
-    const { data, error } = await supabase
-      .from(TRUST_ACCOUNTS_TABLE)
-      .select('*')
-      .eq('tenant_id', tenantId);
-
-    if (error) throw error;
-    return (data || []).map((d: any) => ({
-      id: d.id,
-      clientId: d.client_id,
-      clientName: d.client_name,
-      caseId: d.case_id ?? undefined,
-      amount: d.amount,
-      type: d.type,
-      status: d.status,
-      description: d.description,
-      date: d.date,
-    } as TrustAccount));
-  } catch (error) {
-    console.error("fetchTrustAccounts failed:", error);
-    return [];
-  }
-}
-
-export async function fetchEnforcement(): Promise<EnforcementCase[]> {
-  try {
-    const tenantId = getCurrentTenantId();
-    const { data, error } = await supabase
-      .from(ENFORCEMENT_CASES_TABLE)
-      .select('*')
-      .eq('tenant_id', tenantId);
-
-    if (error) throw error;
-    return (data || []).map((d: any) => ({
-      id: d.id,
-      tenantId: d.tenant_id,
-      fileNumber: d.file_number,
-      source: d.source,
-      caseId: d.case_id,
-      clientId: d.client_id,
-      clientName: d.client_name,
-      debtorName: d.debtor_name,
-      amountClaimed: d.amount_claimed,
-      amountCollected: d.amount_collected,
-      status: d.status,
-      stageDeadline: d.stage_deadline ?? undefined,
-      executionType: d.execution_type,
-      judgmentNumber: d.judgment_number ?? undefined,
-      judgmentDate: d.judgment_date ?? undefined,
-      judgmentCourt: d.judgment_court ?? undefined,
-      linkedCaseId: d.linked_case_id ?? undefined,
-      linkedCaseRef: d.linked_case_ref ?? undefined,
-      actions: d.actions || [],
-      orders: d.orders || [],
-      assets: d.assets || [],
-      createdAt: d.created_at,
-    } as EnforcementCase));
-  } catch (error) {
-    console.error("fetchEnforcement failed:", error);
-    return [];
-  }
-}
-
-export async function fetchTasks(): Promise<Task[]> {
-  try {
-    const tenantId = getCurrentTenantId();
-    const { data, error } = await supabase
-      .from(TASKS_TABLE)
-      .select('*')
-      .eq('tenant_id', tenantId);
-
-    if (error) throw error;
-    return (data || []).map((d: any) => ({
-      id: d.id,
-      caseId: d.case_id,
-      title: d.title,
-      assignedTo: d.assigned_to,
-      dueDate: d.due_date,
-      status: d.status,
-      priority: d.priority,
-    } as Task));
-  } catch (error) {
-    console.error("fetchTasks failed:", error);
     return [];
   }
 }
@@ -462,12 +380,71 @@ export async function fetchTeam(): Promise<TeamMember[]> {
   }
 }
 
+/**
+ * Adding a team member here creates a "users" row with no auth_id — they
+ * can't sign in yet (that requires a real Supabase Auth account, created
+ * separately). This is an invited/placeholder record usable for case and
+ * task assignment until they complete their own signup and their auth_id
+ * gets linked, matching how PortalManagement.tsx handles client-portal
+ * accounts the same way.
+ */
+export async function saveTeamMember(member: TeamMember, isUpdate: boolean = false): Promise<void> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const dbPayload = {
+      id: member.id,
+      tenant_id: tenantId,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+      avatar_url: member.avatar || null,
+      active_cases: member.activeCases ?? 0,
+      pending_tasks: member.pendingTasks ?? 0,
+      completed_tasks: member.completedTasks ?? 0,
+      join_date: member.joinDate,
+      status: member.status ?? 'نشط',
+    };
+
+    let error;
+    if (isUpdate) {
+      const { error: updateError } = await supabase
+        .from(USERS_TABLE)
+        .update(dbPayload)
+        .eq('id', member.id)
+        .eq('tenant_id', tenantId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase.from(USERS_TABLE).insert(dbPayload);
+      error = insertError;
+    }
+    if (error) throw error;
+  } catch (error) {
+    handleDatabaseError(error, isUpdate ? OperationType.UPDATE : OperationType.CREATE, USERS_TABLE);
+  }
+}
+
+/** Soft delete: keeps historical case/task assignment records intact. */
+export async function deleteTeamMember(memberId: string): Promise<void> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const { error } = await supabase
+      .from(USERS_TABLE)
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', memberId)
+      .eq('tenant_id', tenantId);
+    if (error) throw error;
+  } catch (error) {
+    handleDatabaseError(error, OperationType.DELETE, USERS_TABLE);
+  }
+}
+
 export async function saveInvoice(invoice: Invoice, isUpdate: boolean = false): Promise<void> {
   try {
     const tenantId = getCurrentTenantId();
     const { error } = await supabase.from(INVOICES_TABLE).upsert({
       id: invoice.id,
       tenant_id: tenantId,
+      invoice_number: invoice.invoiceNumber,
       client_id: invoice.clientId,
       client_name: invoice.clientName,
       base: invoice.base,
@@ -496,5 +473,50 @@ export async function deleteInvoice(invoiceId: string): Promise<void> {
     await logAuditAction('DELETE', INVOICES_TABLE, invoiceId, 'Soft-deleted invoice');
   } catch (error) {
     handleDatabaseError(error, OperationType.DELETE, INVOICES_TABLE);
+  }
+}
+
+const OFFICE_SETTINGS_TABLE = "office_settings";
+
+export async function fetchOfficeSettings(): Promise<OfficeSettings | null> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const { data, error } = await supabase
+      .from(OFFICE_SETTINGS_TABLE)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return {
+      name: data.name,
+      vatNumber: data.vat_number ?? "",
+      address: data.address ?? "",
+      phone: data.phone ?? "",
+      email: data.email ?? "",
+      logo: data.logo ?? "",
+    };
+  } catch (error) {
+    console.error("fetchOfficeSettings failed:", error);
+    return null;
+  }
+}
+
+/** office_settings has tenant_id as its primary key (one row per tenant), so this is always an upsert. */
+export async function saveOfficeSettings(settings: OfficeSettings): Promise<void> {
+  try {
+    const tenantId = getCurrentTenantId();
+    const { error } = await supabase.from(OFFICE_SETTINGS_TABLE).upsert({
+      tenant_id: tenantId,
+      name: settings.name,
+      vat_number: settings.vatNumber,
+      address: settings.address,
+      phone: settings.phone,
+      email: settings.email,
+      logo: settings.logo,
+    });
+    if (error) throw error;
+  } catch (error) {
+    handleDatabaseError(error, OperationType.WRITE, OFFICE_SETTINGS_TABLE);
   }
 }

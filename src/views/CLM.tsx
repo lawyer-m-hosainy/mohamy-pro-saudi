@@ -57,7 +57,7 @@ export default function CLM() {
     if (!selected || !newVersionContent.trim()) return;
     const nextVersion = (selected.versions[selected.versions.length - 1]?.versionNumber || 0) + 1;
     addContractVersion(selected.id, {
-      id: `CV-${Date.now()}`,
+      id: crypto.randomUUID(),
       requestId: selected.id,
       versionNumber: nextVersion,
       content: newVersionContent.trim(),
@@ -66,7 +66,7 @@ export default function CLM() {
       changeSummary: changeSummary || "تحديث عام",
     });
     addAuditLog({
-      id: `AL-CLM-V-${Date.now()}`,
+      id: crypto.randomUUID(),
       userId: currentUser?.id || "unknown",
       userName: currentUser?.name || "unknown",
       action: "Add Contract Version",
@@ -98,7 +98,7 @@ export default function CLM() {
     }
     
     addContractRequest({
-      id: `REQ-${Math.floor(Math.random() * 90000) + 10000}`,
+      id: crypto.randomUUID(),
       title: newRequestData.title,
       clientName: newRequestData.clientName,
       stage: "طلب",

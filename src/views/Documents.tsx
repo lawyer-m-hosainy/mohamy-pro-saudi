@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, Search, Download, Trash2, Folder, File, Filter } from "lucide-react";
+import { Upload, Search, Download, Trash2, Folder, File, Filter, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCasesStore } from "@/store/useCasesStore";
+import { useDocumentsStore } from "@/store/useDocumentsStore";
+import { uploadFile, buildDocumentUploadPath, getDocumentSignedUrl, deleteStoredFile } from "@/services/fileService";
 import React from "react";
 
 type DocRow = {
@@ -22,6 +24,7 @@ type DocRow = {
   size: string;
   date: string;
   uploadedBy: string;
+  storagePath?: string;
 };
 
 function formatBytes(n: number) {
@@ -66,12 +69,30 @@ const DocumentRow = memo(({ doc, onDownload, onDelete }: { doc: DocRow, onDownlo
 export default function Documents() {
   const currentUser = useAuthStore((s) => s.currentUser);
   const cases = useCasesStore((s) => s.cases) || [];
-  const [documents, setDocuments] = useState<DocRow[]>([
-    { id: "d1", name: "لائحة دعوى - شركة الراجحي.pdf", case: "C-2024-001", type: "لائحة", size: "2.4 MB", date: "2024-04-01", uploadedBy: "أحمد المحامي" },
-    { id: "d2", name: "عقد تأسيس شركة النهضة.pdf", case: "C-2024-002", type: "عقد", size: "1.1 MB", date: "2024-04-05", uploadedBy: "سارة المستشارة" },
-    { id: "d3", name: "مذكرة جوابية - عمالي.docx", case: "C-2024-003", type: "مذكرة", size: "500 KB", date: "2024-04-10", uploadedBy: "أحمد المحامي" },
-    { id: "d4", name: "حكم ابتدائي - قضية تجارية.pdf", case: "C-2024-001", type: "حكم", size: "3.2 MB", date: "2024-04-12", uploadedBy: "خالد الشريك" },
-  ]);
+  const documentRecords = useDocumentsStore((s) => s.documents);
+  const loadDocuments = useDocumentsStore((s) => s.loadDocuments);
+  const addDocument = useDocumentsStore((s) => s.addDocument);
+  const removeDocument = useDocumentsStore((s) => s.removeDocument);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    void loadDocuments();
+  }, [loadDocuments]);
+
+  const documents: DocRow[] = documentRecords.map((d) => {
+    const linkedCase = d.caseId ? cases.find((c) => c.id === d.caseId) : undefined;
+    return {
+    id: d.id,
+    name: d.name,
+    case: linkedCase ? (linkedCase.caseReference || linkedCase.id) : "—",
+    type: d.type,
+    size: d.sizeBytes ? formatBytes(d.sizeBytes) : "—",
+    date: d.createdAt?.slice(0, 10) || "",
+    uploadedBy: d.uploadedBy || "—",
+    storagePath: d.storagePath,
+    };
+  });
+
   const [uploadOpen, setUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
@@ -80,21 +101,33 @@ export default function Documents() {
 
   const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "name">("date_desc");
 
-  const handleDownload = useCallback((doc: DocRow) => {
-    const blob = new Blob(["محتوى المستند التجريبي"], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = doc.name;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`تم تحميل المستند: ${doc.name}`);
+  const handleDownload = useCallback(async (doc: DocRow) => {
+    if (!doc.storagePath) {
+      toast.error("لا يوجد ملف مرفوع مرتبط بهذا السجل");
+      return;
+    }
+    try {
+      const url = await getDocumentSignedUrl(doc.storagePath);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.name;
+      a.click();
+      toast.success(`تم تحميل المستند: ${doc.name}`);
+    } catch {
+      toast.error("تعذر تحميل المستند");
+    }
   }, []);
 
-  const handleDelete = useCallback((id: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
-    toast.success(`تم حذف المستند من السجل`);
-  }, []);
+  const handleDelete = useCallback(async (id: string) => {
+    const doc = documentRecords.find((d) => d.id === id);
+    try {
+      if (doc?.storagePath) await deleteStoredFile(doc.storagePath);
+      removeDocument(id);
+      toast.success(`تم حذف المستند من السجل`);
+    } catch {
+      toast.error("تعذر حذف المستند");
+    }
+  }, [documentRecords, removeDocument]);
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch = doc.name.includes(searchTerm) || doc.case.includes(searchTerm);
@@ -133,28 +166,46 @@ export default function Documents() {
           </DialogHeader>
           <form
             className="space-y-4 pt-2"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              const fd = new FormData(e.currentTarget);
+              const form = e.currentTarget;
+              const fd = new FormData(form);
               const file = (fd.get("file") as File) || null;
               if (!file || !file.size) {
                 toast.error("اختر ملفاً");
                 return;
               }
-              const caseRef = String(fd.get("caseRef") || "").trim() || "—";
+              const caseId = String(fd.get("caseRef") || "").trim() || undefined;
               const docType = String(fd.get("docType") || "").trim() || "مستند";
-              const row: DocRow = {
-                id: `d-${Date.now()}`,
-                name: file.name,
-                case: caseRef,
-                type: docType,
-                size: formatBytes(file.size),
-                date: new Date().toISOString().slice(0, 10),
-                uploadedBy: currentUser?.name || "مستخدم",
-              };
-              setDocuments((prev) => [row, ...prev]);
-              toast.success("تم تسجيل المستند في المكتب");
-              setUploadOpen(false);
+              setUploading(true);
+              try {
+                const path = buildDocumentUploadPath(file.name);
+                await uploadFile(file, path);
+                addDocument({
+                  id: crypto.randomUUID(),
+                  name: file.name,
+                  url: path,
+                  type: docType,
+                  caseId,
+                  storagePath: path,
+                  sizeBytes: file.size,
+                  uploadedBy: currentUser?.name || "مستخدم",
+                  createdAt: new Date().toISOString(),
+                });
+                toast.success("تم رفع المستند وتسجيله في المكتب");
+                setUploadOpen(false);
+                form.reset();
+              } catch (error) {
+                const message =
+                  error instanceof Error && error.message === "FILE_TOO_LARGE"
+                    ? "حجم الملف كبير جدًا (الحد الأقصى 10MB)"
+                    : error instanceof Error && error.message === "FILE_TYPE_NOT_ALLOWED"
+                    ? "نوع الملف غير مسموح. المسموح: PDF, DOC, DOCX, TXT"
+                    : "فشل رفع الملف. تأكد من الاتصال بالإنترنت.";
+                toast.error(message);
+              } finally {
+                setUploading(false);
+              }
             }}
           >
             <div className="space-y-2">
@@ -163,16 +214,16 @@ export default function Documents() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="doc-case">القضية المرتبطة</Label>
-              <select 
-                id="doc-case" 
-                name="caseRef" 
+              <select
+                id="doc-case"
+                name="caseRef"
                 title="القضية المرتبطة"
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm dark:text-white"
               >
                 <option value="" className="dark:bg-navy-900">— ملف عام (بدون قضية) —</option>
-                {cases.map((c: any) => (
+                {cases.map((c) => (
                   <option key={c.id} value={c.id} className="dark:bg-navy-900">
-                    {c.id} - {c.plaintiff} ضد {c.defendant}
+                    {c.caseReference || c.id} - {c.plaintiff} ضد {c.defendant}
                   </option>
                 ))}
               </select>
@@ -181,8 +232,8 @@ export default function Documents() {
               <Label htmlFor="doc-type">نوع المستند</Label>
               <Input id="doc-type" name="docType" placeholder="لائحة، مذكرة، عقد..." className="dark:bg-white/5" />
             </div>
-            <Button type="submit" className="w-full bg-primary-600 text-white hover:bg-primary-700">
-              حفظ في السجل
+            <Button type="submit" disabled={uploading} className="w-full bg-primary-600 text-white hover:bg-primary-700">
+              {uploading ? <Loader2 className="animate-spin" size={16} /> : "حفظ في السجل"}
             </Button>
           </form>
         </DialogContent>

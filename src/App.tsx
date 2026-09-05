@@ -4,7 +4,7 @@ import { RootLayout } from "./components/layout/RootLayout";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { fetchCases, fetchClients, fetchEnforcement, fetchTasks, fetchTeam, fetchTrustAccounts } from "@/services/legalDataService";
+import { fetchCases, fetchClients, fetchTeam } from "@/services/legalDataService";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useClientsStore } from "@/store/useClientsStore";
 import { useCasesStore } from "@/store/useCasesStore";
@@ -12,6 +12,11 @@ import { useTeamStore } from "@/store/useTeamStore";
 import { useInvoicesStore } from "@/store/useInvoicesStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useEnforcementStore } from "@/store/useEnforcementStore";
+import { useComplianceStore } from "@/store/useComplianceStore";
+import { useCLMStore } from "@/store/useCLMStore";
+import { useIPStore } from "@/store/useIPStore";
+import { useAdvisoryStore } from "@/store/useAdvisoryStore";
+import { useUIStore } from "@/store/useUIStore";
 import { checkAppHealth } from "@/observability/health";
 import { logEvent } from "@/observability/logger";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -67,38 +72,49 @@ function PermissionGate({ children, permission, fallback = <Navigate to="/dashbo
 
 export default function App() {
   const setClients = useClientsStore(state => state.setClients);
+  const loadCrmData = useClientsStore(state => state.loadCrmData);
   const setCases = useCasesStore(state => state.setCases);
+  const loadCaseExtras = useCasesStore(state => state.loadCaseExtras);
+  const loadUIData = useUIStore(state => state.loadUIData);
   const setTeamMembers = useTeamStore(state => state.setTeamMembers);
-  const setTasks = useTeamStore(state => state.setTasks);
+  const loadTasks = useTeamStore(state => state.loadTasks);
   const loadInvoices = useInvoicesStore(state => state.loadInvoices);
-  const setTrustAccounts = useFinanceStore(state => state.setTrustAccounts);
-  const setEnforcementCases = useEnforcementStore(state => state.setEnforcementCases);
+  const loadFinanceData = useFinanceStore(state => state.loadFinanceData);
+  const loadEnforcementCases = useEnforcementStore(state => state.loadEnforcementCases);
+  const loadComplianceData = useComplianceStore(state => state.loadComplianceData);
+  const loadCLMData = useCLMStore(state => state.loadCLMData);
+  const loadIPData = useIPStore(state => state.loadIPData);
+  const loadAdvisoryData = useAdvisoryStore(state => state.loadAdvisoryData);
 
   useEffect(() => {
     let mounted = true;
     const bootstrap = async () => {
       try {
-        const [remoteClients, remoteCases, remoteTrust, remoteEnf, remoteTasks, remoteTeam] = await Promise.all([
-          fetchClients(), 
+        const [remoteClients, remoteCases, remoteTeam] = await Promise.all([
+          fetchClients(),
           fetchCases(),
-          fetchTrustAccounts(),
-          fetchEnforcement(),
-          fetchTasks(),
-          fetchTeam()
+          fetchTeam(),
         ]);
-        
+
         if (!mounted) return;
 
         if (remoteClients?.length > 0) setClients(remoteClients);
         if (remoteCases?.length > 0) setCases(remoteCases);
-        if (remoteTrust?.length > 0) setTrustAccounts(remoteTrust);
-        if (remoteEnf?.length > 0) setEnforcementCases(remoteEnf);
-        if (remoteTasks?.length > 0) setTasks(remoteTasks);
         if (remoteTeam?.length > 0) setTeamMembers(remoteTeam);
-        
-        // Load invoices using its own store logic (which calls fetchInvoices)
+
+        // Each of these loads its own table(s) and updates its own store.
         void loadInvoices();
-        
+        void loadFinanceData();
+        void loadEnforcementCases();
+        void loadTasks();
+        void loadComplianceData();
+        void loadCLMData();
+        void loadIPData();
+        void loadAdvisoryData();
+        void loadCrmData();
+        void loadCaseExtras();
+        void loadUIData();
+
       } catch (error) {
         console.error("Bootstrap error:", error);
       }
@@ -108,7 +124,7 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [setClients, setCases, setTrustAccounts, setEnforcementCases, setTasks, setTeamMembers, loadInvoices]);
+  }, [setClients, setCases, setTeamMembers, loadInvoices, loadFinanceData, loadEnforcementCases, loadTasks, loadComplianceData, loadCLMData, loadIPData, loadAdvisoryData, loadCrmData, loadCaseExtras, loadUIData]);
 
   useEffect(() => {
     const runHealthCheck = async () => {

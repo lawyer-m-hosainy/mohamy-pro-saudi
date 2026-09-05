@@ -73,7 +73,7 @@ export default function ESignatures() {
               }
               if (addESignature) {
                 addESignature({
-                  id: `ESIG-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   documentName: requestData.documentName,
                   recipientName: requestData.recipientName,
                   recipientEmail: requestData.recipientEmail,

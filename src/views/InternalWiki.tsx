@@ -68,7 +68,7 @@ export default function InternalWiki() {
               }
               const tags = tagsRaw ? tagsRaw.split(/[,،]/).map((t) => t.trim()).filter(Boolean) : ["wiki"];
               addWikiArticle({
-                id: `W-${Date.now()}`,
+                id: crypto.randomUUID(),
                 title,
                 content,
                 category: wikiCategory,

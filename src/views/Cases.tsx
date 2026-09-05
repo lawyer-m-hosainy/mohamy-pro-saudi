@@ -10,6 +10,7 @@ import { useCasesStore } from "@/store/useCasesStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useTeamStore } from "@/store/useTeamStore";
 import { cn } from "@/lib/utils";
+import { deleteCase as deleteCaseFromDb } from "@/services/legalDataService";
 
 import { 
   DropdownMenu, 
@@ -69,7 +70,7 @@ const CaseRow = React.memo(({
           </div>
         </TableCell>
         <TableCell className="font-bold text-primary-600 dark:text-primary-400">
-          {c.id}
+          {c.caseReference || c.id}
         </TableCell>
         <TableCell className="text-sm text-slate-700 dark:text-slate-300">{c.court}</TableCell>
         <TableCell>
@@ -205,7 +206,7 @@ export default function Cases() {
   }, []);
 
   const filteredCases = (cases || []).filter(c => {
-    const matchesSearch = c.id?.includes(searchQuery) || 
+    const matchesSearch = c.caseReference?.includes(searchQuery) ||
                           c.automatedNumber?.includes(searchQuery) ||
                           c.circulationCode?.includes(searchQuery) ||
                           c.archiveCode?.includes(searchQuery) ||
@@ -363,10 +364,15 @@ export default function Cases() {
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel className="dark:bg-navy-800 dark:hover:bg-white/5 mt-0">إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
+            <AlertDialogAction onClick={async () => {
               if (caseToDelete) {
-                deleteCase(caseToDelete);
-                toast.success("تم حذف القضية بنجاح");
+                try {
+                  await deleteCaseFromDb(caseToDelete);
+                  deleteCase(caseToDelete);
+                  toast.success("تم حذف القضية بنجاح");
+                } catch {
+                  toast.error("تعذر حذف القضية، حاول مرة أخرى");
+                }
               }
             }} className="bg-red-600 hover:bg-red-700 text-white">تأكيد الحذف</AlertDialogAction>
           </AlertDialogFooter>

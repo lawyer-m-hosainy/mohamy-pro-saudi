@@ -95,6 +95,12 @@ alter table public.cases add column if not exists memorandums jsonb not null def
 alter table public.cases add column if not exists najiz_reference_status text
   check (najiz_reference_status in ('مربوط بناجز', 'غير مربوط'));
 
+-- The manually-entered case file reference (e.g. "45-123-ت") used to be
+-- stored directly in the uuid `id` column via NewCaseDialog.tsx, which
+-- fails against a uuid column — every case creation was silently broken.
+alter table public.cases add column if not exists case_reference text;
+create index if not exists idx_cases_case_reference on public.cases (tenant_id, case_reference);
+
 -- Blind-index columns for searching encrypted PII (national_id,
 -- commercial_registration, vat_number are stored client-side-encrypted and
 -- unsearchable as-is). The app computes a deterministic HMAC-SHA256 of the
@@ -147,6 +153,10 @@ alter table public.users add column if not exists linked_client_id uuid referenc
 create table if not exists public.invoices (
   id uuid default uuid_generate_v4() primary key,
   tenant_id uuid not null,
+  -- Human-readable ZATCA-style number (e.g. INV-2609-0001), separate from
+  -- the uuid id — the frontend used to use that display string AS the id,
+  -- which fails against this uuid column (P4-report finding).
+  invoice_number text,
   client_id uuid references public.clients(id) on delete restrict,
   client_name text not null,
   base numeric(14,2) not null check (base >= 0),
@@ -156,6 +166,7 @@ create table if not exists public.invoices (
   date timestamptz not null default now(),
   deleted_at timestamptz
 );
+create index if not exists idx_invoices_invoice_number on public.invoices (tenant_id, invoice_number);
 
 create table if not exists public.expenses (
   id uuid default uuid_generate_v4() primary key,
@@ -566,8 +577,11 @@ create table if not exists public.documents (
   case_id uuid references public.cases(id) on delete cascade,
   name text not null,
   url text not null,
-  type text not null check (type in ('مذكرة', 'لائحة', 'حكم', 'أخرى')),
+  -- Free text: user-entered document type in the upload dialog, not a fixed taxonomy.
+  type text not null,
   storage_path text,
+  size_bytes bigint,
+  uploaded_by text,
   created_at timestamptz not null default now()
 );
 
@@ -605,6 +619,20 @@ create table if not exists public.audit_logs (
   ip_address text,
   timestamp timestamptz not null default now()
 );
+
+create table if not exists public.wiki_articles (
+  id uuid default uuid_generate_v4() primary key,
+  tenant_id uuid not null,
+  title text not null,
+  content text not null,
+  category text not null check (category in ('أبحاث', 'إجراءات', 'نماذج', 'أنظمة')),
+  author text,
+  tags jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_wiki_articles_tenant on public.wiki_articles (tenant_id);
 
 create table if not exists public.workflows (
   id uuid default uuid_generate_v4() primary key,

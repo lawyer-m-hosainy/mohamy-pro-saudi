@@ -25,8 +25,12 @@ export type CourtType =
   | 'ديوان المظالم';
 
 export interface Case {
-  id: string;
+  id: string; // real DB uuid — never user-entered, see caseReference for that
   tenantId?: string;
+  // The manually-entered case file reference (e.g. "45-123-ت"). Used to be
+  // stored directly in `id`, which is a uuid column — every case creation
+  // failed at the database. This is a separate, purely display field.
+  caseReference?: string;
   clientId: string; // رابط مع الموكل (Mandatory)
   clientRole?: 'مدعي' | 'مدعى عليه'; // صفة الموكل
   workflowStage?: 'intake' | 'pleadings' | 'hearing' | 'judgment' | 'closed';

@@ -86,7 +86,7 @@ export default function Team() {
                 return;
               }
               addTeamMember({
-                id: `TM-${Date.now()}`,
+                id: crypto.randomUUID(),
                 name: newMember.name,
                 email: newMember.email,
                 role: newMember.role,

@@ -183,7 +183,7 @@ export default function TimeTracking() {
                 toast.success("تم تعديل السجل بنجاح");
               } else {
                 addTimeEntry({
-                  id: `TE-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   caseId: manualCaseId,
                   lawyerId: manualLawyerId,
                   description: manualDesc.trim() || "عمل يدوي",

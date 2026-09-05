@@ -205,7 +205,7 @@ declare
     'ip_records','ip_filings','ip_renewals','ip_oppositions','ip_enforcement_actions',
     'tasks','leads','key_accounts','proposals',
     'documents','notifications','office_settings','workflows','advisory_requests',
-    'sessions','deadlines'
+    'sessions','deadlines','wiki_articles'
   ];
 begin
   foreach t in array tables loop

@@ -20,7 +20,7 @@ export default function AddExpenseDialog({ caseData }: AddExpenseDialogProps) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     addExpense({
-      id: `EXP-${Date.now()}`,
+      id: crypto.randomUUID(),
       caseId: caseData.id,
       caseName: `${caseData.plaintiff} ضد ${caseData.defendant}`,
       category: String(fd.get('category')) as "رسوم قضائية" | "أتعاب خبراء" | "تنقلات" | "أخرى",

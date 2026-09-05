@@ -107,7 +107,7 @@ export const useAnalyticsStore = create<AnalyticsState>((set) => ({
     });
 
     return {
-      id: `CCR-${Date.now()}`,
+      id: crypto.randomUUID(),
       query,
       checkedAt: new Date().toISOString(),
       checkedBy: authState.currentUser?.id || 'System',

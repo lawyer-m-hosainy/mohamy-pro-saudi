@@ -39,8 +39,11 @@ export interface EnforcementCase {
   /** مصدر ملف التنفيذ: من قضية مكتب أو حكم خارجي */
   source: EnforcementSource;
 
-  caseId: string;
-  clientId: string;
+  caseId?: string;
+  // Optional: a manually-entered "حكم خارجي" (external judgment) file may
+  // not have a matching row in clients yet — left undefined rather than a
+  // fabricated id (client_id is a nullable FK precisely for this case).
+  clientId?: string;
   clientName: string;
   debtorName: string;
   amountClaimed: number;

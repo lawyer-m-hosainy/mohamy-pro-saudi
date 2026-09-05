@@ -71,8 +71,12 @@ export interface PaymentPlan {
 export interface ReceivableAccount {
   id: string;
   tenantId?: string;
-  caseId: string;
-  clientId: string;
+  // Optional: Collections.tsx currently takes a free-text client/case name
+  // rather than a real selection, so these may not reference an existing
+  // clients/cases row. Left undefined rather than a fabricated id — the DB
+  // columns are nullable FKs precisely for this.
+  caseId?: string;
+  clientId?: string;
   clientName: string;
   totalAmount: number;
   collectedAmount: number;
@@ -88,6 +92,7 @@ export interface ReceivableAccount {
 export interface Invoice {
   id: string;
   tenantId?: string;
+  invoiceNumber: string; // human-readable ZATCA-style number (e.g. INV-2609-0001), distinct from the uuid id
   clientId: string;
   clientName: string;
   base: number;

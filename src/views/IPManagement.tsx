@@ -51,11 +51,11 @@ export default function IPManagement() {
                   return;
                 }
                 addIPRecord({
-                  id: `IP-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   title: newTitle,
                   type: 'علامة تجارية',
                   owner: 'العميل',
-                  registrationNumber: `REG-${Math.floor(Math.random() * 10000)}`,
+                  registrationNumber: crypto.randomUUID(),
                   expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
                   status: 'تحت الفحص'
                 });

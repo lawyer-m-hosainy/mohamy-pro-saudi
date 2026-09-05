@@ -21,7 +21,7 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
   const updateCase = useCasesStore((state) => state.updateCase);
   const clients = useClientsStore((state) => state.clients);
   const [newCaseData, setNewCaseData] = useState({
-    id: "",
+    caseReference: "",
     clientId: "",
     court: "المحكمة التجارية" as any,
     circuit: "",
@@ -39,7 +39,7 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
     if (open) {
       if (caseToEdit) {
         setNewCaseData({
-          id: caseToEdit.id || "",
+          caseReference: caseToEdit.caseReference || "",
           clientId: caseToEdit.clientId || "",
           court: caseToEdit.court || "المحكمة التجارية",
           circuit: caseToEdit.circuit || "",
@@ -54,7 +54,7 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
         });
       } else {
         setNewCaseData({
-          id: "",
+          caseReference: "",
           clientId: "",
           court: "المحكمة التجارية",
           circuit: "",
@@ -76,10 +76,11 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
     
     try {
       caseSchema.parse(newCaseData);
-      
+
       let finalCaseData = { ...newCaseData } as any;
 
       if (caseToEdit) {
+        finalCaseData.id = caseToEdit.id;
         if (finalCaseData.status === "محفوظة" && !caseToEdit.archiveCode) {
            finalCaseData.archiveCode = await getNextCounter('archive');
         }
@@ -91,6 +92,7 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
         const generatedCirculationCode = await getNextCounter('circulation');
         const newCaseObj = {
           ...finalCaseData,
+          id: crypto.randomUUID(),
           circulationCode: generatedCirculationCode,
           memorandums: [],
           najizReferenceStatus: "غير مربوط",
@@ -103,7 +105,7 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
 
       onOpenChange(false);
       setNewCaseData({
-        id: "",
+        caseReference: "",
         clientId: "",
         court: "المحكمة التجارية",
         circuit: "",
@@ -154,10 +156,10 @@ export default function NewCaseDialog({ open, onOpenChange, caseToEdit }: NewCas
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>رقم القضية / المرجع</Label>
-              <Input 
-                placeholder="مثلاً: 45-123-ت" 
-                value={newCaseData.id}
-                onChange={e => setNewCaseData(p => ({ ...p, id: e.target.value.replace(/\//g, '-') }))}
+              <Input
+                placeholder="مثلاً: 45-123-ت"
+                value={newCaseData.caseReference}
+                onChange={e => setNewCaseData(p => ({ ...p, caseReference: e.target.value.replace(/\//g, '-') }))}
               />
             </div>
             <div className="space-y-2">

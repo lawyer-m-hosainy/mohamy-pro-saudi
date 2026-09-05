@@ -45,7 +45,7 @@ export function Topbar() {
     const query = deferredSearchQuery.toLowerCase();
     
     const filteredClients = clients.filter(c => c.name.toLowerCase().includes(query)).slice(0, 3);
-    const filteredCases = cases.filter(c => c.id.toLowerCase().includes(query) || c.plaintiff.toLowerCase().includes(query) || c.defendant.toLowerCase().includes(query)).slice(0, 3);
+    const filteredCases = cases.filter(c => c.caseReference?.toLowerCase().includes(query) || c.plaintiff.toLowerCase().includes(query) || c.defendant.toLowerCase().includes(query)).slice(0, 3);
     const filteredTasks = tasks.filter(t => t.title.toLowerCase().includes(query)).slice(0, 3);
     
     return { clients: filteredClients, cases: filteredCases, tasks: filteredTasks };
@@ -137,7 +137,7 @@ export function Topbar() {
                         onClick={() => { navigate('/dashboard/cases'); setSearchQuery(""); }}
                         className="w-full text-start px-2 py-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors"
                       >
-                        <span className="font-bold text-primary-600">{c.id}</span> - {c.plaintiff}
+                        <span className="font-bold text-primary-600">{c.caseReference || c.id}</span> - {c.plaintiff}
                       </button>
                     ))}
                   </div>

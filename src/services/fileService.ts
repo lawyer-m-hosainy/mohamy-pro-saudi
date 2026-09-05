@@ -44,21 +44,22 @@ async function writeUploadAudit(caseId: string, path: string, file: File) {
       user_id: userId,
       action: "document_upload",
       module: "cases",
-      details: `Uploaded file for case ${caseId}`,
-      file_name: sanitizeFileName(file.name),
-      file_size: file.size,
-      file_type: file.type,
-      storage_path: path,
+      details: `Uploaded ${sanitizeFileName(file.name)} (${file.size} bytes, ${file.type}) for case ${caseId} at ${path}`,
     });
   } catch (err) {
     // Non-blocking for UX; upload should not fail because audit write fails.
   }
 }
 
+/**
+ * The "documents" bucket is private (legal documents are confidential) —
+ * uploading returns the storage path, not a fetchable URL. Use
+ * getDocumentSignedUrl() to generate a short-lived download link on demand.
+ */
 export async function uploadFile(file: File, path: string): Promise<string> {
   validateUpload(file);
-  
-  const { data, error } = await supabase.storage
+
+  const { error } = await supabase.storage
     .from(STORAGE_BUCKET)
     .upload(path, file, {
       cacheControl: '3600',
@@ -70,18 +71,34 @@ export async function uploadFile(file: File, path: string): Promise<string> {
     throw new Error(error.message);
   }
 
-  const { data: urlData } = supabase.storage
-    .from(STORAGE_BUCKET)
-    .getPublicUrl(path);
-
   logEvent("info", { event: "file_upload_success", context: { path } });
-  return urlData.publicUrl;
+  return path;
+}
+
+export async function getDocumentSignedUrl(path: string, expiresInSeconds = 300): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .createSignedUrl(path, expiresInSeconds);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
+}
+
+export async function deleteStoredFile(path: string): Promise<void> {
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+  if (error) throw new Error(error.message);
 }
 
 export function buildCaseUploadPath(caseId: string, fileName: string) {
   const tenantId = getCurrentTenantId();
   const safeName = sanitizeFileName(fileName);
   return `${tenantId}/cases/${caseId}/${Date.now()}_${safeName}`;
+}
+
+/** For documents not (yet) linked to a specific case — the Documents.tsx general library. */
+export function buildDocumentUploadPath(fileName: string) {
+  const tenantId = getCurrentTenantId();
+  const safeName = sanitizeFileName(fileName);
+  return `${tenantId}/documents/${Date.now()}_${safeName}`;
 }
 
 export async function uploadCaseDocument(file: File, caseId: string) {

@@ -72,7 +72,7 @@ export default function Tasks() {
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
               addTask({
-                id: `T-${Date.now()}`,
+                id: crypto.randomUUID(),
                 caseId: String(fd.get('caseId')),
                 title: String(fd.get('title')),
                 assignedTo: 'U-001',

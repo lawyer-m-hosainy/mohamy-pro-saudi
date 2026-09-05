@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useFinanceStore } from '@/store/useFinanceStore';
+import { useClientsStore } from '@/store/useClientsStore';
 import { trustAccountSchema } from "@/lib/schemas";
 import { ZodError } from "zod";
 
@@ -19,8 +20,10 @@ export default function TrustAccounting() {
   const trustAccounts = useFinanceStore((state) => state.trustAccounts || []) || [];
   const addTrustAccount = useFinanceStore((state) => state.addTrustAccount);
   const disburseTrustAccount = useFinanceStore((state) => state.disburseTrustAccount);
+  const clients = useClientsStore((state) => state.clients);
   const [depositOpen, setDepositOpen] = useState(false);
   const [depositType, setDepositType] = useState<"أمانة" | "مقدم أتعاب" | "مبلغ تنفيذ">("أمانة");
+  const [depositClientId, setDepositClientId] = useState("");
 
   return (
     <motion.div 
@@ -49,7 +52,8 @@ export default function TrustAccounting() {
             onSubmit={(e) => {
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
-              const clientName = String(fd.get("clientName") || "").trim();
+              const client = clients.find(c => c.id === depositClientId);
+              const clientName = client?.name || "";
               const amount = Number(fd.get("amount"));
               const type = depositType;
               const description = String(fd.get("description") || "").trim();
@@ -63,10 +67,14 @@ export default function TrustAccounting() {
                   description,
                   date
                 });
+                if (!depositClientId) {
+                  toast.error("يجب اختيار عميل من القائمة");
+                  return;
+                }
 
                 addTrustAccount({
-                  id: `TA-${Date.now()}`,
-                  clientId: `CLI-${Date.now()}`,
+                  id: crypto.randomUUID(),
+                  clientId: depositClientId,
                   clientName,
                   amount,
                   type: type || "أمانة",
@@ -76,6 +84,7 @@ export default function TrustAccounting() {
                 });
                 toast.success("تم تسجيل الإيداع");
                 setDepositOpen(false);
+                setDepositClientId("");
               } catch (error) {
                 if (error instanceof ZodError) {
                   toast.error(error.issues[0].message);
@@ -86,8 +95,20 @@ export default function TrustAccounting() {
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor="ta-client">اسم العميل</Label>
-              <Input id="ta-client" name="clientName" required placeholder="اسم العميل أو الجهة" className="dark:bg-white/5" />
+              <Label htmlFor="ta-client">العميل</Label>
+              <select
+                id="ta-client"
+                title="العميل"
+                required
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm dark:bg-white/5"
+                value={depositClientId}
+                onChange={(e) => setDepositClientId(e.target.value)}
+              >
+                <option value="" className="dark:bg-navy-900">— اختر عميلاً —</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id} className="dark:bg-navy-900">{c.name}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>نوع المبلغ</Label>

@@ -58,7 +58,7 @@ export default function Collections() {
 
   const recordAction = (receivableId: string, type: "إصدار مطالبة" | "إنذار قانوني" | "جدولة سداد" | "تسوية") => {
     addCollectionAction(receivableId, {
-      id: `CA-${Date.now()}`,
+      id: crypto.randomUUID(),
       receivableId,
       type,
       createdAt: new Date().toISOString(),
@@ -66,7 +66,7 @@ export default function Collections() {
       notes: `تم تنفيذ إجراء ${type} من لوحة التحصيل`,
     });
     addAuditLog({
-      id: `AL-COL-${Date.now()}`,
+      id: crypto.randomUUID(),
       userId: currentUser?.id || "unknown",
       userName: currentUser?.name || "unknown",
       action: "Collection Action",
@@ -86,7 +86,7 @@ export default function Collections() {
     }
     closeReceivable(receivableId);
     addAuditLog({
-      id: `AL-COL-CLOSE-${Date.now()}`,
+      id: crypto.randomUUID(),
       userId: currentUser?.id || "unknown",
       userName: currentUser?.name || "unknown",
       action: "Close Receivable",
@@ -105,10 +105,8 @@ export default function Collections() {
     }
     
     addReceivable({
-      id: `REC-${Math.floor(Math.random() * 90000)}`,
-      clientId: `C-${Math.floor(Math.random() * 90000)}`,
+      id: crypto.randomUUID(),
       clientName: newRec.clientName,
-      caseId: `C-${Math.floor(Math.random() * 90000)}`,
       totalAmount: Number(newRec.amount),
       collectedAmount: 0,
       outstandingAmount: Number(newRec.amount),

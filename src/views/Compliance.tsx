@@ -79,7 +79,7 @@ export default function Compliance() {
                   return;
                 }
                 addComplianceRecord({
-                  id: `COMP-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   title: newTitle,
                   type: 'أخرى',
                   expiryDate: new Date(Date.now() + 180*24*60*60*1000).toISOString().split('T')[0],

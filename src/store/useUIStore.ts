@@ -1,7 +1,13 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { OfficeSettings, Notification, WikiArticle, Workflow, AuditLog, ESignatureRequest } from '../types';
+import { createTenantCrud } from '../services/genericCrud';
+import { fetchOfficeSettings, saveOfficeSettings } from '../services/legalDataService';
 
+const notificationsCrud = createTenantCrud<Notification>('notifications');
+const wikiArticlesCrud = createTenantCrud<WikiArticle>('wiki_articles');
+const workflowsCrud = createTenantCrud<Workflow>('workflows');
+const auditLogsCrud = createTenantCrud<AuditLog>('audit_logs');
+const eSignaturesCrud = createTenantCrud<ESignatureRequest>('esignature_requests');
 
 interface UIState {
   officeSettings: OfficeSettings;
@@ -15,6 +21,8 @@ interface UIState {
   toggleSidebar: () => void;
   closeSidebar: () => void;
 
+  loadUIData: () => Promise<void>;
+
   setOfficeSettings: (settings: OfficeSettings) => void;
   setNotifications: (notifications: Notification[]) => void;
   markNotificationAsRead: (id: string) => void;
@@ -26,9 +34,7 @@ interface UIState {
   addESignature: (request: ESignatureRequest) => void;
 }
 
-export const useUIStore = create<UIState>()(
-  persist(
-    (set) => ({
+export const useUIStore = create<UIState>((set, get) => ({
   officeSettings: {
     name: "",
     vatNumber: "",
@@ -38,35 +44,7 @@ export const useUIStore = create<UIState>()(
     logo: ""
   },
   notifications: [],
-  wikiArticles: [
-    {
-      id: "W-001",
-      title: "أهم نقاط نظام الشركات الجديد ومدى تأثيره على العقود التجارية",
-      content: "يتضمن نظام الشركات الجديد العديد من الأحكام التي تهدف إلى تعزيز المرونة للشركات...",
-      category: "أنظمة",
-      author: "أحمد بن علي",
-      lastUpdated: "2024-04-18",
-      tags: ["نظام الشركات الجديد", "تجاري"]
-    },
-    {
-      id: "W-002",
-      title: "متطلبات رفع دعوى في المنازعات العقارية",
-      content: "تتطلب المنازعات العقارية التأكد من عدة مستندات قبل قيد الدعوى ومنها...",
-      category: "إجراءات",
-      author: "سعد بن عبدالله",
-      lastUpdated: "2024-04-12",
-      tags: ["المنازعات العقارية", "محكمة عامة"]
-    },
-    {
-      id: "W-003",
-      title: "شروط التحكيم التجاري وصياغة شرط التحكيم",
-      content: "يجب أن يكون شرط التحكيم التجاري واضحاً ومحدداً للمركز أو الآلية المتبعة...",
-      category: "أبحاث",
-      author: "فريق البحث",
-      lastUpdated: "2024-04-05",
-      tags: ["التحكيم التجاري", "عقود"]
-    }
-  ],
+  wikiArticles: [],
   workflows: [],
   auditLogs: [],
   eSignatures: [],
@@ -75,21 +53,46 @@ export const useUIStore = create<UIState>()(
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   closeSidebar: () => set({ isSidebarOpen: false }),
 
-  setOfficeSettings: (officeSettings) => set({ officeSettings }),
+  loadUIData: async () => {
+    const [officeSettings, notifications, wikiArticles, workflows, auditLogs, eSignatures] = await Promise.all([
+      fetchOfficeSettings(),
+      notificationsCrud.fetchAll(),
+      wikiArticlesCrud.fetchAll(),
+      workflowsCrud.fetchAll(),
+      auditLogsCrud.fetchAll(),
+      eSignaturesCrud.fetchAll(),
+    ]);
+    set({
+      ...(officeSettings ? { officeSettings } : {}),
+      notifications, wikiArticles, workflows, auditLogs, eSignatures,
+    });
+  },
+
+  setOfficeSettings: (officeSettings) => {
+    set({ officeSettings });
+    void saveOfficeSettings(officeSettings);
+  },
   setNotifications: (notifications) => set({ notifications }),
-  markNotificationAsRead: (id) => set((state) => ({
-    notifications: state.notifications.map(n => n.id === id ? { ...n, isRead: true } : n)
-  })),
+  markNotificationAsRead: (id) => {
+    set((state) => ({
+      notifications: state.notifications.map(n => n.id === id ? { ...n, isRead: true } : n)
+    }));
+    const updated = get().notifications.find(n => n.id === id);
+    if (updated) void notificationsCrud.save(updated, true);
+  },
   setWikiArticles: (wikiArticles) => set({ wikiArticles }),
-  addWikiArticle: (article) => set((state) => ({ wikiArticles: [article, ...state.wikiArticles] })),
+  addWikiArticle: (article) => {
+    set((state) => ({ wikiArticles: [article, ...state.wikiArticles] }));
+    void wikiArticlesCrud.save(article, false);
+  },
   setWorkflows: (workflows) => set({ workflows }),
-  addAuditLog: (log) => set((state) => ({ auditLogs: [log, ...state.auditLogs] })),
+  addAuditLog: (log) => {
+    set((state) => ({ auditLogs: [log, ...state.auditLogs] }));
+    void auditLogsCrud.save(log, false);
+  },
   setESignatures: (eSignatures) => set({ eSignatures }),
-  addESignature: (request) => set((state) => ({ eSignatures: [request, ...state.eSignatures] })),
-    }),
-    {
-      name: 'mohamy-ui-storage',
-      partialize: (state) => ({ officeSettings: state.officeSettings }),
-    }
-  )
-);
+  addESignature: (request) => {
+    set((state) => ({ eSignatures: [request, ...state.eSignatures] }));
+    void eSignaturesCrud.save(request, false);
+  },
+}));

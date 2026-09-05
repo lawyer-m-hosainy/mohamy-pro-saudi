@@ -94,7 +94,7 @@ export default function LegalQA() {
                 return;
               }
               addQAReview({
-                id: `QA-${Date.now()}`,
+                id: crypto.randomUUID(),
                 caseId: newReviewCaseId,
                 reviewerId: currentUser?.id || "U-001",
                 status: "Pending",
