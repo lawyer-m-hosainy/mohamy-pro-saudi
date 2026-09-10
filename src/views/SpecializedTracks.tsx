@@ -63,7 +63,7 @@ export default function SpecializedTracks() {
     }
     
     addSpecializedTrack({
-      id: `ST-${newTrackData.caseType === 'عمالي' ? 'LAB' : 'CRI'}-${Math.floor(Math.random() * 9000)}`,
+      id: crypto.randomUUID(),
       caseId: newTrackData.caseId,
       caseType: newTrackData.caseType,
       stage: newTrackData.caseType === 'عمالي' ? "مكتب العمل" : "الشرطة",

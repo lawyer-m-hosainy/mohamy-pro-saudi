@@ -43,9 +43,14 @@ describe('Domain Schemas', () => {
 
   describe('CaseSchema', () => {
     it('should validate correct case data with recognized court', () => {
+      // Was missing the required clientId and used 'المحكمة العامة',
+      // which isn't one of CaseSchema's recognized CourtType values
+      // (src/types/case.ts) — this test never actually passed against the
+      // real schema.
       const validData = {
         id: 'case-1',
-        court: 'المحكمة العامة' as const,
+        clientId: 'cl-1',
+        court: 'المحكمة الابتدائية' as const,
         plaintiff: 'شركة أ',
         defendant: 'شركة ب',
         status: 'نشطة' as const,

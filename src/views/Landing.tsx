@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   Scale, ShieldCheck, Clock, Users, ArrowLeft, MessageCircle, 
   CheckCircle2, Star, Phone, Mail, MapPin, Briefcase, Building2, Gavel, FileText
@@ -299,8 +299,8 @@ export default function Landing() {
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
             <div>&copy; {new Date().getFullYear()} مكتب العدالة للمحاماة والاستشارات القانونية. جميع الحقوق محفوظة.</div>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">الشروط والأحكام</a>
-              <a href="#" className="hover:text-white transition-colors">سياسة الخصوصية</a>
+              <Link to="/terms" className="hover:text-white transition-colors">الشروط والأحكام</Link>
+              <Link to="/privacy" className="hover:text-white transition-colors">سياسة الخصوصية</Link>
             </div>
           </div>
         </div>

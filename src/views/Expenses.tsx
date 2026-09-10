@@ -105,7 +105,7 @@ export default function Expenses() {
                 }
                 const caseData = cases.find((c: any) => c.id === newExpense.caseId);
                 addExpense({
-                  id: `EXP-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   caseId: newExpense.caseId,
                   caseName: caseData ? `${caseData.plaintiff} ضد ${caseData.defendant}` : newExpense.caseId,
                   category: newExpense.category as 'رسوم قضائية' | 'أتعاب خبراء' | 'تنقلات' | 'أخرى',

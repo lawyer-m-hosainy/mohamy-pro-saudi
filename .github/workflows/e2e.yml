@@ -1,0 +1,50 @@
+name: E2E
+
+on:
+  workflow_dispatch: {}
+  # Not on push/pull_request by default — see e2e/README.md ("Not wired
+  # into CI by default"). Uncomment once TEST_USER_EMAIL/TEST_USER_PASSWORD/
+  # VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY are configured as repo secrets:
+  # push:
+  #   branches: [main, master]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    # Skips instead of failing when the test account isn't configured yet,
+    # so enabling the `push` trigger above doesn't turn CI red for everyone
+    # before that one-time setup (e2e/README.md) is done.
+    if: ${{ secrets.TEST_USER_EMAIL != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        # playwright.config.ts's webServer starts `npm run dev` itself
+        # when PLAYWRIGHT_BASE_URL isn't set.
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

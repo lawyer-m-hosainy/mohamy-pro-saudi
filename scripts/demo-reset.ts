@@ -14,7 +14,8 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const DEMO_TENANT_ID = "demo-tenant";
+// Must match DEMO_TENANT_ID in src/lib/tenant.ts and scripts/demo-seed.ts.
+const DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000000";
 
 async function reset() {
   console.log("🧹 Resetting demo data from Supabase...\n");

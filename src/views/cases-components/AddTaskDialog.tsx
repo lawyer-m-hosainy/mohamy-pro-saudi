@@ -19,7 +19,7 @@ export default function AddTaskDialog({ caseId }: AddTaskDialogProps) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     addTask({
-      id: `T-${Date.now()}`,
+      id: crypto.randomUUID(),
       caseId: caseId,
       title: String(fd.get('title')),
       assignedTo: 'U-001',

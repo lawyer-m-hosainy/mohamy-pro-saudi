@@ -4,6 +4,9 @@
  * Provides a Facade for future Moyasar/Stripe integration.
  */
 
+import { supabase } from "@/lib/supabase/client";
+import { getCurrentTenantId } from "@/lib/tenant";
+
 export type PlanTier = 'basic' | 'advanced' | 'enterprise';
 
 export interface SubscriptionPlan {
@@ -106,30 +109,62 @@ export function checkQuota(
   };
 }
 
-// ── Moyasar Payment Facade (Mocked) ────────────────────────────────
-// In production, replace with real Moyasar SDK calls.
+// ── Moyasar Payment Facade ──────────────────────────────────────────
+// The card itself is tokenized client-side with Moyasar.js (never sent to
+// our backend) into a `source` object; this just hands that token to our
+// server, which holds the actual secret key (see POST /api/payments/initiate
+// in server.ts). There is deliberately no client-side "verifyPayment" —
+// the previous version of this file had one that unconditionally returned
+// `success: true` with no server round-trip at all, meaning any signed-in
+// user could grant themselves an Enterprise plan for free. Subscription
+// status is only ever written by the Moyasar webhook (server.ts), after
+// Moyasar itself confirms the charge.
 export async function initializePayment(
   tenantId: string,
   plan: PlanTier,
-  billing: 'monthly' | 'yearly'
-): Promise<{ paymentUrl: string; sessionId: string }> {
-  const selectedPlan = PLANS[plan];
-  const amount = billing === 'monthly' ? selectedPlan.priceMonthly : selectedPlan.priceYearly;
+  billing: 'monthly' | 'yearly',
+  source: { type: string; [key: string]: unknown },
+  accessToken: string
+): Promise<{ id: string; status: string; transactionUrl: string | null }> {
+  const res = await fetch('/api/payments/initiate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      'x-tenant-id': tenantId,
+    },
+    body: JSON.stringify({ plan, billing, source }),
+  });
 
-  // Mock: In production, call Moyasar API here
-  console.log(`[Moyasar Mock] Initiating payment for tenant ${tenantId}, plan ${plan}, amount ${amount} SAR`);
-
-  return {
-    paymentUrl: `https://api.moyasar.com/v1/payments?amount=${amount * 100}&currency=SAR&description=Mohamy+Pro+${plan}`,
-    sessionId: `MOCK-SESSION-${Date.now()}`
-  };
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body?.error || 'تعذر بدء عملية الدفع');
+  }
+  return body;
 }
 
-export async function verifyPayment(sessionId: string): Promise<{ success: boolean; transactionId: string }> {
-  // Mock: In production, verify with Moyasar API
-  console.log(`[Moyasar Mock] Verifying payment session ${sessionId}`);
+/** Read-only: `subscriptions` RLS only grants tenant users SELECT on their own row (see rls-policies.sql). */
+export async function fetchSubscription(): Promise<TenantSubscription | null> {
+  const tenantId = getCurrentTenantId();
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('tenant_id, plan, status, start_date, end_date')
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('fetchSubscription failed:', error);
+    return null;
+  }
+  if (!data) return null;
+
   return {
-    success: true,
-    transactionId: `TXN-${Date.now()}`
+    tenantId: data.tenant_id,
+    plan: data.plan as PlanTier,
+    status: data.status as TenantSubscription['status'],
+    startDate: data.start_date,
+    endDate: data.end_date,
+    currentUsers: 0,
+    currentCases: 0,
   };
 }

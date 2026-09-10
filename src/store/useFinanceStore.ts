@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { Expense, TimeEntry, ReceivableAccount, TrustAccount, PricingModel } from '../types';
+import { createTenantCrud } from '../services/genericCrud';
 
+const expensesCrud = createTenantCrud<Expense>('expenses');
+const timeEntriesCrud = createTenantCrud<TimeEntry>('time_entries');
+const trustAccountsCrud = createTenantCrud<TrustAccount>('trust_accounts');
+const receivablesCrud = createTenantCrud<ReceivableAccount>('receivable_accounts');
+const pricingModelsCrud = createTenantCrud<PricingModel>('pricing_models');
 
 interface FinanceState {
   expenses: Expense[];
@@ -8,7 +14,9 @@ interface FinanceState {
   receivables: ReceivableAccount[];
   trustAccounts: TrustAccount[];
   pricingModels: PricingModel[];
-  
+
+  loadFinanceData: () => Promise<void>;
+
   setExpenses: (expenses: Expense[]) => void;
   addExpense: (expense: Expense) => void;
   setTimeEntries: (entries: TimeEntry[]) => void;
@@ -27,111 +35,107 @@ interface FinanceState {
   setPricingModels: (models: PricingModel[]) => void;
 }
 
-export const useFinanceStore = create<FinanceState>((set) => ({
+export const useFinanceStore = create<FinanceState>((set, get) => ({
   expenses: [],
   timeEntries: [],
-  receivables: [
-    {
-      id: "REC-99120",
-      clientId: "C-177617",
-      clientName: "شركة العزم للمقاولات",
-      caseId: "C-152468",
-      totalAmount: 25000,
-      collectedAmount: 0,
-      outstandingAmount: 25000,
-      dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-      status: "متأخر",
-      isReconciled: false,
-      actions: []
-    },
-    {
-      id: "REC-44321",
-      clientId: "C-334411",
-      clientName: "أحمد عبدالله العقاري",
-      caseId: "C-998822",
-      totalAmount: 200000,
-      collectedAmount: 80000,
-      outstandingAmount: 120000,
-      dueDate: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString(),
-      status: "متأخر",
-      isReconciled: false,
-      actions: [
-        {
-          id: "CA-1",
-          receivableId: "REC-44321",
-          type: "إنذار قانوني",
-          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          createdBy: "النظام",
-          notes: "تم إرسال إنذار قانوني نهائي قبل الرفع لمحكمة التنفيذ"
-        }
-      ]
-    },
-    {
-      id: "REC-11223",
-      clientId: "C-556677",
-      clientName: "مؤسسة الرواد المحدودة",
-      caseId: "C-112233",
-      totalAmount: 15000,
-      collectedAmount: 0,
-      outstandingAmount: 15000,
-      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      status: "مفتوح",
-      isReconciled: false,
-      actions: []
-    }
-  ],
+  receivables: [],
   trustAccounts: [],
   pricingModels: [],
 
+  loadFinanceData: async () => {
+    const [expenses, timeEntries, trustAccounts, receivables, pricingModels] = await Promise.all([
+      expensesCrud.fetchAll(),
+      timeEntriesCrud.fetchAll(),
+      trustAccountsCrud.fetchAll(),
+      receivablesCrud.fetchAll(),
+      pricingModelsCrud.fetchAll(),
+    ]);
+    set({ expenses, timeEntries, trustAccounts, receivables, pricingModels });
+  },
+
   setExpenses: (expenses) => set({ expenses }),
-  addExpense: (expense) => set((state) => ({ expenses: [expense, ...state.expenses] })),
+  addExpense: (expense) => {
+    set((state) => ({ expenses: [expense, ...state.expenses] }));
+    void expensesCrud.save(expense, false);
+  },
   setTimeEntries: (timeEntries) => set({ timeEntries }),
   setReceivables: (receivables) => set({ receivables }),
-  addReceivable: (receivable) => set((state) => ({ receivables: [receivable, ...state.receivables] })),
-  
-  addCollectionAction: (receivableId, action) => set((state) => ({
-    receivables: state.receivables.map((r) =>
-      r.id === receivableId ? { ...r, actions: [...r.actions, action] } : r
-    ),
-  })),
-  reconcileReceivable: (receivableId) => set((state) => ({
-    receivables: state.receivables.map((r) =>
-      r.id === receivableId ? { ...r, isReconciled: true } : r
-    ),
-  })),
-  closeReceivable: (receivableId) => set((state) => ({
-    receivables: state.receivables.map((r) => {
-      if (r.id !== receivableId) return r;
-      if (!r.isReconciled) return r;
-      return { ...r, status: "مغلق" };
-    }),
-  })),
-  
+  addReceivable: (receivable) => {
+    set((state) => ({ receivables: [receivable, ...state.receivables] }));
+    void receivablesCrud.save(receivable, false);
+  },
+
+  addCollectionAction: (receivableId, action) => {
+    set((state) => ({
+      receivables: state.receivables.map((r) =>
+        r.id === receivableId ? { ...r, actions: [...r.actions, action] } : r
+      ),
+    }));
+    const updated = get().receivables.find((r) => r.id === receivableId);
+    if (updated) void receivablesCrud.save(updated, true);
+  },
+  reconcileReceivable: (receivableId) => {
+    set((state) => ({
+      receivables: state.receivables.map((r) =>
+        r.id === receivableId ? { ...r, isReconciled: true } : r
+      ),
+    }));
+    const updated = get().receivables.find((r) => r.id === receivableId);
+    if (updated) void receivablesCrud.save(updated, true);
+  },
+  closeReceivable: (receivableId) => {
+    set((state) => ({
+      receivables: state.receivables.map((r) => {
+        if (r.id !== receivableId) return r;
+        if (!r.isReconciled) return r;
+        return { ...r, status: "مغلق" };
+      }),
+    }));
+    const updated = get().receivables.find((r) => r.id === receivableId);
+    if (updated) void receivablesCrud.save(updated, true);
+  },
+
   setTrustAccounts: (trustAccounts) => set({ trustAccounts }),
-  addTrustAccount: (account) =>
-    set((state) => ({ trustAccounts: [account, ...state.trustAccounts] })),
-  disburseTrustAccount: (accountId) => set((state) => ({
-    trustAccounts: state.trustAccounts.map((a) =>
-      a.id === accountId ? { ...a, status: "تم الصرف" } : a
-    ),
-  })),
-  addTimeEntry: (entry) =>
-    set((state) => ({ timeEntries: [entry, ...state.timeEntries] })),
-  updateTimeEntry: (id, updates) => set((state) => ({
-    timeEntries: state.timeEntries.map((te) => 
-      te.id === id ? { ...te, ...updates } : te
-    )
-  })),
-  deleteTimeEntry: (id) => set((state) => ({
-    timeEntries: state.timeEntries.filter((te) => te.id !== id)
-  })),
-  toggleTimeEntryBilledStatus: (id) => set((state) => ({
-    timeEntries: state.timeEntries.map((te) =>
-      te.id === id ? { ...te, isBilled: !te.isBilled } : te
-    )
-  })),
+  addTrustAccount: (account) => {
+    set((state) => ({ trustAccounts: [account, ...state.trustAccounts] }));
+    void trustAccountsCrud.save(account, false);
+  },
+  disburseTrustAccount: (accountId) => {
+    set((state) => ({
+      trustAccounts: state.trustAccounts.map((a) =>
+        a.id === accountId ? { ...a, status: "تم الصرف" } : a
+      ),
+    }));
+    const updated = get().trustAccounts.find((a) => a.id === accountId);
+    if (updated) void trustAccountsCrud.save(updated, true);
+  },
+  addTimeEntry: (entry) => {
+    set((state) => ({ timeEntries: [entry, ...state.timeEntries] }));
+    void timeEntriesCrud.save(entry, false);
+  },
+  updateTimeEntry: (id, updates) => {
+    set((state) => ({
+      timeEntries: state.timeEntries.map((te) =>
+        te.id === id ? { ...te, ...updates } : te
+      )
+    }));
+    const updated = get().timeEntries.find((te) => te.id === id);
+    if (updated) void timeEntriesCrud.save(updated, true);
+  },
+  deleteTimeEntry: (id) => {
+    set((state) => ({
+      timeEntries: state.timeEntries.filter((te) => te.id !== id)
+    }));
+    void timeEntriesCrud.remove(id);
+  },
+  toggleTimeEntryBilledStatus: (id) => {
+    set((state) => ({
+      timeEntries: state.timeEntries.map((te) =>
+        te.id === id ? { ...te, isBilled: !te.isBilled } : te
+      )
+    }));
+    const updated = get().timeEntries.find((te) => te.id === id);
+    if (updated) void timeEntriesCrud.save(updated, true);
+  },
   setPricingModels: (pricingModels) => set({ pricingModels }),
 }));

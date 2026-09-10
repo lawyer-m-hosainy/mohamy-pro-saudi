@@ -33,14 +33,25 @@ const featureFlags: Record<string, FeatureFlag> = {
   EMAIL_NOTIFICATIONS: {
     key: 'EMAIL_NOTIFICATIONS',
     label: 'الإشعارات البريدية',
-    enabled: true,
-    description: 'تفعيل إرسال إشعارات الجلسات والفواتير عبر البريد'
+    // Was `true` with zero email provider wired anywhere in the codebase
+    // (no SendGrid/Resend/nodemailer dependency, no send call) — a flag
+    // that claims a feature works when it silently does nothing is worse
+    // than one that's honestly off. POST /api/notifications/email now
+    // exists (server.ts, via Resend) but nothing calls it yet; flip this
+    // once session/invoice reminders are wired to call it.
+    enabled: false,
+    description: 'تفعيل إرسال إشعارات الجلسات والفواتير عبر البريد (Resend) — يتطلب RESEND_API_KEY وربط نقاط الإرسال'
   },
   MOYASAR_PAYMENTS: {
     key: 'MOYASAR_PAYMENTS',
     label: 'بوابة الدفع الإلكتروني',
-    enabled: false,
-    description: 'تفعيل الدفع الإلكتروني (Paymob / Fawry)'
+    // The checkout UI (src/views/Billing.tsx) now exists — the remaining
+    // gate is real credentials (MOYASAR_SECRET_KEY server-side,
+    // VITE_MOYASAR_PUBLISHABLE_KEY client-side); the endpoint and the
+    // checkout form both degrade to a clear "not configured yet" message
+    // when those are unset, so it's safe to leave this on.
+    enabled: true,
+    description: 'الدفع الإلكتروني عبر Moyasar — يتطلب ضبط MOYASAR_SECRET_KEY و VITE_MOYASAR_PUBLISHABLE_KEY فعلياً ليعمل'
   }
 };
 

@@ -1,10 +1,23 @@
 import { create } from 'zustand';
-import { 
-  RiskRegister, Control, ComplianceIssue, RegulatoryObligation, 
+import {
+  RiskRegister, Control, ComplianceIssue, RegulatoryObligation,
   ComplianceRecord, LegalPrecedent, QAReview, ConflictCheckRecord,
   KnowledgeAsset, SpecializedTrack, TrainingPathway, KSAAssessment
 } from '../types';
+import { createTenantCrud } from '../services/genericCrud';
 
+const riskCrud = createTenantCrud<RiskRegister>('risk_registers');
+const controlsCrud = createTenantCrud<Control>('controls');
+const issuesCrud = createTenantCrud<ComplianceIssue>('compliance_issues');
+const obligationsCrud = createTenantCrud<RegulatoryObligation>('regulatory_obligations');
+const complianceCrud = createTenantCrud<ComplianceRecord>('compliance_records');
+const precedentsCrud = createTenantCrud<LegalPrecedent>('legal_precedents');
+const qaReviewsCrud = createTenantCrud<QAReview>('qa_reviews');
+const conflictCrud = createTenantCrud<ConflictCheckRecord>('conflict_check_records');
+const knowledgeCrud = createTenantCrud<KnowledgeAsset>('knowledge_assets');
+const tracksCrud = createTenantCrud<SpecializedTrack>('specialized_tracks');
+const pathwaysCrud = createTenantCrud<TrainingPathway>('training_pathways');
+const assessmentsCrud = createTenantCrud<KSAAssessment>('ksa_assessments');
 
 interface ComplianceState {
   riskRegisters: RiskRegister[];
@@ -19,6 +32,8 @@ interface ComplianceState {
   specializedTracks: SpecializedTrack[];
   trainingPathways: TrainingPathway[];
   assessments: KSAAssessment[];
+
+  loadComplianceData: () => Promise<void>;
 
   setRiskRegisters: (registers: RiskRegister[]) => void;
   setControls: (controls: Control[]) => void;
@@ -49,206 +64,154 @@ interface ComplianceState {
   updateTrainingModuleStatus: (pathwayId: string, moduleId: string, status: TrainingPathway['modules'][number]['status']) => void;
 }
 
-const MOCK_PRECEDENTS: LegalPrecedent[] = [
-  {
-    id: "LP-101",
-    title: "حكم نقض في دعوى عمالية (مكافأة نهاية الخدمة)",
-    category: "عمالي",
-    summary: "مبدأ قضائي يقرر أن مكافأة نهاية الخدمة تُحسب بناءً على آخر أجر فعلي استلمه العامل شاملاً البدلات الثابتة.",
-    tags: ["عمالي", "مكافأة", "مبادئ قضائية"],
-    date: "2023-11-05"
-  },
-  {
-    id: "LP-102",
-    title: "مذكرة دفاع في دعوى مطالبة مالية (عقد مقاولة)",
-    category: "تجاري",
-    summary: "مذكرة نموذجية للرد على مطالبة المقاول وتوضيح الدفوع المتعلقة بالتأخير في التسليم والعيوب الهندسية.",
-    tags: ["تجاري", "مقاولات", "مذكرة دفاع"],
-    date: "2024-01-20"
-  }
-];
-
-const MOCK_QA_REVIEWS: QAReview[] = [
-  {
-    id: "QA-99120",
-    caseId: "C-1001",
-    reviewerId: "U-001",
-    status: "Pending",
-    checklist: [
-      { id: "QA-CH-1", requirement: "التحقق من صحة بيانات الوكالة في ناجز", isMet: true },
-      { id: "QA-CH-2", requirement: "مراجعة المذكرة لغوياً وقانونياً", isMet: false, comment: "يوجد خطأ إملائي في الصفحة الثانية" },
-      { id: "QA-CH-3", requirement: "التأكد من إرفاق كافة المستندات الثبوتية", isMet: false },
-    ],
-    overallComment: "بانتظار استكمال النواقص قبل الاعتماد النهائي للإيداع"
-  },
-  {
-    id: "QA-88221",
-    caseId: "C-1002",
-    reviewerId: "U-001",
-    status: "Approved",
-    checklist: [
-      { id: "QA-CH-1", requirement: "التحقق من صحة بيانات الوكالة في ناجز", isMet: true },
-      { id: "QA-CH-2", requirement: "مراجعة المذكرة لغوياً وقانونياً", isMet: true },
-      { id: "QA-CH-3", requirement: "التأكد من إرفاق كافة المستندات الثبوتية", isMet: true },
-    ],
-    overallComment: "المذكرة جاهزة ومكتملة من الناحية المهنية",
-    completedAt: new Date().toISOString()
-  }
-];
-
-export const useComplianceStore = create<ComplianceState>((set) => ({
+export const useComplianceStore = create<ComplianceState>((set, get) => ({
   riskRegisters: [],
   controls: [],
   complianceIssues: [],
   regulatoryObligations: [],
   compliance: [],
-  precedents: MOCK_PRECEDENTS,
-  qaReviews: MOCK_QA_REVIEWS,
+  precedents: [],
+  qaReviews: [],
   conflictHistory: [],
-  knowledgeAssets: [
-    {
-      id: "A-001",
-      title: "دليل صياغة عقود التأسيس للشركات ذات المسؤولية المحدودة",
-      category: "Procedure",
-      version: 2,
-      isVerified: true,
-      updatedAt: "2024-03-15",
-      createdAt: "2024-01-10",
-      authorId: "U-001",
-      contentUrl: "/docs/llc-guide.pdf",
-      tags: ["شركات", "عقود", "نماذج"],
-    },
-    {
-      id: "A-002",
-      title: "أحدث التعديلات على نظام الإفلاس السعودي 1445",
-      category: "Research",
-      version: 1,
-      isVerified: true,
-      updatedAt: "2024-04-10",
-      createdAt: "2024-04-10",
-      authorId: "U-002",
-      contentUrl: "/docs/bankruptcy-amendments.pdf",
-      tags: ["نظام الإفلاس", "أبحاث", "تحديثات"],
-    }
-  ],
-  specializedTracks: [
-    {
-      id: "ST-LAB-1029",
-      caseId: "C-152468",
-      caseType: "عمالي",
-      stage: "محكمة ابتدائية",
-      slaDueAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(), // 12 hours from now (SLA alert)
-      status: "نشط",
-      checklist: [
-        { id: "chk-1", title: "مراجعة عقد العمل والملاحق", done: true },
-        { id: "chk-2", title: "احتساب مكافأة نهاية الخدمة بدقة", done: true },
-        { id: "chk-3", title: "إرفاق كشف الحساب البنكي لتحويل الرواتب", done: false },
-        { id: "chk-4", title: "صياغة لائحة الدعوى العمالية", done: false },
-      ],
-      documentTemplates: [
-        { id: "tpl-1", title: "لائحة دعوى عمالية", type: "لائحة" },
-        { id: "tpl-2", title: "مذكرة رد عمالية", type: "مذكرة" }
-      ],
-      steps: [
-        { id: "s-1", name: "جمع المستندات", completed: true },
-        { id: "s-2", name: "محاولة الصلح عبر منصة ودي", completed: true, notes: "فشلت محاولة الصلح" },
-        { id: "s-3", name: "رفع الدعوى في ناجز", completed: false },
-      ],
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: "ST-CRI-9921",
-      caseId: "C-998822",
-      caseType: "جزائي",
-      stage: "النيابة العامة",
-      slaDueAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days late
-      status: "متأخر",
-      checklist: [
-        { id: "chk-1", title: "استلام لائحة الاتهام", done: true },
-        { id: "chk-2", title: "الاطلاع على ملف التحقيق", done: false },
-        { id: "chk-3", title: "إعداد مذكرة الدفوع الشكلية والموضوعية", done: false },
-      ],
-      documentTemplates: [
-        { id: "tpl-1", title: "مذكرة دفوع جزائية", type: "مذكرة" },
-        { id: "tpl-2", title: "طلب إخلاء سبيل", type: "أخرى" }
-      ],
-      steps: [
-        { id: "s-1", name: "حضور جلسة التحقيق", completed: true },
-        { id: "s-2", name: "تقديم الدفوع الأولية", completed: false },
-      ],
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ],
+  knowledgeAssets: [],
+  specializedTracks: [],
   trainingPathways: [],
   assessments: [],
+
+  loadComplianceData: async () => {
+    const [
+      riskRegisters, controls, complianceIssues, regulatoryObligations,
+      compliance, precedents, qaReviews, conflictHistory,
+      knowledgeAssets, specializedTracks, trainingPathways, assessments,
+    ] = await Promise.all([
+      riskCrud.fetchAll(), controlsCrud.fetchAll(), issuesCrud.fetchAll(), obligationsCrud.fetchAll(),
+      complianceCrud.fetchAll(), precedentsCrud.fetchAll(), qaReviewsCrud.fetchAll(), conflictCrud.fetchAll(),
+      knowledgeCrud.fetchAll(), tracksCrud.fetchAll(), pathwaysCrud.fetchAll(), assessmentsCrud.fetchAll(),
+    ]);
+    set({
+      riskRegisters, controls, complianceIssues, regulatoryObligations,
+      compliance, precedents, qaReviews, conflictHistory,
+      knowledgeAssets, specializedTracks, trainingPathways, assessments,
+    });
+  },
 
   setRiskRegisters: (riskRegisters) => set({ riskRegisters }),
   setControls: (controls) => set({ controls }),
   setComplianceIssues: (complianceIssues) => set({ complianceIssues }),
   setRegulatoryObligations: (regulatoryObligations) => set({ regulatoryObligations }),
   setCompliance: (compliance) => set({ compliance }),
-  addComplianceRecord: (record) => set((state) => ({ compliance: [record, ...state.compliance] })),
-  updateComplianceRecord: (id, updates) => set((state) => ({
-    compliance: state.compliance.map(r => r.id === id ? { ...r, ...updates } : r)
-  })),
-  removeComplianceRecord: (id) => set((state) => ({
-    compliance: state.compliance.filter(r => r.id !== id)
-  })),
+  addComplianceRecord: (record) => {
+    set((state) => ({ compliance: [record, ...state.compliance] }));
+    void complianceCrud.save(record, false);
+  },
+  updateComplianceRecord: (id, updates) => {
+    set((state) => ({
+      compliance: state.compliance.map(r => r.id === id ? { ...r, ...updates } : r)
+    }));
+    const updated = get().compliance.find(r => r.id === id);
+    if (updated) void complianceCrud.save(updated, true);
+  },
+  removeComplianceRecord: (id) => {
+    set((state) => ({
+      compliance: state.compliance.filter(r => r.id !== id)
+    }));
+    void complianceCrud.remove(id);
+  },
   setPrecedents: (precedents) => set({ precedents }),
   setQAReviews: (qaReviews) => set({ qaReviews }),
-  addQAReview: (review) =>
-    set((state) => ({ qaReviews: [review, ...state.qaReviews] })),
-  addPrecedent: (precedent) =>
-    set((state) => ({ precedents: [precedent, ...state.precedents] })),
-  addConflictRecord: (record) => set((state) => ({ conflictHistory: [record, ...state.conflictHistory] })),
+  addQAReview: (review) => {
+    set((state) => ({ qaReviews: [review, ...state.qaReviews] }));
+    void qaReviewsCrud.save(review, false);
+  },
+  addPrecedent: (precedent) => {
+    set((state) => ({ precedents: [precedent, ...state.precedents] }));
+    void precedentsCrud.save(precedent, false);
+  },
+  addConflictRecord: (record) => {
+    set((state) => ({ conflictHistory: [record, ...state.conflictHistory] }));
+    void conflictCrud.save(record, false);
+  },
   setKnowledgeAssets: (knowledgeAssets) => set({ knowledgeAssets }),
-  addKnowledgeAsset: (asset) =>
-    set((state) => ({ knowledgeAssets: [asset, ...state.knowledgeAssets] })),
+  addKnowledgeAsset: (asset) => {
+    set((state) => ({ knowledgeAssets: [asset, ...state.knowledgeAssets] }));
+    void knowledgeCrud.save(asset, false);
+  },
   setSpecializedTracks: (specializedTracks) => set({ specializedTracks }),
-  addSpecializedTrack: (track) => set((state) => ({ specializedTracks: [track, ...state.specializedTracks] })),
+  addSpecializedTrack: (track) => {
+    set((state) => ({ specializedTracks: [track, ...state.specializedTracks] }));
+    void tracksCrud.save(track, false);
+  },
   setTrainingPathways: (trainingPathways) => set({ trainingPathways }),
   setAssessments: (assessments) => set({ assessments }),
 
-  updateRiskStatus: (id, status) => set((state) => ({
-    riskRegisters: state.riskRegisters.map((r) => (r.id === id ? { ...r, status } : r)),
-  })),
-  updateComplianceIssueStatus: (id, status) => set((state) => ({
-    complianceIssues: state.complianceIssues.map((i) => (i.id === id ? { ...i, status } : i)),
-  })),
-  updateQAChecklist: (reviewId, itemId, isMet) => set((state) => ({
-    qaReviews: state.qaReviews.map(review => 
-      review.id === reviewId 
-        ? { ...review, checklist: review.checklist.map(item => item.id === itemId ? { ...item, isMet } : item) }
-        : review
-    )
-  })),
-  updateQAStatus: (reviewId, status) => set((state) => ({
-    qaReviews: state.qaReviews.map(review => review.id === reviewId ? { ...review, status, completedAt: status === 'Approved' ? new Date().toISOString() : review.completedAt } : review)
-  })),
-  toggleSpecializedChecklist: (trackId, checklistId) => set((state) => ({
-    specializedTracks: state.specializedTracks.map((t) =>
-      t.id === trackId
-        ? {
-            ...t,
-            checklist: t.checklist.map((c) => (c.id === checklistId ? { ...c, done: !c.done } : c)),
-          }
-        : t
-    ),
-  })),
-  updateSpecializedTrackStatus: (trackId, status) => set((state) => ({
-    specializedTracks: state.specializedTracks.map((t) =>
-      t.id === trackId ? { ...t, status } : t
-    ),
-  })),
-  updateTrainingModuleStatus: (pathwayId, moduleId, status) => set((state) => ({
-    trainingPathways: state.trainingPathways.map(pathway => 
-      pathway.id === pathwayId 
-        ? { 
-            ...pathway, 
-            modules: pathway.modules.map(mod => mod.id === moduleId ? { ...mod, status, completedAt: status === 'Completed' ? new Date().toISOString() : mod.completedAt } : mod),
-            overallProgress: Math.round((pathway.modules.length > 0 ? (pathway.modules.filter(m => m.status === 'Completed').length / pathway.modules.length) * 100 : 0))
-          }
-        : pathway
-    )
-  })),
+  updateRiskStatus: (id, status) => {
+    set((state) => ({
+      riskRegisters: state.riskRegisters.map((r) => (r.id === id ? { ...r, status } : r)),
+    }));
+    const updated = get().riskRegisters.find((r) => r.id === id);
+    if (updated) void riskCrud.save(updated, true);
+  },
+  updateComplianceIssueStatus: (id, status) => {
+    set((state) => ({
+      complianceIssues: state.complianceIssues.map((i) => (i.id === id ? { ...i, status } : i)),
+    }));
+    const updated = get().complianceIssues.find((i) => i.id === id);
+    if (updated) void issuesCrud.save(updated, true);
+  },
+  updateQAChecklist: (reviewId, itemId, isMet) => {
+    set((state) => ({
+      qaReviews: state.qaReviews.map(review =>
+        review.id === reviewId
+          ? { ...review, checklist: review.checklist.map(item => item.id === itemId ? { ...item, isMet } : item) }
+          : review
+      )
+    }));
+    const updated = get().qaReviews.find(r => r.id === reviewId);
+    if (updated) void qaReviewsCrud.save(updated, true);
+  },
+  updateQAStatus: (reviewId, status) => {
+    set((state) => ({
+      qaReviews: state.qaReviews.map(review => review.id === reviewId ? { ...review, status, completedAt: status === 'Approved' ? new Date().toISOString() : review.completedAt } : review)
+    }));
+    const updated = get().qaReviews.find(r => r.id === reviewId);
+    if (updated) void qaReviewsCrud.save(updated, true);
+  },
+  toggleSpecializedChecklist: (trackId, checklistId) => {
+    set((state) => ({
+      specializedTracks: state.specializedTracks.map((t) =>
+        t.id === trackId
+          ? {
+              ...t,
+              checklist: t.checklist.map((c) => (c.id === checklistId ? { ...c, done: !c.done } : c)),
+            }
+          : t
+      ),
+    }));
+    const updated = get().specializedTracks.find((t) => t.id === trackId);
+    if (updated) void tracksCrud.save(updated, true);
+  },
+  updateSpecializedTrackStatus: (trackId, status) => {
+    set((state) => ({
+      specializedTracks: state.specializedTracks.map((t) =>
+        t.id === trackId ? { ...t, status } : t
+      ),
+    }));
+    const updated = get().specializedTracks.find((t) => t.id === trackId);
+    if (updated) void tracksCrud.save(updated, true);
+  },
+  updateTrainingModuleStatus: (pathwayId, moduleId, status) => {
+    set((state) => ({
+      trainingPathways: state.trainingPathways.map(pathway =>
+        pathway.id === pathwayId
+          ? {
+              ...pathway,
+              modules: pathway.modules.map(mod => mod.id === moduleId ? { ...mod, status, completedAt: status === 'Completed' ? new Date().toISOString() : mod.completedAt } : mod),
+              overallProgress: Math.round((pathway.modules.length > 0 ? (pathway.modules.filter(m => m.status === 'Completed').length / pathway.modules.length) * 100 : 0))
+            }
+          : pathway
+      )
+    }));
+    const updated = get().trainingPathways.find(p => p.id === pathwayId);
+    if (updated) void pathwaysCrud.save(updated, true);
+  },
 }));

@@ -1,15 +1,17 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Building2, FileText, Users, CheckCircle2, ArrowLeft, ArrowRight, Plus, X, Sparkles } from "lucide-react";
+import { Building2, FileText, Users, CheckCircle2, ArrowLeft, ArrowRight, Plus, X, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PLANS, PlanTier } from "@/modules/subscriptions/subscriptionService";
 import { isFeatureEnabled } from "@/config/features";
+import { saveOfficeSettings, saveTeamMember } from "@/services/legalDataService";
 
 interface OnboardingData {
   officeName: string;
@@ -27,6 +29,7 @@ const STEPS = [
 ];
 
 export default function OnboardingFlow() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<OnboardingData>({
     officeName: "",
@@ -36,6 +39,7 @@ export default function OnboardingFlow() {
     teamEmails: [""],
   });
   const [emailInput, setEmailInput] = useState("");
+  const [isCompleting, setIsCompleting] = useState(false);
 
   if (!isFeatureEnabled("TENANT_ONBOARDING")) {
     return (
@@ -68,10 +72,49 @@ export default function OnboardingFlow() {
     setData({ ...data, teamEmails: data.teamEmails.filter((_, i) => i !== index) });
   };
 
-  const handleComplete = () => {
-    toast.success("تم إنشاء مكتبك بنجاح! مرحباً بك في ليجل ERP.");
-    // In production: call Supabase to create tenant document, send invite emails, etc.
-    console.log("[Onboarding] Tenant created:", data);
+  const handleComplete = async () => {
+    setIsCompleting(true);
+    try {
+      await saveOfficeSettings({
+        name: data.officeName,
+        vatNumber: data.vatNumber,
+        address: "",
+        phone: "",
+        email: "",
+        logo: data.logoUrl,
+      });
+
+      // Invited members are placeholder rows (no auth_id yet) usable for
+      // case/task assignment until they complete their own signup —
+      // same convention as Team.tsx's "invite" flow.
+      const emails = data.teamEmails.filter((e) => e.includes("@"));
+      await Promise.all(
+        emails.map((email) =>
+          saveTeamMember(
+            {
+              id: crypto.randomUUID(),
+              name: email.split("@")[0],
+              email,
+              role: "محامي متدرب",
+              activeCases: 0,
+              pendingTasks: 0,
+              completedTasks: 0,
+              joinDate: new Date().toISOString().slice(0, 10),
+              status: "نشط",
+            },
+            false
+          )
+        )
+      );
+
+      toast.success("تم إنشاء مكتبك بنجاح! مرحباً بك في ليجل ERP.");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("[Onboarding] Failed to complete setup:", error);
+      toast.error("تعذر إكمال إعداد المكتب. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   return (
@@ -205,8 +248,8 @@ export default function OnboardingFlow() {
                       <p className="text-[10px] text-slate-400">حد القضايا</p>
                     </div>
                   </div>
-                  <Button onClick={handleComplete} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 px-8">
-                    <Sparkles size={16} />
+                  <Button onClick={handleComplete} disabled={isCompleting} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 px-8">
+                    {isCompleting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                     ابدأ استخدام ليجل ERP
                   </Button>
                 </motion.div>

@@ -39,7 +39,7 @@ export default function Enforcement() {
       (e) =>
         e.id.toLowerCase().includes(q) ||
         e.fileNumber?.toLowerCase().includes(q) ||
-        e.caseId.toLowerCase().includes(q) ||
+        e.caseId?.toLowerCase().includes(q) ||
         e.clientName.toLowerCase().includes(q) ||
         e.debtorName.toLowerCase().includes(q)
     );
@@ -58,7 +58,7 @@ export default function Enforcement() {
   const logSensitiveAction = () => {
     if (!selected) return;
     addAuditLog({
-      id: `AL-ENF-${Date.now()}`,
+      id: crypto.randomUUID(),
       userId: currentUser?.id || "unknown",
       userName: currentUser?.name || "unknown",
       action: "View Enforcement Details",

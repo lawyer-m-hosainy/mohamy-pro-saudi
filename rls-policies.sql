@@ -185,3 +185,63 @@ create trigger trg_prevent_self_privilege_escalation
   before update on public.users
   for each row
   execute function public.prevent_self_privilege_escalation();
+
+-- =============================================
+-- 8. سياسات الجداول الجديدة (Migration 002 في schema.sql)
+-- =============================================
+-- كل هذه الجداول تتبع نفس نمط العزل بالضبط (tenant_id = get_my_tenant_id()
+-- لكل من SELECT/INSERT/UPDATE/DELETE)، لذلك نطبّقها عبر حلقة بدلاً من تكرار
+-- ~150 سياسة يدوياً (35 جدول × 4 عمليات) — أقل عرضة للخطأ ولنسيان جدول.
+do $$
+declare
+  t text;
+  tables text[] := array[
+    'invoices','expenses','time_entries','trust_accounts','pricing_models','receivable_accounts',
+    'enforcement_cases',
+    'risk_registers','controls','compliance_issues','regulatory_obligations','compliance_records',
+    'legal_precedents','qa_reviews','conflict_check_records','knowledge_assets','specialized_tracks',
+    'training_pathways','ksa_assessments',
+    'contract_requests','contract_templates','rfp_submissions','esignature_requests',
+    'ip_records','ip_filings','ip_renewals','ip_oppositions','ip_enforcement_actions',
+    'tasks','leads','key_accounts','proposals',
+    'documents','notifications','office_settings','workflows','advisory_requests',
+    'sessions','deadlines','wiki_articles'
+  ];
+begin
+  foreach t in array tables loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('drop policy if exists "%s_tenant_all" on public.%I', t, t);
+    execute format(
+      'create policy "%s_tenant_all" on public.%I for all using (tenant_id = public.get_my_tenant_id()) with check (tenant_id = public.get_my_tenant_id())',
+      t, t
+    );
+    execute format('create index if not exists idx_%s_tenant_id on public.%I (tenant_id)', t, t);
+  end loop;
+end $$;
+
+-- audit_logs is intentionally NOT in the loop above: it must stay
+-- append-only. Users can read and write their own tenant's audit trail but
+-- can never update or delete an existing entry (no such policy exists, and
+-- RLS defaults to deny when no policy matches).
+alter table public.audit_logs enable row level security;
+drop policy if exists "audit_logs_select_tenant" on public.audit_logs;
+drop policy if exists "audit_logs_insert_tenant" on public.audit_logs;
+create policy "audit_logs_select_tenant"
+  on public.audit_logs for select
+  using (tenant_id = public.get_my_tenant_id());
+create policy "audit_logs_insert_tenant"
+  on public.audit_logs for insert
+  with check (tenant_id = public.get_my_tenant_id());
+create index if not exists idx_audit_logs_tenant_id on public.audit_logs (tenant_id);
+
+-- subscriptions is also NOT in the generic loop: a tenant user must be able
+-- to see their own plan/status, but must never be able to write to this
+-- table directly — that would let anyone grant themselves an 'enterprise'
+-- plan with 'active' status over the REST API with no payment at all. Only
+-- the Moyasar webhook handler in server.ts (using the service-role key,
+-- which bypasses RLS entirely) writes to this table.
+alter table public.subscriptions enable row level security;
+drop policy if exists "subscriptions_select_tenant" on public.subscriptions;
+create policy "subscriptions_select_tenant"
+  on public.subscriptions for select
+  using (tenant_id = public.get_my_tenant_id());

@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { toast } from "sonner";
 import { useAnalyticsStore } from '@/store/useAnalyticsStore';
+import { useCasesStore } from '@/store/useCasesStore';
 import { useClientsStore } from '@/store/useClientsStore';
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useTeamStore } from '@/store/useTeamStore';

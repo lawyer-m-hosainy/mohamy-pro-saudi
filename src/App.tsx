@@ -4,7 +4,7 @@ import { RootLayout } from "./components/layout/RootLayout";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { fetchCases, fetchClients, fetchEnforcement, fetchInvoices, fetchTasks, fetchTeam, fetchTrustAccounts } from "@/services/legalDataService";
+import { fetchCases, fetchClients, fetchTeam } from "@/services/legalDataService";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useClientsStore } from "@/store/useClientsStore";
 import { useCasesStore } from "@/store/useCasesStore";
@@ -12,8 +12,11 @@ import { useTeamStore } from "@/store/useTeamStore";
 import { useInvoicesStore } from "@/store/useInvoicesStore";
 import { useFinanceStore } from "@/store/useFinanceStore";
 import { useEnforcementStore } from "@/store/useEnforcementStore";
-import { mockTasks, mockTeamMembers } from "@/mocks/data";
-import { getCurrentTenantId } from "@/lib/tenant";
+import { useComplianceStore } from "@/store/useComplianceStore";
+import { useCLMStore } from "@/store/useCLMStore";
+import { useIPStore } from "@/store/useIPStore";
+import { useAdvisoryStore } from "@/store/useAdvisoryStore";
+import { useUIStore } from "@/store/useUIStore";
 import { checkAppHealth } from "@/observability/health";
 import { logEvent } from "@/observability/logger";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -56,6 +59,10 @@ const BDDashboard = lazy(() => import("./views/BDDashboard"));
 const LegalQA = lazy(() => import("./views/LegalQA"));
 const TrainingPortal = lazy(() => import("./views/TrainingPortal"));
 const PartnerReporting = lazy(() => import("./views/PartnerReporting"));
+const CRM = lazy(() => import("./views/CRM"));
+const TermsOfService = lazy(() => import("./views/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./views/PrivacyPolicy"));
+const Billing = lazy(() => import("./views/Billing"));
 
 // Enterprise Modules
 const OnboardingFlow = lazy(() => import("./modules/onboarding/OnboardingFlow"));
@@ -68,38 +75,49 @@ function PermissionGate({ children, permission, fallback = <Navigate to="/dashbo
 
 export default function App() {
   const setClients = useClientsStore(state => state.setClients);
+  const loadCrmData = useClientsStore(state => state.loadCrmData);
   const setCases = useCasesStore(state => state.setCases);
+  const loadCaseExtras = useCasesStore(state => state.loadCaseExtras);
+  const loadUIData = useUIStore(state => state.loadUIData);
   const setTeamMembers = useTeamStore(state => state.setTeamMembers);
-  const setTasks = useTeamStore(state => state.setTasks);
+  const loadTasks = useTeamStore(state => state.loadTasks);
   const loadInvoices = useInvoicesStore(state => state.loadInvoices);
-  const setTrustAccounts = useFinanceStore(state => state.setTrustAccounts);
-  const setEnforcementCases = useEnforcementStore(state => state.setEnforcementCases);
+  const loadFinanceData = useFinanceStore(state => state.loadFinanceData);
+  const loadEnforcementCases = useEnforcementStore(state => state.loadEnforcementCases);
+  const loadComplianceData = useComplianceStore(state => state.loadComplianceData);
+  const loadCLMData = useCLMStore(state => state.loadCLMData);
+  const loadIPData = useIPStore(state => state.loadIPData);
+  const loadAdvisoryData = useAdvisoryStore(state => state.loadAdvisoryData);
 
   useEffect(() => {
     let mounted = true;
     const bootstrap = async () => {
       try {
-        const [remoteClients, remoteCases, remoteTrust, remoteEnf, remoteTasks, remoteTeam] = await Promise.all([
-          fetchClients(), 
+        const [remoteClients, remoteCases, remoteTeam] = await Promise.all([
+          fetchClients(),
           fetchCases(),
-          fetchTrustAccounts(),
-          fetchEnforcement(),
-          fetchTasks(),
-          fetchTeam()
+          fetchTeam(),
         ]);
-        
+
         if (!mounted) return;
 
         if (remoteClients?.length > 0) setClients(remoteClients);
         if (remoteCases?.length > 0) setCases(remoteCases);
-        if (remoteTrust?.length > 0) setTrustAccounts(remoteTrust);
-        if (remoteEnf?.length > 0) setEnforcementCases(remoteEnf);
-        if (remoteTasks?.length > 0) setTasks(remoteTasks);
         if (remoteTeam?.length > 0) setTeamMembers(remoteTeam);
-        
-        // Load invoices using its own store logic (which calls fetchInvoices)
+
+        // Each of these loads its own table(s) and updates its own store.
         void loadInvoices();
-        
+        void loadFinanceData();
+        void loadEnforcementCases();
+        void loadTasks();
+        void loadComplianceData();
+        void loadCLMData();
+        void loadIPData();
+        void loadAdvisoryData();
+        void loadCrmData();
+        void loadCaseExtras();
+        void loadUIData();
+
       } catch (error) {
         console.error("Bootstrap error:", error);
       }
@@ -109,7 +127,7 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [setClients, setCases, setTrustAccounts, setEnforcementCases, setTasks, setTeamMembers, loadInvoices]);
+  }, [setClients, setCases, setTeamMembers, loadInvoices, loadFinanceData, loadEnforcementCases, loadTasks, loadComplianceData, loadCLMData, loadIPData, loadAdvisoryData, loadCrmData, loadCaseExtras, loadUIData]);
 
   useEffect(() => {
     const runHealthCheck = async () => {
@@ -148,7 +166,9 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/onboarding" element={<OnboardingFlow />} />
               <Route path="/client-portal" element={<ClientPortal />} />
-              
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+
               <Route path="/dashboard" element={<ProtectedRoute><RouteLayoutWrapper /></ProtectedRoute>}>
                 <Route index element={<Dashboard />} />
                 <Route path="clients" element={<PermissionGate permission="view_clients"><Clients /></PermissionGate>} />
@@ -163,28 +183,30 @@ export default function App() {
               <Route path="compliance" element={<PermissionGate permission="compliance_view"><Compliance /></PermissionGate>} />
               <Route path="library" element={<LegalLibrary />} />
               <Route path="contracts" element={<Contracts />} />
-              <Route path="documents" element={<Documents />} />
-              <Route path="ip-management" element={<IPManagement />} />
+              <Route path="documents" element={<PermissionGate permission="documents"><Documents /></PermissionGate>} />
+              <Route path="ip-management" element={<PermissionGate permission="manage_operations"><IPManagement /></PermissionGate>} />
               <Route path="time-tracking" element={<TimeTracking />} />
-              <Route path="client-portal" element={<PortalManagement />} />
-              <Route path="conflict-check" element={<ConflictCheck />} />
-              <Route path="trust-accounting" element={<TrustAccounting />} />
-              <Route path="enforcement" element={<Enforcement />} />
-              <Route path="advisory-desk" element={<AdvisoryDesk />} />
-              <Route path="grc" element={<GRC />} />
-              <Route path="collections" element={<Collections />} />
-              <Route path="clm" element={<CLM />} />
-              <Route path="ip-operations" element={<IPOperations />} />
-              <Route path="specialized-tracks" element={<SpecializedTracks />} />
+              <Route path="client-portal" element={<PermissionGate permission="manage_office"><PortalManagement /></PermissionGate>} />
+              <Route path="conflict-check" element={<PermissionGate permission="conflict_check"><ConflictCheck /></PermissionGate>} />
+              <Route path="trust-accounting" element={<PermissionGate permission="finance_basic"><TrustAccounting /></PermissionGate>} />
+              <Route path="enforcement" element={<PermissionGate permission="manage_operations"><Enforcement /></PermissionGate>} />
+              <Route path="advisory-desk" element={<PermissionGate permission="manage_operations"><AdvisoryDesk /></PermissionGate>} />
+              <Route path="grc" element={<PermissionGate permission="compliance_view"><GRC /></PermissionGate>} />
+              <Route path="collections" element={<PermissionGate permission="finance_basic"><Collections /></PermissionGate>} />
+              <Route path="clm" element={<PermissionGate permission="manage_operations"><CLM /></PermissionGate>} />
+              <Route path="ip-operations" element={<PermissionGate permission="manage_operations"><IPOperations /></PermissionGate>} />
+              <Route path="specialized-tracks" element={<PermissionGate permission="manage_operations"><SpecializedTracks /></PermissionGate>} />
               <Route path="audit-logs" element={<PermissionGate permission="view_reports"><AuditLogs /></PermissionGate>} />
               <Route path="ai-analyzer" element={<AIDocumentAnalyzer />} />
               <Route path="wiki" element={<InternalWiki />} />
               <Route path="bd" element={<PermissionGate permission="view_reports"><BDDashboard /></PermissionGate>} />
+              <Route path="crm" element={<PermissionGate permission="view_clients"><CRM /></PermissionGate>} />
               <Route path="qa" element={<PermissionGate permission="legal_qa"><LegalQA /></PermissionGate>} />
               <Route path="training" element={<PermissionGate permission="training_portal"><TrainingPortal /></PermissionGate>} />
               <Route path="partner-reports" element={<PermissionGate permission="view_reports"><PartnerReporting /></PermissionGate>} />
               <Route path="platform-admin" element={<PermissionGate permission="platform_admin"><GlobalAdmin /></PermissionGate>} />
-              <Route path="settings" element={<Settings />} />
+              <Route path="settings" element={<PermissionGate permission="manage_office"><Settings /></PermissionGate>} />
+              <Route path="settings/billing" element={<PermissionGate permission="manage_office"><Billing /></PermissionGate>} />
             </Route>
             
             {/* Redirect old routes if needed */}

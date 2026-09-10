@@ -18,6 +18,7 @@ function isNear(date: string, days = 15) {
 }
 
 export default function IPOperations() {
+  const ipRecords = useIPStore((state) => state.ipRecords);
   const ipFilings = useIPStore((state) => state.ipFilings);
   const ipRenewals = useIPStore((state) => state.ipRenewals);
   const ipOppositions = useIPStore((state) => state.ipOppositions);
@@ -32,6 +33,7 @@ export default function IPOperations() {
   // Form State
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newFilingData, setNewFilingData] = useState({
+    ipRecordId: "",
     clientName: "",
     type: "علامة تجارية" as "علامة تجارية" | "براءة اختراع" | "حق مؤلف",
     authority: "الهيئة السعودية للملكية الفكرية",
@@ -53,14 +55,14 @@ export default function IPOperations() {
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFilingData.clientName) {
+    if (!newFilingData.clientName || !newFilingData.ipRecordId) {
       toast.error("يرجى تعبئة جميع الحقول المطلوبة");
       return;
     }
-    
+
     addIPFiling({
-      id: `FIL-${Math.floor(Math.random() * 90000)}`,
-      ipRecordId: `IP-${Math.floor(Math.random() * 9000)}`,
+      id: crypto.randomUUID(),
+      ipRecordId: newFilingData.ipRecordId,
       clientName: newFilingData.clientName,
       type: newFilingData.type,
       filingDate: new Date().toISOString(),
@@ -68,10 +70,10 @@ export default function IPOperations() {
       status: "قيد التقديم",
       feeAmount: 0
     });
-    
+
     toast.success("تم إضافة ملف تقديم جديد");
     setIsAddOpen(false);
-    setNewFilingData({ ...newFilingData, clientName: "" });
+    setNewFilingData({ ...newFilingData, clientName: "", ipRecordId: "" });
   };
 
   return (
@@ -93,6 +95,19 @@ export default function IPOperations() {
                 <DialogTitle>إنشاء ملف تقديم ملكية فكرية</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleAddSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">سجل الملكية الفكرية</label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background md:text-sm"
+                    value={newFilingData.ipRecordId}
+                    onChange={(e) => setNewFilingData(prev => ({...prev, ipRecordId: e.target.value}))}
+                  >
+                    <option value="">— اختر سجلاً —</option>
+                    {ipRecords.map(r => (
+                      <option key={r.id} value={r.id}>{r.title}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">اسم العميل (المالك)</label>
                   <Input 

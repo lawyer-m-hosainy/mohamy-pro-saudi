@@ -33,8 +33,9 @@ describe('linkCaseToNajiz', () => {
   it('يغير حالة ناجز إلى مربوط بناجز', () => {
     const mockCase: Case = {
       id: 'C-1',
+      clientId: 'CL-1',
       najizReferenceStatus: 'غير مربوط',
-      status: 'نشطة',
+      status: 'متداولة',
       workflowStage: 'intake',
       plaintiff: 'A',
       defendant: 'B',
@@ -58,8 +59,9 @@ describe('addCaseMemorandum', () => {
   it('يضيف اسم المذكرة لمصفوفة المذكرات ويغير حالة سير العمل إلى pleadings', () => {
     const mockCase: Case = {
       id: 'C-2',
+      clientId: 'CL-1',
       najizReferenceStatus: 'غير مربوط',
-      status: 'نشطة',
+      status: 'متداولة',
       workflowStage: 'intake',
       plaintiff: 'A',
       defendant: 'B',
@@ -104,6 +106,7 @@ describe('transitionCaseStatus', () => {
   it('يرمي خطأ عند انتقال غير صالح', () => {
     const mockCase: Case = {
       id: 'C-3',
+      clientId: 'CL-1',
       najizReferenceStatus: 'غير مربوط',
       status: 'مغلقة',
       workflowStage: 'closed',
@@ -119,12 +122,13 @@ describe('transitionCaseStatus', () => {
     const repo = new MockCasesRepository([mockCase]);
     
     // محاولة فتح قضية مغلقة
-    expect(() => transitionCaseStatus(repo, 'C-3', 'نشطة')).toThrow('INVALID_CASE_STATUS_TRANSITION');
+    expect(() => transitionCaseStatus(repo, 'C-3', 'متداولة')).toThrow('INVALID_CASE_STATUS_TRANSITION');
   });
   
   it('يغير حالة القضية ومرحلة سير العمل بنجاح للانتقال الصالح', () => {
     const mockCase: Case = {
       id: 'C-4',
+      clientId: 'CL-1',
       najizReferenceStatus: 'غير مربوط',
       status: 'تحت الدراسة',
       workflowStage: 'intake',
@@ -139,10 +143,10 @@ describe('transitionCaseStatus', () => {
     };
     const repo = new MockCasesRepository([mockCase]);
     
-    transitionCaseStatus(repo, 'C-4', 'نشطة');
+    transitionCaseStatus(repo, 'C-4', 'متداولة');
     
     const updated = repo.getCases().find(c => c.id === 'C-4');
-    expect(updated?.status).toBe('نشطة');
+    expect(updated?.status).toBe('متداولة');
     expect(updated?.workflowStage).toBe('hearing');
   });
 });

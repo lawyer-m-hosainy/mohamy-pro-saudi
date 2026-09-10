@@ -45,8 +45,8 @@ describe('financeDomain', () => {
   describe('computeFinancialSummary', () => {
     it('should compute correct totals', () => {
       const invoices: Invoice[] = [
-        { id: '1', clientId: 'c1', clientName: 'أ', base: 1000, vat: 150, total: 1150, status: 'مدفوعة', date: '2025-01-01' },
-        { id: '2', clientId: 'c2', clientName: 'ب', base: 2000, vat: 300, total: 2300, status: 'غير مدفوعة', date: '2025-02-01' },
+        { id: '1', invoiceNumber: 'INV-1', clientId: 'c1', clientName: 'أ', base: 1000, vat: 150, total: 1150, status: 'مدفوعة', date: '2025-01-01' },
+        { id: '2', invoiceNumber: 'INV-2', clientId: 'c2', clientName: 'ب', base: 2000, vat: 300, total: 2300, status: 'غير مدفوعة', date: '2025-02-01' },
       ];
       const expenses: Expense[] = [
         { id: 'e1', caseId: 'c1', caseName: 'ق', category: 'رسوم قضائية', amount: 200, date: '2025-01-15', status: 'تم السداد', description: '' },

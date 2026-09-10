@@ -25,10 +25,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const permissions: Record<string, string[]> = {
       'محامي شريك': ['*'], // Full Access
       'مدير مكتب': ['*'], // Full Access (Admin)
-      'محامي': ['view_cases', 'edit_cases', 'view_clients', 'legal_qa', 'conflict_check'],
-      'محامي مستشار': ['view_cases', 'view_clients', 'legal_qa', 'conflict_check', 'view_reports'],
+      'محامي': ['view_cases', 'edit_cases', 'view_clients', 'legal_qa', 'conflict_check', 'documents', 'manage_operations'],
+      'محامي مستشار': ['view_cases', 'view_clients', 'legal_qa', 'conflict_check', 'view_reports', 'documents', 'manage_operations'],
       'سكرتير': ['view_clients', 'edit_clients', 'view_cases', 'documents', 'finance_basic'],
-      'محامي متدرب': ['view_cases', 'training_portal', 'view_wiki'],
+      // Trainees can view their assigned cases and the wiki, but not
+      // manage practice-area modules (enforcement, CLM, IP, advisory,
+      // specialized tracks) or the office's own settings/portal access.
+      'محامي متدرب': ['view_cases', 'training_portal', 'view_wiki', 'documents'],
     };
 
     const rolePerms = permissions[userRole] || [];

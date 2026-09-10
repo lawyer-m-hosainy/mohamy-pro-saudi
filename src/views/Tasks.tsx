@@ -72,7 +72,7 @@ export default function Tasks() {
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
               addTask({
-                id: `T-${Date.now()}`,
+                id: crypto.randomUUID(),
                 caseId: String(fd.get('caseId')),
                 title: String(fd.get('title')),
                 assignedTo: 'U-001',
@@ -159,11 +159,9 @@ export default function Tasks() {
               </Select>
             </div>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 dark:border-white/10">
-                  <Filter size={16} />
-                  تصفية متقدمة {priorityFilter !== 'all' && `(${priorityFilter === 'high' ? 'عالية' : priorityFilter === 'medium' ? 'متوسطة' : 'عادية'})`}
-                </Button>
+              <DropdownMenuTrigger render={<Button variant="outline" className="gap-2 dark:border-white/10" />}>
+                <Filter size={16} />
+                تصفية متقدمة {priorityFilter !== 'all' && `(${priorityFilter === 'high' ? 'عالية' : priorityFilter === 'medium' ? 'متوسطة' : 'عادية'})`}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="dark:bg-navy-800 dark:border-white/10 w-40">
                 <div className="px-2 py-1.5 text-sm font-semibold text-slate-500">الأولوية</div>

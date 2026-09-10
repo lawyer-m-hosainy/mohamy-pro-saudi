@@ -11,6 +11,7 @@ import { generateZatcaTLV } from "@/lib/taxQR";
 import { toast } from "sonner";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useInvoicesStore } from "@/store/useInvoicesStore";
+import { useClientsStore } from "@/store/useClientsStore";
 import { generateInvoiceId } from "@/lib/invoice";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +34,7 @@ const MemoizedInvoiceRow = React.memo(({
   const [previewOpen, setPreviewOpen] = useState(false);
   return (
   <TableRow className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
-    <TableCell className="font-mono text-xs font-bold dark:text-slate-300">{inv.id}</TableCell>
+    <TableCell className="font-mono text-xs font-bold dark:text-slate-300">{inv.invoiceNumber}</TableCell>
     <TableCell className="font-bold text-navy-900 dark:text-white">{inv.clientName}</TableCell>
     <TableCell className="text-sm dark:text-slate-300">{inv.base.toLocaleString()} ر.س</TableCell>
     <TableCell className="text-sm text-primary-600 dark:text-primary-400">{inv.vat.toLocaleString()} ر.س</TableCell>
@@ -70,7 +71,7 @@ const MemoizedInvoiceRow = React.memo(({
               </div>
               <div className="text-end space-y-1">
                 <h3 className="text-xl font-bold text-primary-600 dark:text-primary-400">فاتورة ضريبية</h3>
-                <p className="text-sm font-mono dark:text-slate-300">{inv.id}</p>
+                <p className="text-sm font-mono dark:text-slate-300">{inv.invoiceNumber}</p>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{new Date(inv.date).toLocaleDateString('ar-SA')}</p>
               </div>
             </div>
@@ -155,7 +156,8 @@ export default function Finance() {
   const removeInvoice = useInvoicesStore(state => state.removeInvoice);
   const updateInvoiceStatus = useInvoicesStore(state => state.updateInvoiceStatus);
   const loadInvoices = useInvoicesStore(state => state.loadInvoices);
-  
+  const clients = useClientsStore(state => state.clients);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newInvoice, setNewInvoice] = useState({ clientName: "", clientId: "", base: "" });
 
@@ -182,8 +184,9 @@ export default function Finance() {
       });
 
       await addInvoice({
-        id: generateInvoiceId(),
-        clientId: newInvoice.clientId || `C-${Date.now()}`,
+        id: crypto.randomUUID(),
+        invoiceNumber: generateInvoiceId(),
+        clientId: newInvoice.clientId,
         clientName: newInvoice.clientName,
         base: baseNum,
         status: 'مسودة',
@@ -194,7 +197,7 @@ export default function Finance() {
       setNewInvoice({ clientName: "", clientId: "", base: "" });
     } catch (error) {
       if (error instanceof ZodError) {
-        toast.error(error.errors[0].message);
+        toast.error(error.issues[0].message);
       } else {
         toast.error("حدث خطأ أثناء حفظ الفاتورة");
       }
@@ -236,14 +239,22 @@ export default function Finance() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="clientName">اسم العميل</Label>
-                <Input 
-                  id="clientName" 
-                  value={newInvoice.clientName} 
-                  onChange={(e) => setNewInvoice({...newInvoice, clientName: e.target.value})} 
-                  placeholder="شركة مثال..." 
-                  className="dark:bg-white/5" 
-                />
+                <Label htmlFor="clientId">العميل</Label>
+                <select
+                  id="clientId"
+                  title="العميل"
+                  className="w-full h-10 rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm dark:bg-white/5"
+                  value={newInvoice.clientId}
+                  onChange={(e) => {
+                    const client = clients.find(c => c.id === e.target.value);
+                    setNewInvoice({ ...newInvoice, clientId: e.target.value, clientName: client?.name || "" });
+                  }}
+                >
+                  <option value="" className="dark:bg-navy-900">— اختر عميلاً —</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id} className="dark:bg-navy-900">{client.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="base">المبلغ الأساسي (قبل الضريبة)</Label>

@@ -2,6 +2,7 @@
 // React does not yet offer a hooks API for getDerivedStateFromError
 import React from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import * as Sentry from "@sentry/browser";
 
 interface Props {
   children: React.ReactNode;
@@ -26,6 +27,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("[ErrorBoundary]", error.message, errorInfo.componentStack);
+    if (import.meta.env.VITE_SENTRY_DSN) {
+      Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack, module: this.props.fallbackModule } });
+    }
   }
 
   handleReset() {

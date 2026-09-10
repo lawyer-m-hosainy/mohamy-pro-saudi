@@ -70,7 +70,7 @@ export const mockCases: Case[] = [
     defendant: 'شركة النهضة للمقاولات', 
     memorandums: ['مذكرة جوابية أولى', 'لائحة اعتراضية'], 
     powerOfAttorneyRef: '441234567', 
-    status: 'نشطة', 
+    status: 'متداولة', 
     externalPlatformRef: 'مربوط بناجز',
     createdAt: '2024-01-15'
   },
@@ -96,7 +96,7 @@ export const mockCases: Case[] = [
     defendant: 'مؤسسة الحلول الرقمية', 
     memorandums: ['مذكرة دفاع'], 
     powerOfAttorneyRef: '445556667', 
-    status: 'نشطة', 
+    status: 'متداولة', 
     externalPlatformRef: 'مربوط بناجز',
     createdAt: '2024-03-05'
   },
@@ -122,7 +122,7 @@ export const mockCases: Case[] = [
     defendant: 'خالد بن وليد الشمري', 
     memorandums: ['مذكرة رد'], 
     powerOfAttorneyRef: '442223334', 
-    status: 'نشطة', 
+    status: 'متداولة', 
     externalPlatformRef: 'غير مربوط',
     createdAt: '2024-03-25'
   },
@@ -214,6 +214,9 @@ export const mockEnforcementCases: EnforcementCase[] = [
   {
     id: "E-1001",
     tenantId: "demo-tenant",
+    fileNumber: "ENF-2026-0001",
+    source: "قضية_مكتب",
+    executionType: "حكم قضائي",
     caseId: "C-1001",
     clientId: "1",
     clientName: "شركة الراجحي العقارية",

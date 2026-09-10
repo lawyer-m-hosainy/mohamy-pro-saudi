@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 export default function Compliance() {
   const compliance = useComplianceStore((state) => state.compliance);
   const updateComplianceRecord = useComplianceStore((state) => state.updateComplianceRecord);
+  const addComplianceRecord = useComplianceStore((state) => state.addComplianceRecord);
   const removeComplianceRecord = useComplianceStore((state) => state.removeComplianceRecord);
 
   const [addOpen, setAddOpen] = useState(false);
@@ -78,7 +79,7 @@ export default function Compliance() {
                   return;
                 }
                 addComplianceRecord({
-                  id: `COMP-${Date.now()}`,
+                  id: crypto.randomUUID(),
                   title: newTitle,
                   type: 'أخرى',
                   expiryDate: new Date(Date.now() + 180*24*60*60*1000).toISOString().split('T')[0],

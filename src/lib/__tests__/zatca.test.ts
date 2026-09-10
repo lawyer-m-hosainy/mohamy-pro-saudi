@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateZatcaTLV } from '../zatca';
+import { generateZatcaTLV } from '../taxQR';
 
 describe('ZATCA Library', () => {
   it('should return a valid Base64 string', () => {

@@ -43,7 +43,7 @@ export default function Contracts() {
     }
     const cat = category as "تجاري" | "عمالي" | "عقاري" | "أحوال شخصية";
     addContractTemplate({
-      id: `TMPL-${Date.now()}`,
+      id: crypto.randomUUID(),
       title: `نموذج ${cat} — ${new Date().toLocaleDateString("ar-SA")}`,
       description: prompt.slice(0, 200) || "نموذج محفوظ من صانع العقود",
       content: generatedContent,

@@ -54,7 +54,7 @@ export function getCaseDistribution(cases: Case[]): Record<string, number> {
  * Filters cases that are at risk (old and still active).
  */
 export function getAtRiskCases(cases: Case[], thresholdDays: number = 120): Case[] {
-  return cases.filter(c => c.status === 'نشطة' && calculateCaseAge(c.createdAt) > thresholdDays);
+  return cases.filter(c => c.status === 'متداولة' && calculateCaseAge(c.createdAt) > thresholdDays);
 }
 
 /**
@@ -62,7 +62,7 @@ export function getAtRiskCases(cases: Case[], thresholdDays: number = 120): Case
  */
 export function getStatusLabel(status: Case['status']): string {
   const labels: Record<string, string> = {
-    'نشطة': 'قيد العمل',
+    'متداولة': 'قيد العمل',
     'مغلقة': 'منتهية',
     'تحت الدراسة': 'قيد المراجعة',
   };

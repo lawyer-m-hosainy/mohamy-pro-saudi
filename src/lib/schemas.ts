@@ -15,7 +15,7 @@ export const clientSchema = z.object({
 });
 
 export const caseSchema = z.object({
-  id: z.string().min(1, { message: "رقم القضية / المرجع مطلوب" }),
+  caseReference: z.string().min(1, { message: "رقم القضية / المرجع مطلوب" }),
   clientId: z.string().min(1, { message: "يجب اختيار موكل" }),
   court: z.string().min(1, { message: "نوع المحكمة مطلوب" }),
   plaintiff: z.string().min(1, { message: "اسم المدعي مطلوب" }),
@@ -26,6 +26,7 @@ export const caseSchema = z.object({
 });
 
 export const invoiceSchema = z.object({
+  clientId: z.string().min(1, { message: "يجب اختيار عميل من القائمة" }),
   clientName: z.string().min(1, { message: "يجب اختيار عميل" }),
   base: z.number().min(0, { message: "المبلغ الأساسي يجب أن يكون 0 أو أكثر" }),
   taxRate: z.number().min(0).max(100).default(15),

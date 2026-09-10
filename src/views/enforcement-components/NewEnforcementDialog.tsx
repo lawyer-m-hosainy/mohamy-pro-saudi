@@ -104,7 +104,7 @@ export default function NewEnforcementDialog({ open, onOpenChange, preSelectedCa
       return;
     }
     createManual({
-      clientId: extData.clientId || `EXT-${Date.now()}`,
+      clientId: extData.clientId || undefined,
       clientName: extData.clientName,
       debtorName: extData.debtorName,
       amountClaimed: Number(extData.amountClaimed),

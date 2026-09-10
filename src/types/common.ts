@@ -10,9 +10,15 @@ export interface UserProfile {
 
 export interface Document {
   id: string;
+  tenantId?: string;
+  caseId?: string;
   name: string;
   url: string;
-  type: 'مذكرة' | 'لائحة' | 'حكم' | 'أخرى';
+  /** Free text entered by the uploader (e.g. "مذكرة", "عقد") — not a fixed taxonomy. */
+  type: string;
+  storagePath?: string;
+  sizeBytes?: number;
+  uploadedBy?: string;
   createdAt: string;
 }
 

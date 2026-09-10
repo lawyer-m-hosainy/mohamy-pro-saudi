@@ -70,6 +70,7 @@ export default function Dashboard() {
   const clients = useClientsStore(state => state.clients);
   const tasks = useTeamStore(state => state.tasks);
   const updateTaskStatus = useTeamStore(state => state.updateTaskStatus);
+  const getPracticeAreaStats = useAnalyticsStore(state => state.getPracticeAreaStats);
   
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftResult, setDraftResult] = useState("");
@@ -127,6 +128,11 @@ export default function Dashboard() {
       bgClass: CATEGORY_COLORS[name]?.bgClass || 'bg-slate-400',
     }));
   }, [cases]);
+
+  const practiceAreaBarData = useMemo(
+    () => getPracticeAreaStats().map(a => ({ name: a.area, value: a.count })),
+    [getPracticeAreaStats, cases]
+  );
 
   return (
     <motion.div 
@@ -230,6 +236,40 @@ export default function Dashboard() {
             </Card>
           </motion.div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-none shadow-sm dark:bg-navy-800">
+          <CardHeader className="border-b border-slate-50 dark:border-white/5 pb-4">
+            <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
+              <Scale className="w-5 h-5 text-primary-500" />
+              توزيع القضايا حسب المجال
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-64 pt-4">
+            {practiceAreaBarData.length > 0 ? (
+              <MemoizedBarChart data={practiceAreaBarData} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-sm">لا توجد بيانات كافية بعد</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm dark:bg-navy-800">
+          <CardHeader className="border-b border-slate-50 dark:border-white/5 pb-4">
+            <CardTitle className="text-lg font-bold text-navy-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary-500" />
+              نسب أنواع القضايا
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="h-64 pt-4">
+            {cases.length > 0 ? (
+              <MemoizedPieChart data={dynamicCategoryData} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 text-sm">لا توجد بيانات كافية بعد</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

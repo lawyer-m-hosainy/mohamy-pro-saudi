@@ -44,7 +44,7 @@ export function addDeadlineToCase(repository: CasesRepository, input: DeadlineIn
   repository.addDeadline(deadline);
 }
 
-export function transitionCaseStatus(repository: CasesRepository, caseId: string, nextStatus: "نشطة" | "مغلقة" | "تحت الدراسة") {
+export function transitionCaseStatus(repository: CasesRepository, caseId: string, nextStatus: "متداولة" | "مغلقة" | "تحت الدراسة" | "محفوظة") {
   const cases = repository.getCases();
   const updated = cases.map((c) => {
     if (c.id !== caseId) return c;

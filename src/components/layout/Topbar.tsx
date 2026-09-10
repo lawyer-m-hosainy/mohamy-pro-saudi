@@ -22,9 +22,11 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
+import { setTenantIdCache } from "@/lib/tenant";
 
 export function Topbar() {
   const currentUser = useAuthStore(state => state.currentUser);
+  const hasPermission = useAuthStore(state => state.hasPermission);
   const notifications = useUIStore(state => state.notifications);
   const markNotificationAsRead = useUIStore(state => state.markNotificationAsRead);
   const toggleSidebar = useUIStore(state => state.toggleSidebar);
@@ -44,7 +46,7 @@ export function Topbar() {
     const query = deferredSearchQuery.toLowerCase();
     
     const filteredClients = clients.filter(c => c.name.toLowerCase().includes(query)).slice(0, 3);
-    const filteredCases = cases.filter(c => c.id.toLowerCase().includes(query) || c.plaintiff.toLowerCase().includes(query) || c.defendant.toLowerCase().includes(query)).slice(0, 3);
+    const filteredCases = cases.filter(c => c.caseReference?.toLowerCase().includes(query) || c.plaintiff.toLowerCase().includes(query) || c.defendant.toLowerCase().includes(query)).slice(0, 3);
     const filteredTasks = tasks.filter(t => t.title.toLowerCase().includes(query)).slice(0, 3);
     
     return { clients: filteredClients, cases: filteredCases, tasks: filteredTasks };
@@ -59,7 +61,16 @@ export function Topbar() {
 
   const handleLogout = async () => {
     try {
+      // signOut() is a no-op for a demo session (there's no Supabase auth
+      // session to begin with), so demo state has to be cleared explicitly
+      // or a "logged out" demo user stays authenticated until the 30-minute
+      // timeout in ProtectedRoute.tsx.
+      const { setDemoMode, setCurrentUser } = useAuthStore.getState();
       await supabase.auth.signOut();
+      setDemoMode(false);
+      setCurrentUser(null);
+      setTenantIdCache(null);
+      localStorage.removeItem("demoStartedAt");
       toast.success("تم تسجيل الخروج بنجاح");
       navigate("/login");
     } catch {
@@ -127,7 +138,7 @@ export function Topbar() {
                         onClick={() => { navigate('/dashboard/cases'); setSearchQuery(""); }}
                         className="w-full text-start px-2 py-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors"
                       >
-                        <span className="font-bold text-primary-600">{c.id}</span> - {c.plaintiff}
+                        <span className="font-bold text-primary-600">{c.caseReference || c.id}</span> - {c.plaintiff}
                       </button>
                     ))}
                   </div>
@@ -243,10 +254,12 @@ export function Topbar() {
               <DropdownMenuLabel>حسابي</DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/dashboard/settings')}>
-              <User size={16} />
-              الملف الشخصي
-            </DropdownMenuItem>
+            {hasPermission('manage_office') && (
+              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/dashboard/settings')}>
+                <User size={16} />
+                الملف الشخصي
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
               <LogOut size={16} />
               تسجيل الخروج

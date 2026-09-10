@@ -102,7 +102,7 @@ export default function ConflictCheck() {
 
     const updatedRecord = {
       ...currentResult,
-      id: `CCR-DEC-${Date.now()}`,
+      id: crypto.randomUUID(),
       resolutionNotes: decisionNotes.trim(),
       resolutionDate: new Date().toISOString(),
       resolvedBy: currentUser?.name || "محامي شريك",

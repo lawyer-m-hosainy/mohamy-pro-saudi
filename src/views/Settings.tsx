@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useRef, useEffect } from "react";
-import { Building2, Mail, Phone, MapPin, Hash, Upload, Moon, Sun, Monitor } from "lucide-react";
+import { Building2, Mail, Phone, MapPin, Hash, Upload, Moon, Sun, Monitor, CreditCard } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useUIStore } from '@/store/useUIStore';
 
@@ -13,6 +14,7 @@ export default function Settings() {
   const officeSettings = useUIStore((state) => state.officeSettings);
   const setOfficeSettings = useUIStore((state) => state.setOfficeSettings);
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
   
   // Initialize with fallback to prevent runtime errors if store is empty
   const [formData, setFormData] = useState(officeSettings || {
@@ -59,9 +61,15 @@ export default function Settings() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div>
-        <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إعدادات المكتب</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">إدارة معلومات المكتب، الهوية البصرية، وتفضيلات النظام.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-navy-900 dark:text-white">إعدادات المكتب</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">إدارة معلومات المكتب، الهوية البصرية، وتفضيلات النظام.</p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/dashboard/settings/billing")} className="gap-2 dark:border-white/10">
+          <CreditCard size={16} />
+          الفوترة والاشتراك
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
