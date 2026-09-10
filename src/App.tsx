@@ -60,6 +60,8 @@ const LegalQA = lazy(() => import("./views/LegalQA"));
 const TrainingPortal = lazy(() => import("./views/TrainingPortal"));
 const PartnerReporting = lazy(() => import("./views/PartnerReporting"));
 const CRM = lazy(() => import("./views/CRM"));
+const TermsOfService = lazy(() => import("./views/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./views/PrivacyPolicy"));
 
 // Enterprise Modules
 const OnboardingFlow = lazy(() => import("./modules/onboarding/OnboardingFlow"));
@@ -163,7 +165,9 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/onboarding" element={<OnboardingFlow />} />
               <Route path="/client-portal" element={<ClientPortal />} />
-              
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+
               <Route path="/dashboard" element={<ProtectedRoute><RouteLayoutWrapper /></ProtectedRoute>}>
                 <Route index element={<Dashboard />} />
                 <Route path="clients" element={<PermissionGate permission="view_clients"><Clients /></PermissionGate>} />

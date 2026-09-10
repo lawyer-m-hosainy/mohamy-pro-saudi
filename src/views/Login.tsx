@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Scale, Loader2, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DEMO_TENANT_ID, setTenantIdCache } from "@/lib/tenant";
 
 // Must match ProtectedRoute.tsx's check exactly — that component is what
@@ -54,6 +55,7 @@ export default function Login() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirm, setRegisterConfirm] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -106,6 +108,10 @@ export default function Login() {
 
     if (!name || !regEmail || !pwd) {
       toast.error("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
+    }
+    if (!acceptedTerms) {
+      toast.error("يجب الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة");
       return;
     }
     if (pwd.length < 6) {
@@ -323,9 +329,27 @@ export default function Login() {
                         dir="ltr"
                       />
                     </div>
-                    <Button 
+                    <div className="flex items-start gap-2">
+                      <Checkbox
+                        id="accept-terms"
+                        checked={acceptedTerms}
+                        onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <Label htmlFor="accept-terms" className="text-xs font-normal text-slate-500 dark:text-slate-400 leading-relaxed cursor-pointer">
+                        أوافق على{" "}
+                        <Link to="/terms" target="_blank" className="text-primary-600 dark:text-primary-400 hover:underline">
+                          الشروط والأحكام
+                        </Link>{" "}
+                        و{" "}
+                        <Link to="/privacy" target="_blank" className="text-primary-600 dark:text-primary-400 hover:underline">
+                          سياسة الخصوصية
+                        </Link>
+                      </Label>
+                    </div>
+                    <Button
                       type="submit"
-                      disabled={isRegisterLoading}
+                      disabled={isRegisterLoading || !acceptedTerms}
                       className="w-full bg-primary-600 hover:bg-primary-700 text-white py-5"
                     >
                       {isRegisterLoading ? (
