@@ -339,7 +339,7 @@ app.post('/api/payments/initiate', async (req: any, res) => {
         currency: 'SAR',
         description: `Malaf ${plan} (${billing})`,
         source,
-        callback_url: `${process.env.APP_URL || ''}/settings/billing`,
+        callback_url: `${process.env.APP_URL || ''}/dashboard/settings/billing`,
         metadata: { tenant_id: tenantId, plan, billing },
       }),
     });
@@ -382,6 +382,21 @@ app.post('/api/payments/webhook', express.json(), async (req, res) => {
   if (type === 'payment_paid') {
     const plan = payment.metadata?.plan || 'basic';
     const billing = payment.metadata?.billing || 'monthly';
+
+    // Defense in depth: /api/payments/initiate always computes the charged
+    // amount itself from PLAN_PRICING (never trusts the client for it), so
+    // this should never actually mismatch — but if a payment ever reached
+    // Moyasar through any other path, silently activating whatever plan its
+    // metadata claims regardless of what was paid would be the exact "free
+    // Enterprise upgrade" hole this endpoint replaced (see the comment
+    // above the Payments section). Refuse to activate rather than trust it.
+    const pricing = PLAN_PRICING[plan];
+    const expectedHalalas = pricing ? Math.round((billing === 'yearly' ? pricing.yearly : pricing.monthly) * 100) : null;
+    if (!pricing || payment.amount !== expectedHalalas) {
+      logger.error({ plan, billing, paid: payment.amount, expectedHalalas, paymentId: payment.id }, 'Moyasar webhook: paid amount does not match plan pricing, refusing to activate subscription');
+      return res.status(422).json({ error: 'Amount does not match plan pricing' });
+    }
+
     const endDate = new Date();
     if (billing === 'yearly') endDate.setFullYear(endDate.getFullYear() + 1);
     else endDate.setMonth(endDate.getMonth() + 1);

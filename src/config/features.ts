@@ -45,8 +45,13 @@ const featureFlags: Record<string, FeatureFlag> = {
   MOYASAR_PAYMENTS: {
     key: 'MOYASAR_PAYMENTS',
     label: 'بوابة الدفع الإلكتروني',
-    enabled: false,
-    description: 'تفعيل الدفع الإلكتروني عبر Moyasar — يتطلب MOYASAR_SECRET_KEY وواجهة تحصيل بطاقة (Moyasar.js)'
+    // The checkout UI (src/views/Billing.tsx) now exists — the remaining
+    // gate is real credentials (MOYASAR_SECRET_KEY server-side,
+    // VITE_MOYASAR_PUBLISHABLE_KEY client-side); the endpoint and the
+    // checkout form both degrade to a clear "not configured yet" message
+    // when those are unset, so it's safe to leave this on.
+    enabled: true,
+    description: 'الدفع الإلكتروني عبر Moyasar — يتطلب ضبط MOYASAR_SECRET_KEY و VITE_MOYASAR_PUBLISHABLE_KEY فعلياً ليعمل'
   }
 };
 

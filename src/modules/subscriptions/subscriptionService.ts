@@ -4,6 +4,9 @@
  * Provides a Facade for future Moyasar/Stripe integration.
  */
 
+import { supabase } from "@/lib/supabase/client";
+import { getCurrentTenantId } from "@/lib/tenant";
+
 export type PlanTier = 'basic' | 'advanced' | 'enterprise';
 
 export interface SubscriptionPlan {
@@ -138,4 +141,30 @@ export async function initializePayment(
     throw new Error(body?.error || 'تعذر بدء عملية الدفع');
   }
   return body;
+}
+
+/** Read-only: `subscriptions` RLS only grants tenant users SELECT on their own row (see rls-policies.sql). */
+export async function fetchSubscription(): Promise<TenantSubscription | null> {
+  const tenantId = getCurrentTenantId();
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select('tenant_id, plan, status, start_date, end_date')
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('fetchSubscription failed:', error);
+    return null;
+  }
+  if (!data) return null;
+
+  return {
+    tenantId: data.tenant_id,
+    plan: data.plan as PlanTier,
+    status: data.status as TenantSubscription['status'],
+    startDate: data.start_date,
+    endDate: data.end_date,
+    currentUsers: 0,
+    currentCases: 0,
+  };
 }

@@ -62,6 +62,7 @@ const PartnerReporting = lazy(() => import("./views/PartnerReporting"));
 const CRM = lazy(() => import("./views/CRM"));
 const TermsOfService = lazy(() => import("./views/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./views/PrivacyPolicy"));
+const Billing = lazy(() => import("./views/Billing"));
 
 // Enterprise Modules
 const OnboardingFlow = lazy(() => import("./modules/onboarding/OnboardingFlow"));
@@ -205,6 +206,7 @@ export default function App() {
               <Route path="partner-reports" element={<PermissionGate permission="view_reports"><PartnerReporting /></PermissionGate>} />
               <Route path="platform-admin" element={<PermissionGate permission="platform_admin"><GlobalAdmin /></PermissionGate>} />
               <Route path="settings" element={<PermissionGate permission="manage_office"><Settings /></PermissionGate>} />
+              <Route path="settings/billing" element={<PermissionGate permission="manage_office"><Billing /></PermissionGate>} />
             </Route>
             
             {/* Redirect old routes if needed */}
